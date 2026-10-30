@@ -52,7 +52,10 @@ class DoacaoCard extends StatelessWidget {
                   ),
                   if (novidade) const _Etiqueta('NOVA', AppColors.laranja),
                   if (!novidade)
-                    _Etiqueta(doacao.status.rotulo, _corDoStatus(doacao.status)),
+                    _Etiqueta(
+                      doacao.status.rotulo,
+                      _corDoStatus(doacao.status),
+                    ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -86,11 +89,11 @@ class DoacaoCard extends StatelessWidget {
   }
 
   static Color _corDoStatus(StatusDoacao status) => switch (status) {
-        StatusDoacao.disponivel => AppColors.verde,
-        StatusDoacao.reservada => AppColors.laranja,
-        StatusDoacao.concluida => AppColors.cinza,
-        StatusDoacao.cancelada => AppColors.erro,
-      };
+    StatusDoacao.disponivel => AppColors.verde,
+    StatusDoacao.reservada => AppColors.laranja,
+    StatusDoacao.concluida => AppColors.cinza,
+    StatusDoacao.cancelada => AppColors.erro,
+  };
 }
 
 class _Etiqueta extends StatelessWidget {

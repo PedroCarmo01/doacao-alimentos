@@ -20,9 +20,9 @@ class HomeDoadorPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EmConstrucao(
-        titulo: 'Minhas doações',
-        responsavel: 'Pessoa 2',
-        etapa: 'trilha/18-app-doador.md',
-        sessao: sessao,
-      );
+    titulo: 'Minhas doações',
+    responsavel: 'Pessoa 2',
+    etapa: 'trilha/18-app-doador.md',
+    sessao: sessao,
+  );
 }

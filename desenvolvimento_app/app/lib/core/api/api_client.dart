@@ -17,11 +17,11 @@ class ApiClient {
     required ArmazenamentoToken armazenamentoToken,
     http.Client? cliente,
     this.tempoLimite = const Duration(seconds: 15),
-  })  : _urlBase = urlBase.endsWith('/')
-            ? urlBase.substring(0, urlBase.length - 1)
-            : urlBase,
-        _armazenamentoToken = armazenamentoToken,
-        _cliente = cliente ?? http.Client();
+  }) : _urlBase = urlBase.endsWith('/')
+           ? urlBase.substring(0, urlBase.length - 1)
+           : urlBase,
+       _armazenamentoToken = armazenamentoToken,
+       _cliente = cliente ?? http.Client();
 
   final String _urlBase;
   final ArmazenamentoToken _armazenamentoToken;
@@ -112,7 +112,9 @@ class ApiClient {
         codigo: '${erro['codigo'] ?? 'ERRO'}',
         mensagem: '${erro['mensagem'] ?? 'Erro inesperado.'}',
         status: resposta.statusCode,
-        detalhes: detalhes is List ? [for (final d in detalhes) '$d'] : const [],
+        detalhes: detalhes is List
+            ? [for (final d in detalhes) '$d']
+            : const [],
       );
     }
     throw ApiException(
@@ -123,9 +125,9 @@ class ApiClient {
   }
 
   static String _mensagemPadrao(int status) => switch (status) {
-        401 => 'Faça login novamente.',
-        404 => 'Rota não encontrada no servidor (ela já foi implementada?).',
-        >= 500 => 'Erro no servidor. Tente novamente em instantes.',
-        _ => 'Erro inesperado (HTTP $status).',
-      };
+    401 => 'Faça login novamente.',
+    404 => 'Rota não encontrada no servidor (ela já foi implementada?).',
+    >= 500 => 'Erro no servidor. Tente novamente em instantes.',
+    _ => 'Erro inesperado (HTTP $status).',
+  };
 }

@@ -38,13 +38,13 @@ class Perfil {
   Coordenadas get coordenadas => Coordenadas(latitude, longitude);
 
   Map<String, dynamic> toJson() => {
-        'usuarioId': usuarioId,
-        'nomeOrganizacao': nomeOrganizacao,
-        'telefone': telefone,
-        'endereco': endereco,
-        'latitude': latitude,
-        'longitude': longitude,
-      };
+    'usuarioId': usuarioId,
+    'nomeOrganizacao': nomeOrganizacao,
+    'telefone': telefone,
+    'endereco': endereco,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
 }
 
 /// Usuário + perfil: tudo o que o app precisa saber sobre quem está logado.
@@ -66,7 +66,7 @@ class Conta {
   final Perfil perfil;
 
   Map<String, dynamic> toJson() => {
-        'usuario': usuario.toJson(),
-        'perfil': perfil.toJson(),
-      };
+    'usuario': usuario.toJson(),
+    'perfil': perfil.toJson(),
+  };
 }

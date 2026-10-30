@@ -55,8 +55,8 @@ class SistemaRepositoryFake implements SistemaRepository {
 
   @override
   Future<StatusSistema> verificar() async => const StatusSistema(
-        apiOnline: true,
-        bancoOnline: true,
-        modoDemonstracao: true,
-      );
+    apiOnline: true,
+    bancoOnline: true,
+    modoDemonstracao: true,
+  );
 }

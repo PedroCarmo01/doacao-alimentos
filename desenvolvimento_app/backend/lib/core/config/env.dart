@@ -49,10 +49,12 @@ class Env {
       dbSenha: leitor.texto('DB_SENHA'),
       dbTls: leitor.booleano('DB_TLS', padrao: true),
       jwtSegredo: segredo,
-      jwtValidade:
-          Duration(hours: leitor.inteiro('JWT_VALIDADE_HORAS', padrao: 12)),
-      prazoReserva:
-          Duration(minutes: leitor.inteiro('RESERVA_MINUTOS', padrao: 120)),
+      jwtValidade: Duration(
+        hours: leitor.inteiro('JWT_VALIDADE_HORAS', padrao: 12),
+      ),
+      prazoReserva: Duration(
+        minutes: leitor.inteiro('RESERVA_MINUTOS', padrao: 120),
+      ),
       raioPadraoKm: leitor.decimal('RAIO_PADRAO_KM', padrao: 10),
       fusoHorarioUtc: leitor.inteiro('FUSO_HORARIO', padrao: -3),
       corsOrigem: leitor.texto('CORS_ORIGEM', padrao: '*'),
@@ -88,9 +90,9 @@ class _LeitorDeVariaveis {
   }
 
   StateError _faltando(String chave) => StateError(
-        'A variável $chave não está definida. Você criou o arquivo .env? '
-        '(na pasta backend: Copy-Item .env.example .env)',
-      );
+    'A variável $chave não está definida. Você criou o arquivo .env? '
+    '(na pasta backend: Copy-Item .env.example .env)',
+  );
 
   String texto(String chave, {String? padrao}) =>
       _bruto(chave) ?? padrao ?? (throw _faltando(chave));
@@ -99,7 +101,9 @@ class _LeitorDeVariaveis {
     final valor = _bruto(chave);
     if (valor == null) return padrao;
     return int.tryParse(valor) ??
-        (throw StateError('$chave deve ser um número inteiro (atual: "$valor").'));
+        (throw StateError(
+          '$chave deve ser um número inteiro (atual: "$valor").',
+        ));
   }
 
   double decimal(String chave, {required double padrao}) {

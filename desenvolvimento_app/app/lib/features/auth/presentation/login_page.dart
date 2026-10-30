@@ -23,8 +23,8 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EmConstrucao(
-        titulo: 'Entrar como ${tipo.rotulo}',
-        responsavel: 'Pessoa 1',
-        etapa: 'trilha/17-app-autenticacao.md',
-      );
+    titulo: 'Entrar como ${tipo.rotulo}',
+    responsavel: 'Pessoa 1',
+    etapa: 'trilha/17-app-autenticacao.md',
+  );
 }

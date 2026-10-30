@@ -207,7 +207,8 @@ class BancoFake {
     if (!doacao.podeSerCancelada) {
       throw const ApiException(
         codigo: 'DOACAO_NAO_CANCELAVEL',
-        mensagem: 'Só é possível cancelar doações que ainda não foram '
+        mensagem:
+            'Só é possível cancelar doações que ainda não foram '
             'reservadas.',
         status: 409,
       );
@@ -241,7 +242,8 @@ class BancoFake {
     if (!doacao.podeSerReservada(agora)) {
       throw const ApiException(
         codigo: 'DOACAO_INDISPONIVEL',
-        mensagem: 'Esta doação acabou de ser reservada por outra ONG ou não '
+        mensagem:
+            'Esta doação acabou de ser reservada por outra ONG ou não '
             'está mais disponível.',
         status: 409,
       );
@@ -318,7 +320,8 @@ class BancoFake {
     if (conta.usuario.tipo != tipo) {
       throw ApiException(
         codigo: 'SEM_PERMISSAO',
-        mensagem: 'Esta ação está disponível apenas para o perfil '
+        mensagem:
+            'Esta ação está disponível apenas para o perfil '
             '${tipo.rotulo}.',
         status: 403,
       );
@@ -364,18 +367,17 @@ class BancoFake {
     Reserva reserva,
     StatusReserva status, {
     DateTime? retiradoEm,
-  }) =>
-      Reserva(
-        id: reserva.id,
-        doacaoId: reserva.doacaoId,
-        ongId: reserva.ongId,
-        status: status,
-        reservadoEm: reserva.reservadoEm,
-        expiraEm: reserva.expiraEm,
-        retiradoEm: retiradoEm ?? reserva.retiradoEm,
-        tituloDoacao: reserva.tituloDoacao,
-        nomeOng: reserva.nomeOng,
-      );
+  }) => Reserva(
+    id: reserva.id,
+    doacaoId: reserva.doacaoId,
+    ongId: reserva.ongId,
+    status: status,
+    reservadoEm: reserva.reservadoEm,
+    expiraEm: reserva.expiraEm,
+    retiradoEm: retiradoEm ?? reserva.retiradoEm,
+    tituloDoacao: reserva.tituloDoacao,
+    nomeOng: reserva.nomeOng,
+  );
 
   void _expirarReservasVencidas() {
     final agora = _agora;
@@ -408,11 +410,13 @@ class BancoFake {
         doadorId: doador.usuario.id,
         titulo: 'Doação surpresa nº $numero',
         descricao: 'Criada automaticamente no modo demonstração.',
-        categoria: CategoriaAlimento
-            .values[numero % CategoriaAlimento.values.length],
+        categoria:
+            CategoriaAlimento.values[numero % CategoriaAlimento.values.length],
         quantidade: '${2 + numero % 5} caixas',
-        validade: Calendario.dataNoFuso(agora, fusoHorarioUtc)
-            .add(const Duration(days: 2)),
+        validade: Calendario.dataNoFuso(
+          agora,
+          fusoHorarioUtc,
+        ).add(const Duration(days: 2)),
         janelaInicio: agora,
         janelaFim: agora.add(const Duration(hours: 3)),
         endereco: doador.perfil.endereco,
@@ -438,34 +442,64 @@ class BancoFake {
       String endereco,
       double latitude,
       double longitude,
-    ) =>
-        cadastrar(
-          DadosCadastro(
-            tipo: tipo,
-            nome: nome,
-            email: email,
-            senha: senhaPadrao,
-            nomeOrganizacao: organizacao,
-            endereco: endereco,
-            latitude: latitude,
-            longitude: longitude,
-          ),
-        );
+    ) => cadastrar(
+      DadosCadastro(
+        tipo: tipo,
+        nome: nome,
+        email: email,
+        senha: senhaPadrao,
+        nomeOrganizacao: organizacao,
+        endereco: endereco,
+        latitude: latitude,
+        longitude: longitude,
+      ),
+    );
 
-    final mercado = conta(TipoUsuario.doador, 'Gerente do Mercado',
-        'mercado@exemplo.com', 'Mercado Bom Preço',
-        'Rua Principal, 100 - Centro', -23.5229, -46.1880);
-    final padaria = conta(TipoUsuario.doador, 'Dono da Padaria',
-        'padaria@exemplo.com', 'Padaria Pão Quente',
-        'Avenida das Flores, 250', -23.5262, -46.1932);
-    final maosAmigas = conta(TipoUsuario.ong, 'Coordenação Mãos Amigas',
-        'maosamigas@exemplo.com', 'ONG Mãos Amigas',
-        'Rua da Solidariedade, 45', -23.5180, -46.1850);
-    final pratoCheio = conta(TipoUsuario.ong, 'Coordenação Prato Cheio',
-        'pratocheio@exemplo.com', 'Instituto Prato Cheio',
-        'Travessa do Bem, 12', -23.5400, -46.2100);
-    conta(TipoUsuario.ong, 'Coordenação Distante', 'distante@exemplo.com',
-        'Associação Distante', 'Praça da Sé - São Paulo', -23.5505, -46.6333);
+    final mercado = conta(
+      TipoUsuario.doador,
+      'Gerente do Mercado',
+      'mercado@exemplo.com',
+      'Mercado Bom Preço',
+      'Rua Principal, 100 - Centro',
+      -23.5229,
+      -46.1880,
+    );
+    final padaria = conta(
+      TipoUsuario.doador,
+      'Dono da Padaria',
+      'padaria@exemplo.com',
+      'Padaria Pão Quente',
+      'Avenida das Flores, 250',
+      -23.5262,
+      -46.1932,
+    );
+    final maosAmigas = conta(
+      TipoUsuario.ong,
+      'Coordenação Mãos Amigas',
+      'maosamigas@exemplo.com',
+      'ONG Mãos Amigas',
+      'Rua da Solidariedade, 45',
+      -23.5180,
+      -46.1850,
+    );
+    final pratoCheio = conta(
+      TipoUsuario.ong,
+      'Coordenação Prato Cheio',
+      'pratocheio@exemplo.com',
+      'Instituto Prato Cheio',
+      'Travessa do Bem, 12',
+      -23.5400,
+      -46.2100,
+    );
+    conta(
+      TipoUsuario.ong,
+      'Coordenação Distante',
+      'distante@exemplo.com',
+      'Associação Distante',
+      'Praça da Sé - São Paulo',
+      -23.5505,
+      -46.6333,
+    );
 
     Doacao doacao(
       Conta doador,
@@ -497,20 +531,47 @@ class BancoFake {
       return nova;
     }
 
-    doacao(mercado, 'Frutas e verduras do dia', CategoriaAlimento.hortifruti,
-        '5 caixas', 2, const Duration(hours: -1), const Duration(hours: 6),
-        StatusDoacao.disponivel);
-    doacao(padaria, 'Pães do dia anterior', CategoriaAlimento.padaria,
-        '30 unidades', 1, Duration.zero, const Duration(hours: 4),
-        StatusDoacao.disponivel);
-    doacao(mercado, 'Iogurtes perto do vencimento',
-        CategoriaAlimento.laticinios, '24 potes', 3,
-        const Duration(hours: 1), const Duration(hours: 8),
-        StatusDoacao.disponivel);
+    doacao(
+      mercado,
+      'Frutas e verduras do dia',
+      CategoriaAlimento.hortifruti,
+      '5 caixas',
+      2,
+      const Duration(hours: -1),
+      const Duration(hours: 6),
+      StatusDoacao.disponivel,
+    );
+    doacao(
+      padaria,
+      'Pães do dia anterior',
+      CategoriaAlimento.padaria,
+      '30 unidades',
+      1,
+      Duration.zero,
+      const Duration(hours: 4),
+      StatusDoacao.disponivel,
+    );
+    doacao(
+      mercado,
+      'Iogurtes perto do vencimento',
+      CategoriaAlimento.laticinios,
+      '24 potes',
+      3,
+      const Duration(hours: 1),
+      const Duration(hours: 8),
+      StatusDoacao.disponivel,
+    );
 
-    final cestas = doacao(mercado, 'Cestas de mercearia',
-        CategoriaAlimento.mercearia, '10 cestas', 30, Duration.zero,
-        const Duration(hours: 5), StatusDoacao.reservada);
+    final cestas = doacao(
+      mercado,
+      'Cestas de mercearia',
+      CategoriaAlimento.mercearia,
+      '10 cestas',
+      30,
+      Duration.zero,
+      const Duration(hours: 5),
+      StatusDoacao.reservada,
+    );
     _reservas.add(
       Reserva(
         id: _proximoId++,
@@ -524,10 +585,16 @@ class BancoFake {
       ),
     );
 
-    final bolos = doacao(padaria, 'Bolos e salgados',
-        CategoriaAlimento.refeicoesProntas, '15 porções', 0,
-        const Duration(hours: -5), const Duration(hours: -1),
-        StatusDoacao.concluida);
+    final bolos = doacao(
+      padaria,
+      'Bolos e salgados',
+      CategoriaAlimento.refeicoesProntas,
+      '15 porções',
+      0,
+      const Duration(hours: -5),
+      const Duration(hours: -1),
+      StatusDoacao.concluida,
+    );
     _reservas.add(
       Reserva(
         id: _proximoId++,

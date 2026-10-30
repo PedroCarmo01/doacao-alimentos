@@ -14,7 +14,7 @@ abstract interface class ArmazenamentoToken {
 /// Armazenamento criptografado do sistema operacional.
 class ArmazenamentoTokenSeguro implements ArmazenamentoToken {
   ArmazenamentoTokenSeguro([FlutterSecureStorage? armazenamento])
-      : _armazenamento = armazenamento ?? const FlutterSecureStorage();
+    : _armazenamento = armazenamento ?? const FlutterSecureStorage();
 
   static const _chave = 'token_jwt';
   final FlutterSecureStorage _armazenamento;

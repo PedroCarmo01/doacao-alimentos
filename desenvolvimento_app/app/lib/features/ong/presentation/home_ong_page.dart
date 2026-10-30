@@ -9,20 +9,16 @@ import '../../../shared/widgets/em_construcao.dart';
 /// Responsável: Pessoa 5. Passo a passo: trilha/19-app-ong.md
 /// ATENÇÃO: mantenha o CONSTRUTOR. Ele é o contrato usado pelo AppRouter.
 class HomeOngPage extends StatelessWidget {
-  const HomeOngPage({
-    super.key,
-    required this.doacoes,
-    required this.sessao,
-  });
+  const HomeOngPage({super.key, required this.doacoes, required this.sessao});
 
   final DoacaoRepository doacoes;
   final Sessao sessao;
 
   @override
   Widget build(BuildContext context) => EmConstrucao(
-        titulo: 'Doações próximas',
-        responsavel: 'Pessoa 5',
-        etapa: 'trilha/19-app-ong.md',
-        sessao: sessao,
-      );
+    titulo: 'Doações próximas',
+    responsavel: 'Pessoa 5',
+    etapa: 'trilha/19-app-ong.md',
+    sessao: sessao,
+  );
 }

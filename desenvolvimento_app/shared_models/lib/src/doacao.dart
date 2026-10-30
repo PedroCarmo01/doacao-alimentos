@@ -116,23 +116,23 @@ class Doacao {
       estaDisponivel && !janelaEncerrada(agora);
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'doadorId': doadorId,
-        'titulo': titulo,
-        'descricao': descricao,
-        'categoria': categoria.name,
-        'quantidade': quantidade,
-        'validade': formatarData(validade),
-        'janelaInicio': formatarInstante(janelaInicio),
-        'janelaFim': formatarInstante(janelaFim),
-        'endereco': endereco,
-        'latitude': latitude,
-        'longitude': longitude,
-        'status': status.name,
-        'criadoEm': formatarInstante(criadoEm),
-        if (nomeDoador != null) 'nomeDoador': nomeDoador,
-        if (distanciaKm != null) 'distanciaKm': distanciaKm,
-      };
+    'id': id,
+    'doadorId': doadorId,
+    'titulo': titulo,
+    'descricao': descricao,
+    'categoria': categoria.name,
+    'quantidade': quantidade,
+    'validade': formatarData(validade),
+    'janelaInicio': formatarInstante(janelaInicio),
+    'janelaFim': formatarInstante(janelaFim),
+    'endereco': endereco,
+    'latitude': latitude,
+    'longitude': longitude,
+    'status': status.name,
+    'criadoEm': formatarInstante(criadoEm),
+    if (nomeDoador != null) 'nomeDoador': nomeDoador,
+    if (distanciaKm != null) 'distanciaKm': distanciaKm,
+  };
 
   Doacao copyWith({
     StatusDoacao? status,
@@ -160,5 +160,6 @@ class Doacao {
   }
 
   @override
-  String toString() => 'Doacao(id: $id, titulo: $titulo, status: ${status.name})';
+  String toString() =>
+      'Doacao(id: $id, titulo: $titulo, status: ${status.name})';
 }

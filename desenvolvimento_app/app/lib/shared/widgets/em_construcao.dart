@@ -51,7 +51,11 @@ class EmConstrucao extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.construction, size: 64, color: AppColors.laranja),
+              const Icon(
+                Icons.construction,
+                size: 64,
+                color: AppColors.laranja,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Tela em construção',

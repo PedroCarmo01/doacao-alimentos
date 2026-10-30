@@ -56,16 +56,16 @@ class DadosNovaDoacao {
   bool get possuiLocalizacao => latitude != null && longitude != null;
 
   Map<String, dynamic> toJson() => {
-        'titulo': titulo,
-        'descricao': descricao,
-        'categoria': categoria.name,
-        'quantidade': quantidade,
-        'validade': formatarData(validade),
-        'janelaInicio': formatarInstante(janelaInicio),
-        'janelaFim': formatarInstante(janelaFim),
-        'endereco': endereco,
-        'latitude': latitude,
-        'longitude': longitude,
-        'declaracaoAlimentosProprios': declaracaoAlimentosProprios,
-      };
+    'titulo': titulo,
+    'descricao': descricao,
+    'categoria': categoria.name,
+    'quantidade': quantidade,
+    'validade': formatarData(validade),
+    'janelaInicio': formatarInstante(janelaInicio),
+    'janelaFim': formatarInstante(janelaFim),
+    'endereco': endereco,
+    'latitude': latitude,
+    'longitude': longitude,
+    'declaracaoAlimentosProprios': declaracaoAlimentosProprios,
+  };
 }

@@ -43,7 +43,8 @@ abstract final class Geo {
     final dLon = _radianos(b.longitude - a.longitude);
     final senoLat = math.sin(dLat / 2);
     final senoLon = math.sin(dLon / 2);
-    final h = senoLat * senoLat +
+    final h =
+        senoLat * senoLat +
         math.cos(_radianos(a.latitude)) *
             math.cos(_radianos(b.latitude)) *
             senoLon *

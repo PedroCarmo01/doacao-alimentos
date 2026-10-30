@@ -36,6 +36,18 @@ Pré-requisitos e instalação passo a passo: [trilha/03](trilha/03-ambiente-win
 4. Tarefas **Backend: recriar dados de exemplo (seed)** e **Backend: iniciar (dart_frog dev)**.
 5. *Run and Debug* → **App — API local (emulador)** → `F5`. (Sem backend: **App — dados fictícios**.)
 
+### Diferenças da máquina pessoal do Pedro (registradas na Etapa 0)
+
+O projeto foi planejado para **MySQL 8.4 LTS** em `C:\dev\Summit`. Na máquina onde o app está sendo construído:
+
+| Item | Planejado | Nesta máquina | Impacto |
+|---|---|---|---|
+| Banco | MySQL 8.4 LTS | **MySQL 8.0** (8.0.44, serviço `MySQL80`, porta 3306) | nenhum: o `schema.sql` usa só recursos que o 8.0 já tem (coluna gerada, `utf8mb4_0900_ai_ci`, TLS e o login `caching_sha2_password`) |
+| Pasta do projeto | `C:\dev\Summit` | `C:\Users\user\Documents\dev\Summit` | nenhum: o caminho não tem espaço nem acento |
+| NDK do Android | baixado sozinho pelo Gradle | instalado à mão: `android sdk install ndk/28.2.13676358` | só na primeira compilação (o novo *Android CLI* substituiu o `sdkmanager`) |
+
+Quem usar MySQL 8.4 não precisa fazer nada diferente.
+
 ### Usuários de teste
 
 Senha de todos: `senha123`.

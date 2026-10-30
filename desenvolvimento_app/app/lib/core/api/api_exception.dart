@@ -15,23 +15,24 @@ class ApiException implements ErroAmigavel {
   });
 
   const ApiException.semConexao()
-      : this(
-          codigo: 'SEM_CONEXAO',
-          mensagem: 'Não foi possível falar com o servidor. Confira se a API '
-              'está rodando e se o endereço (API_URL) está correto.',
-        );
+    : this(
+        codigo: 'SEM_CONEXAO',
+        mensagem:
+            'Não foi possível falar com o servidor. Confira se a API '
+            'está rodando e se o endereço (API_URL) está correto.',
+      );
 
   const ApiException.tempoEsgotado()
-      : this(
-          codigo: 'TEMPO_ESGOTADO',
-          mensagem: 'O servidor demorou demais para responder. Tente de novo.',
-        );
+    : this(
+        codigo: 'TEMPO_ESGOTADO',
+        mensagem: 'O servidor demorou demais para responder. Tente de novo.',
+      );
 
   const ApiException.respostaInvalida()
-      : this(
-          codigo: 'RESPOSTA_INVALIDA',
-          mensagem: 'O servidor respondeu em um formato inesperado.',
-        );
+    : this(
+        codigo: 'RESPOSTA_INVALIDA',
+        mensagem: 'O servidor respondeu em um formato inesperado.',
+      );
 
   /// Código estável para decisões no código (ex.: `DOACAO_INDISPONIVEL`).
   final String codigo;

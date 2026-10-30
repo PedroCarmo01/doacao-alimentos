@@ -34,16 +34,16 @@ class Database implements ExecutorSql {
   Database._(this._pool);
 
   factory Database.conectar(Env env) => Database._(
-        MySQLConnectionPool(
-          host: env.dbHost,
-          port: env.dbPorta,
-          userName: env.dbUsuario,
-          password: env.dbSenha,
-          databaseName: env.dbNome,
-          maxConnections: 5,
-          secure: env.dbTls,
-        ),
-      );
+    MySQLConnectionPool(
+      host: env.dbHost,
+      port: env.dbPorta,
+      userName: env.dbUsuario,
+      password: env.dbSenha,
+      databaseName: env.dbNome,
+      maxConnections: 5,
+      secure: env.dbTls,
+    ),
+  );
 
   final MySQLConnectionPool _pool;
 

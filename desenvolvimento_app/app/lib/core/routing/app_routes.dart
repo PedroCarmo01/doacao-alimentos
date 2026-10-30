@@ -29,7 +29,7 @@ abstract final class AppRoutes {
 
   /// Tela inicial de cada tipo de usuário, depois do login.
   static String inicioDoTipo(TipoUsuario tipo) => switch (tipo) {
-        TipoUsuario.doador => inicioDoador,
-        TipoUsuario.ong => inicioOng,
-      };
+    TipoUsuario.doador => inicioDoador,
+    TipoUsuario.ong => inicioOng,
+  };
 }

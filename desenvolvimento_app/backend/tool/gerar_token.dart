@@ -32,11 +32,15 @@ void main(List<String> argumentos) {
   }
 
   final env = Env.carregar();
-  final token = TokenService(segredo: env.jwtSegredo, validade: env.jwtValidade)
-      .gerar(usuarioId: id, tipo: tipo);
+  final token = TokenService(
+    segredo: env.jwtSegredo,
+    validade: env.jwtValidade,
+  ).gerar(usuarioId: id, tipo: tipo);
 
-  print('Token do usuário $id (${tipo.name}), válido por '
-      '${env.jwtValidade.inHours} h:\n');
+  print(
+    'Token do usuário $id (${tipo.name}), válido por '
+    '${env.jwtValidade.inHours} h:\n',
+  );
   print(token);
   print('\nUse no cabeçalho:  Authorization: Bearer $token');
 }

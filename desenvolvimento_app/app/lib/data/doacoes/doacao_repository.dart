@@ -37,7 +37,8 @@ class DoacaoRepositoryApi implements DoacaoRepository {
   Future<List<Doacao>> listarMinhas() async {
     final json = await _api.get('/doacoes');
     return [
-      for (final item in ApiClient.lista(json, 'doacoes')) Doacao.fromJson(item),
+      for (final item in ApiClient.lista(json, 'doacoes'))
+        Doacao.fromJson(item),
     ];
   }
 
@@ -57,7 +58,8 @@ class DoacaoRepositoryApi implements DoacaoRepository {
       consulta: {if (raioKm != null) 'raioKm': '$raioKm'},
     );
     return [
-      for (final item in ApiClient.lista(json, 'doacoes')) Doacao.fromJson(item),
+      for (final item in ApiClient.lista(json, 'doacoes'))
+        Doacao.fromJson(item),
     ];
   }
 }

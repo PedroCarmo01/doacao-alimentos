@@ -75,11 +75,11 @@ abstract final class ValidadorUsuario {
 
   /// Valida um cadastro inteiro. Lista vazia significa "tudo certo".
   static List<String> validarCadastro(DadosCadastro dados) => [
-        nome(dados.nome),
-        nomeOrganizacao(dados.nomeOrganizacao),
-        email(dados.email),
-        senha(dados.senha),
-        telefone(dados.telefone),
-        coordenadas(dados.latitude, dados.longitude),
-      ].whereType<String>().toList();
+    nome(dados.nome),
+    nomeOrganizacao(dados.nomeOrganizacao),
+    email(dados.email),
+    senha(dados.senha),
+    telefone(dados.telefone),
+    coordenadas(dados.latitude, dados.longitude),
+  ].whereType<String>().toList();
 }

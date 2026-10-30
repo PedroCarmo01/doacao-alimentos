@@ -11,7 +11,8 @@ import 'core/dependencias.dart';
 /// (no VS Code: perfil "App — dados fictícios").
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  final dependencias =
-      AppConfig.usarFake ? Dependencias.fake() : Dependencias.api();
+  final dependencias = AppConfig.usarFake
+      ? Dependencias.fake()
+      : Dependencias.api();
   runApp(App(dependencias: dependencias));
 }

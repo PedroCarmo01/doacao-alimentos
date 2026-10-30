@@ -25,8 +25,8 @@ class DetalheDoacaoDoadorPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EmConstrucao(
-        titulo: 'Doação #$doacaoId',
-        responsavel: 'Pessoa 2',
-        etapa: 'trilha/18-app-doador.md',
-      );
+    titulo: 'Doação #$doacaoId',
+    responsavel: 'Pessoa 2',
+    etapa: 'trilha/18-app-doador.md',
+  );
 }

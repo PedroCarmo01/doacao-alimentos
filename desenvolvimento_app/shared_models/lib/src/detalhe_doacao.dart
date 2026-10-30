@@ -21,7 +21,7 @@ class DetalheDoacao {
   final Reserva? reserva;
 
   Map<String, dynamic> toJson() => {
-        'doacao': doacao.toJson(),
-        'reserva': reserva?.toJson(),
-      };
+    'doacao': doacao.toJson(),
+    'reserva': reserva?.toJson(),
+  };
 }

@@ -46,28 +46,28 @@ class DadosCadastro {
   /// Cópia com textos sem espaços nas pontas, e-mail em minúsculas e campos
   /// opcionais vazios convertidos em `null`.
   DadosCadastro normalizado() => DadosCadastro(
-        tipo: tipo,
-        nome: nome.trim(),
-        email: email.trim().toLowerCase(),
-        senha: senha,
-        nomeOrganizacao: nomeOrganizacao.trim(),
-        telefone: _vazioParaNulo(telefone),
-        endereco: _vazioParaNulo(endereco),
-        latitude: latitude,
-        longitude: longitude,
-      );
+    tipo: tipo,
+    nome: nome.trim(),
+    email: email.trim().toLowerCase(),
+    senha: senha,
+    nomeOrganizacao: nomeOrganizacao.trim(),
+    telefone: _vazioParaNulo(telefone),
+    endereco: _vazioParaNulo(endereco),
+    latitude: latitude,
+    longitude: longitude,
+  );
 
   Map<String, dynamic> toJson() => {
-        'tipo': tipo.name,
-        'nome': nome,
-        'email': email,
-        'senha': senha,
-        'nomeOrganizacao': nomeOrganizacao,
-        'telefone': telefone,
-        'endereco': endereco,
-        'latitude': latitude,
-        'longitude': longitude,
-      };
+    'tipo': tipo.name,
+    'nome': nome,
+    'email': email,
+    'senha': senha,
+    'nomeOrganizacao': nomeOrganizacao,
+    'telefone': telefone,
+    'endereco': endereco,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
 
   static String? _vazioParaNulo(String? texto) {
     final limpo = texto?.trim();

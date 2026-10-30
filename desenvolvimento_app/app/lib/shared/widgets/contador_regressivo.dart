@@ -10,11 +10,7 @@ import '../../core/utils/formatador.dart';
 /// Quando o tempo acaba, chama [aoExpirar] UMA vez (por exemplo, para o
 /// ViewModel recarregar a lista).
 class ContadorRegressivo extends StatefulWidget {
-  const ContadorRegressivo({
-    super.key,
-    required this.expiraEm,
-    this.aoExpirar,
-  });
+  const ContadorRegressivo({super.key, required this.expiraEm, this.aoExpirar});
 
   final DateTime expiraEm;
   final VoidCallback? aoExpirar;

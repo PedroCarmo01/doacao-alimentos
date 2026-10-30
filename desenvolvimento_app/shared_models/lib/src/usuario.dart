@@ -46,18 +46,18 @@ class Usuario {
   bool get ehOng => tipo == TipoUsuario.ong;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'nome': nome,
-        'email': email,
-        'tipo': tipo.name,
-      };
+    'id': id,
+    'nome': nome,
+    'email': email,
+    'tipo': tipo.name,
+  };
 
   Usuario copyWith({String? nome, String? email}) => Usuario(
-        id: id,
-        nome: nome ?? this.nome,
-        email: email ?? this.email,
-        tipo: tipo,
-      );
+    id: id,
+    nome: nome ?? this.nome,
+    email: email ?? this.email,
+    tipo: tipo,
+  );
 
   @override
   String toString() => 'Usuario(id: $id, email: $email, tipo: ${tipo.name})';

@@ -19,9 +19,10 @@ class TokenService {
   final SecretKey _chave;
   final Duration validade;
 
-  String gerar({required int usuarioId, required TipoUsuario tipo}) =>
-      JWT({'uid': usuarioId, 'tipo': tipo.name})
-          .sign(_chave, expiresIn: validade);
+  String gerar({required int usuarioId, required TipoUsuario tipo}) => JWT({
+    'uid': usuarioId,
+    'tipo': tipo.name,
+  }).sign(_chave, expiresIn: validade);
 
   /// Devolve quem é o dono do token, ou lança 401.
   UsuarioAutenticado validar(String token) {

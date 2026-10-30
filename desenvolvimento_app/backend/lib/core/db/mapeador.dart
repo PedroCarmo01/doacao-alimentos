@@ -16,55 +16,55 @@ import 'database.dart';
 /// - reserva: colunas de `reservas` + opcionais `titulo_doacao`, `nome_ong`
 abstract final class Mapeador {
   static Usuario usuario(Linha linha) => Usuario(
-        id: _inteiro(linha, 'id'),
-        nome: _texto(linha, 'nome'),
-        email: _texto(linha, 'email'),
-        tipo: TipoUsuario.values.byName(_texto(linha, 'tipo')),
-      );
+    id: _inteiro(linha, 'id'),
+    nome: _texto(linha, 'nome'),
+    email: _texto(linha, 'email'),
+    tipo: TipoUsuario.values.byName(_texto(linha, 'tipo')),
+  );
 
   static Perfil perfil(Linha linha) => Perfil(
-        usuarioId: _inteiro(linha, 'usuario_id'),
-        nomeOrganizacao: _texto(linha, 'nome_organizacao'),
-        telefone: linha['telefone'],
-        endereco: linha['endereco'],
-        latitude: _decimal(linha, 'latitude'),
-        longitude: _decimal(linha, 'longitude'),
-      );
+    usuarioId: _inteiro(linha, 'usuario_id'),
+    nomeOrganizacao: _texto(linha, 'nome_organizacao'),
+    telefone: linha['telefone'],
+    endereco: linha['endereco'],
+    latitude: _decimal(linha, 'latitude'),
+    longitude: _decimal(linha, 'longitude'),
+  );
 
   /// Linha de um `JOIN` entre `usuarios` e `perfis`.
   static Conta conta(Linha linha) =>
       Conta(usuario: usuario(linha), perfil: perfil(linha));
 
   static Doacao doacao(Linha linha) => Doacao(
-        id: _inteiro(linha, 'id'),
-        doadorId: _inteiro(linha, 'doador_id'),
-        titulo: _texto(linha, 'titulo'),
-        descricao: linha['descricao'],
-        categoria: CategoriaAlimento.values.byName(_texto(linha, 'categoria')),
-        quantidade: _texto(linha, 'quantidade'),
-        validade: Datas.dataDeSql(_texto(linha, 'validade')),
-        janelaInicio: Datas.deSql(_texto(linha, 'janela_inicio')),
-        janelaFim: Datas.deSql(_texto(linha, 'janela_fim')),
-        endereco: linha['endereco'],
-        latitude: _decimal(linha, 'latitude'),
-        longitude: _decimal(linha, 'longitude'),
-        status: StatusDoacao.values.byName(_texto(linha, 'status')),
-        criadoEm: Datas.deSql(_texto(linha, 'criado_em')),
-        nomeDoador: linha['nome_doador'],
-        distanciaKm: _decimalOpcional(linha, 'distancia_km'),
-      );
+    id: _inteiro(linha, 'id'),
+    doadorId: _inteiro(linha, 'doador_id'),
+    titulo: _texto(linha, 'titulo'),
+    descricao: linha['descricao'],
+    categoria: CategoriaAlimento.values.byName(_texto(linha, 'categoria')),
+    quantidade: _texto(linha, 'quantidade'),
+    validade: Datas.dataDeSql(_texto(linha, 'validade')),
+    janelaInicio: Datas.deSql(_texto(linha, 'janela_inicio')),
+    janelaFim: Datas.deSql(_texto(linha, 'janela_fim')),
+    endereco: linha['endereco'],
+    latitude: _decimal(linha, 'latitude'),
+    longitude: _decimal(linha, 'longitude'),
+    status: StatusDoacao.values.byName(_texto(linha, 'status')),
+    criadoEm: Datas.deSql(_texto(linha, 'criado_em')),
+    nomeDoador: linha['nome_doador'],
+    distanciaKm: _decimalOpcional(linha, 'distancia_km'),
+  );
 
   static Reserva reserva(Linha linha) => Reserva(
-        id: _inteiro(linha, 'id'),
-        doacaoId: _inteiro(linha, 'doacao_id'),
-        ongId: _inteiro(linha, 'ong_id'),
-        status: StatusReserva.values.byName(_texto(linha, 'status')),
-        reservadoEm: Datas.deSql(_texto(linha, 'reservado_em')),
-        expiraEm: Datas.deSql(_texto(linha, 'expira_em')),
-        retiradoEm: _instanteOpcional(linha, 'retirado_em'),
-        tituloDoacao: linha['titulo_doacao'],
-        nomeOng: linha['nome_ong'],
-      );
+    id: _inteiro(linha, 'id'),
+    doacaoId: _inteiro(linha, 'doacao_id'),
+    ongId: _inteiro(linha, 'ong_id'),
+    status: StatusReserva.values.byName(_texto(linha, 'status')),
+    reservadoEm: Datas.deSql(_texto(linha, 'reservado_em')),
+    expiraEm: Datas.deSql(_texto(linha, 'expira_em')),
+    retiradoEm: _instanteOpcional(linha, 'retirado_em'),
+    tituloDoacao: linha['titulo_doacao'],
+    nomeOng: linha['nome_ong'],
+  );
 
   static String _texto(Linha linha, String coluna) =>
       linha[coluna] ??

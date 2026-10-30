@@ -18,9 +18,9 @@ class EscolhaPerfilViewModel extends ViewModelBase {
     required SistemaRepository sistema,
     required AuthRepository auth,
     required Sessao sessao,
-  })  : _sistema = sistema,
-        _auth = auth,
-        _sessao = sessao;
+  }) : _sistema = sistema,
+       _auth = auth,
+       _sessao = sessao;
 
   final SistemaRepository _sistema;
   final AuthRepository _auth;
@@ -38,17 +38,17 @@ class EscolhaPerfilViewModel extends ViewModelBase {
 
   /// Verifica o servidor e tenta restaurar a sessão salva.
   Future<bool> iniciar() => executar(() async {
-        final status = await _sistema.verificar();
-        _status = status;
-        if (!status.tudoCerto) return;
-        try {
-          final conta = await _auth.contaAtual();
-          if (conta != null) {
-            _sessao.restaurar(conta);
-            _contaRestaurada = conta;
-          }
-        } on ApiException {
-          // Sem sessão válida: o usuário escolhe o perfil e entra de novo.
-        }
-      });
+    final status = await _sistema.verificar();
+    _status = status;
+    if (!status.tudoCerto) return;
+    try {
+      final conta = await _auth.contaAtual();
+      if (conta != null) {
+        _sessao.restaurar(conta);
+        _contaRestaurada = conta;
+      }
+    } on ApiException {
+      // Sem sessão válida: o usuário escolhe o perfil e entra de novo.
+    }
+  });
 }

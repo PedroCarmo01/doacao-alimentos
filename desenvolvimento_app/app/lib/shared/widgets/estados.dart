@@ -58,7 +58,11 @@ class VazioWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icone ?? Icons.inbox_outlined, size: 56, color: AppColors.cinza),
+            Icon(
+              icone ?? Icons.inbox_outlined,
+              size: 56,
+              color: AppColors.cinza,
+            ),
             const SizedBox(height: 12),
             Text(
               texto,

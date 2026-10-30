@@ -52,38 +52,48 @@ class AppRouter {
   Widget _criarTela(String nome, Object? argumento) {
     final d = _dependencias;
     return switch (nome) {
-      AppRoutes.inicio =>
-        EscolhaPerfilPage(sistema: d.sistema, auth: d.auth, sessao: d.sessao),
-      AppRoutes.login =>
-        LoginPage(tipo: _tipo(argumento), auth: d.auth, sessao: d.sessao),
+      AppRoutes.inicio => EscolhaPerfilPage(
+        sistema: d.sistema,
+        auth: d.auth,
+        sessao: d.sessao,
+      ),
+      AppRoutes.login => LoginPage(
+        tipo: _tipo(argumento),
+        auth: d.auth,
+        sessao: d.sessao,
+      ),
       AppRoutes.cadastro => CadastroPage(
-          tipo: _tipo(argumento),
-          auth: d.auth,
-          sessao: d.sessao,
-          localizacao: d.localizacao,
-        ),
-      AppRoutes.inicioDoador =>
-        HomeDoadorPage(doacoes: d.doacoes, sessao: d.sessao),
+        tipo: _tipo(argumento),
+        auth: d.auth,
+        sessao: d.sessao,
+        localizacao: d.localizacao,
+      ),
+      AppRoutes.inicioDoador => HomeDoadorPage(
+        doacoes: d.doacoes,
+        sessao: d.sessao,
+      ),
       AppRoutes.novaDoacao => NovaDoacaoPage(
-          doacoes: d.doacoes,
-          sessao: d.sessao,
-          relogio: d.relogio,
-        ),
+        doacoes: d.doacoes,
+        sessao: d.sessao,
+        relogio: d.relogio,
+      ),
       AppRoutes.detalheDoacaoDoador => DetalheDoacaoDoadorPage(
-          doacaoId: _id(argumento),
-          doacoes: d.doacoes,
-          reservas: d.reservas,
-          relogio: d.relogio,
-        ),
+        doacaoId: _id(argumento),
+        doacoes: d.doacoes,
+        reservas: d.reservas,
+        relogio: d.relogio,
+      ),
       AppRoutes.inicioOng => HomeOngPage(doacoes: d.doacoes, sessao: d.sessao),
       AppRoutes.detalheDoacaoOng => DetalheDoacaoOngPage(
-          doacaoId: _id(argumento),
-          doacoes: d.doacoes,
-          reservas: d.reservas,
-          relogio: d.relogio,
-        ),
-      AppRoutes.minhasReservas =>
-        MinhasReservasPage(reservas: d.reservas, relogio: d.relogio),
+        doacaoId: _id(argumento),
+        doacoes: d.doacoes,
+        reservas: d.reservas,
+        relogio: d.relogio,
+      ),
+      AppRoutes.minhasReservas => MinhasReservasPage(
+        reservas: d.reservas,
+        relogio: d.relogio,
+      ),
       AppRoutes.mapa => MapaPage(doacoes: d.doacoes, sessao: d.sessao),
       _ => const _PaginaNaoEncontrada(),
     };
@@ -100,7 +110,7 @@ class _PaginaNaoEncontrada extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Página não encontrada')),
-        body: const Center(child: Text('Esta rota não existe.')),
-      );
+    appBar: AppBar(title: const Text('Página não encontrada')),
+    body: const Center(child: Text('Esta rota não existe.')),
+  );
 }

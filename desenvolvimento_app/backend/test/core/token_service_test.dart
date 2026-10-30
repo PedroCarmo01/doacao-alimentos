@@ -18,14 +18,19 @@ void main() {
     });
 
     test('token assinado com outro segredo é recusado', () {
-      final outro = TokenService(segredo: 'outro-segredo-tambem-com-32-caracteres!!');
+      final outro = TokenService(
+        segredo: 'outro-segredo-tambem-com-32-caracteres!!',
+      );
       final token = outro.gerar(usuarioId: 1, tipo: TipoUsuario.doador);
 
       expect(
         () => TokenService(segredo: segredo).validar(token),
         throwsA(
-          isA<NaoAutenticadoException>()
-              .having((erro) => erro.codigo, 'codigo', 'TOKEN_INVALIDO'),
+          isA<NaoAutenticadoException>().having(
+            (erro) => erro.codigo,
+            'codigo',
+            'TOKEN_INVALIDO',
+          ),
         ),
       );
     });
@@ -40,8 +45,11 @@ void main() {
       expect(
         () => servico.validar(token),
         throwsA(
-          isA<NaoAutenticadoException>()
-              .having((erro) => erro.codigo, 'codigo', 'TOKEN_EXPIRADO'),
+          isA<NaoAutenticadoException>().having(
+            (erro) => erro.codigo,
+            'codigo',
+            'TOKEN_EXPIRADO',
+          ),
         ),
       );
     });

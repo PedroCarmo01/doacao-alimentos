@@ -70,17 +70,16 @@ class Reserva {
   bool estaVencida(DateTime agora) => estaAtiva && !expiraEm.isAfter(agora);
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'doacaoId': doacaoId,
-        'ongId': ongId,
-        'status': status.name,
-        'reservadoEm': formatarInstante(reservadoEm),
-        'expiraEm': formatarInstante(expiraEm),
-        'retiradoEm':
-            retiradoEm == null ? null : formatarInstante(retiradoEm!),
-        if (tituloDoacao != null) 'tituloDoacao': tituloDoacao,
-        if (nomeOng != null) 'nomeOng': nomeOng,
-      };
+    'id': id,
+    'doacaoId': doacaoId,
+    'ongId': ongId,
+    'status': status.name,
+    'reservadoEm': formatarInstante(reservadoEm),
+    'expiraEm': formatarInstante(expiraEm),
+    'retiradoEm': retiradoEm == null ? null : formatarInstante(retiradoEm!),
+    if (tituloDoacao != null) 'tituloDoacao': tituloDoacao,
+    if (nomeOng != null) 'nomeOng': nomeOng,
+  };
 
   @override
   String toString() =>

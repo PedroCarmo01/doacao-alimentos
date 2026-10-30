@@ -25,8 +25,11 @@ void main() {
     expect(
       () => banco.autenticar('mercado@exemplo.com', 'errada'),
       throwsA(
-        isA<ApiException>()
-            .having((e) => e.codigo, 'codigo', 'CREDENCIAIS_INVALIDAS'),
+        isA<ApiException>().having(
+          (e) => e.codigo,
+          'codigo',
+          'CREDENCIAIS_INVALIDAS',
+        ),
       ),
     );
   });
@@ -39,7 +42,10 @@ void main() {
     expect(proximas, isNotEmpty);
     expect(proximas.every((d) => d.estaDisponivel), isTrue);
     for (var i = 1; i < proximas.length; i++) {
-      expect(proximas[i].distanciaKm, greaterThanOrEqualTo(proximas[i - 1].distanciaKm!));
+      expect(
+        proximas[i].distanciaKm,
+        greaterThanOrEqualTo(proximas[i - 1].distanciaKm!),
+      );
     }
   });
 
@@ -58,8 +64,11 @@ void main() {
     expect(
       () => banco.reservar(doacao.id),
       throwsA(
-        isA<ApiException>()
-            .having((e) => e.codigo, 'codigo', 'DOACAO_INDISPONIVEL'),
+        isA<ApiException>().having(
+          (e) => e.codigo,
+          'codigo',
+          'DOACAO_INDISPONIVEL',
+        ),
       ),
     );
   });

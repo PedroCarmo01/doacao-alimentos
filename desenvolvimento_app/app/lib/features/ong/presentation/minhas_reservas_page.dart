@@ -20,8 +20,8 @@ class MinhasReservasPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const EmConstrucao(
-        titulo: 'Minhas reservas',
-        responsavel: 'Pessoa 5',
-        etapa: 'trilha/19-app-ong.md',
-      );
+    titulo: 'Minhas reservas',
+    responsavel: 'Pessoa 5',
+    etapa: 'trilha/19-app-ong.md',
+  );
 }

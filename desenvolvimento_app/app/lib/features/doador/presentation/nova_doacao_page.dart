@@ -23,8 +23,8 @@ class NovaDoacaoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const EmConstrucao(
-        titulo: 'Nova doação',
-        responsavel: 'Pessoa 2',
-        etapa: 'trilha/18-app-doador.md',
-      );
+    titulo: 'Nova doação',
+    responsavel: 'Pessoa 2',
+    etapa: 'trilha/18-app-doador.md',
+  );
 }

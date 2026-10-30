@@ -69,20 +69,14 @@ class AuthRepositoryFake implements AuthRepository {
   Future<RespostaAutenticacao> cadastrar(DadosCadastro dados) async {
     await _banco.simularRede();
     final conta = _banco.cadastrar(dados);
-    return RespostaAutenticacao(
-      token: _banco.tokenPara(conta),
-      conta: conta,
-    );
+    return RespostaAutenticacao(token: _banco.tokenPara(conta), conta: conta);
   }
 
   @override
   Future<RespostaAutenticacao> entrar(DadosLogin dados) async {
     await _banco.simularRede();
     final conta = _banco.autenticar(dados.email, dados.senha);
-    return RespostaAutenticacao(
-      token: _banco.tokenPara(conta),
-      conta: conta,
-    );
+    return RespostaAutenticacao(token: _banco.tokenPara(conta), conta: conta);
   }
 
   @override

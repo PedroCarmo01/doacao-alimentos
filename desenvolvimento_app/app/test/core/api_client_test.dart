@@ -13,10 +13,10 @@ void main() {
   late ArmazenamentoTokenMemoria armazenamento;
 
   ApiClient criarCliente(MockClientHandler responder) => ApiClient(
-        urlBase: 'http://api.teste',
-        armazenamentoToken: armazenamento,
-        cliente: MockClient(responder),
-      );
+    urlBase: 'http://api.teste',
+    armazenamentoToken: armazenamento,
+    cliente: MockClient(responder),
+  );
 
   setUp(() => armazenamento = ArmazenamentoTokenMemoria());
 
@@ -67,7 +67,9 @@ void main() {
 
     expect(
       () => api.get('/'),
-      throwsA(isA<ApiException>().having((e) => e.codigo, 'codigo', 'SEM_CONEXAO')),
+      throwsA(
+        isA<ApiException>().having((e) => e.codigo, 'codigo', 'SEM_CONEXAO'),
+      ),
     );
   });
 

@@ -18,8 +18,8 @@ abstract class AppException implements Exception {
   int get statusHttp;
 
   Map<String, Object?> toJson() => {
-        'erro': {'codigo': codigo, 'mensagem': mensagem},
-      };
+    'erro': {'codigo': codigo, 'mensagem': mensagem},
+  };
 
   @override
   String toString() => '$runtimeType($codigo): $mensagem';
@@ -28,7 +28,7 @@ abstract class AppException implements Exception {
 /// 400 — os dados enviados são inválidos.
 class ValidacaoException extends AppException {
   const ValidacaoException(String mensagem, {this.detalhes = const []})
-      : super('VALIDACAO', mensagem);
+    : super('VALIDACAO', mensagem);
 
   /// Uma mensagem por problema encontrado (útil para formulários).
   final List<String> detalhes;
@@ -38,12 +38,12 @@ class ValidacaoException extends AppException {
 
   @override
   Map<String, Object?> toJson() => {
-        'erro': {
-          'codigo': codigo,
-          'mensagem': mensagem,
-          if (detalhes.isNotEmpty) 'detalhes': detalhes,
-        },
-      };
+    'erro': {
+      'codigo': codigo,
+      'mensagem': mensagem,
+      if (detalhes.isNotEmpty) 'detalhes': detalhes,
+    },
+  };
 }
 
 /// 401 — não está logado, ou o token é inválido/expirou.
@@ -70,7 +70,7 @@ class SemPermissaoException extends AppException {
 /// 404 — o recurso não existe (ou o usuário não pode saber que existe).
 class NaoEncontradoException extends AppException {
   const NaoEncontradoException([String mensagem = 'Recurso não encontrado.'])
-      : super('NAO_ENCONTRADO', mensagem);
+    : super('NAO_ENCONTRADO', mensagem);
 
   @override
   int get statusHttp => 404;
@@ -79,7 +79,7 @@ class NaoEncontradoException extends AppException {
 /// 405 — a rota existe, mas não aceita esse método HTTP.
 class MetodoNaoPermitidoException extends AppException {
   const MetodoNaoPermitidoException()
-      : super('METODO_NAO_PERMITIDO', 'Método HTTP não aceito nesta rota.');
+    : super('METODO_NAO_PERMITIDO', 'Método HTTP não aceito nesta rota.');
 
   @override
   int get statusHttp => 405;

@@ -45,19 +45,21 @@ void main() {
       DateTime? inicio,
       DateTime? fim,
       bool declaracao = true,
-    }) =>
-        DadosNovaDoacao(
-          titulo: 'Pães do dia',
-          categoria: CategoriaAlimento.padaria,
-          quantidade: '30 unidades',
-          validade: validade ?? DateTime.utc(2026, 9, 16),
-          janelaInicio: inicio ?? DateTime.utc(2026, 9, 15, 13),
-          janelaFim: fim ?? DateTime.utc(2026, 9, 15, 18),
-          declaracaoAlimentosProprios: declaracao,
-        );
+    }) => DadosNovaDoacao(
+      titulo: 'Pães do dia',
+      categoria: CategoriaAlimento.padaria,
+      quantidade: '30 unidades',
+      validade: validade ?? DateTime.utc(2026, 9, 16),
+      janelaInicio: inicio ?? DateTime.utc(2026, 9, 15, 13),
+      janelaFim: fim ?? DateTime.utc(2026, 9, 15, 18),
+      declaracaoAlimentosProprios: declaracao,
+    );
 
     test('doação válida não tem erros', () {
-      expect(ValidadorDoacao.validar(doacao(), agora: agora, hoje: hoje), isEmpty);
+      expect(
+        ValidadorDoacao.validar(doacao(), agora: agora, hoje: hoje),
+        isEmpty,
+      );
     });
 
     test('não aceita alimento vencido', () {

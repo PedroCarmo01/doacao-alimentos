@@ -26,8 +26,8 @@ class CadastroPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EmConstrucao(
-        titulo: 'Cadastro de ${tipo.rotulo}',
-        responsavel: 'Pessoa 1',
-        etapa: 'trilha/17-app-autenticacao.md',
-      );
+    titulo: 'Cadastro de ${tipo.rotulo}',
+    responsavel: 'Pessoa 1',
+    etapa: 'trilha/17-app-autenticacao.md',
+  );
 }

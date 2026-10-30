@@ -26,3 +26,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # Imagens do próprio app (logo provisória; a definitiva entra na etapa 8).
+  assets:
+    - assets/imagens/

@@ -85,7 +85,9 @@ void main() {
       expect(doacao.podeSerReservada(durante), isTrue);
       expect(doacao.podeSerReservada(depois), isFalse);
       expect(
-        doacao.copyWith(status: StatusDoacao.reservada).podeSerReservada(durante),
+        doacao
+            .copyWith(status: StatusDoacao.reservada)
+            .podeSerReservada(durante),
         isFalse,
       );
     });

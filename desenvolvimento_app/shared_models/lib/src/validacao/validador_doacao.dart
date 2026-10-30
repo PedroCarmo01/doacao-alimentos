@@ -61,24 +61,22 @@ abstract final class ValidadorDoacao {
     return null;
   }
 
-  static String? declaracao(bool aceita) => aceita
-      ? null
-      : 'Confirme que os alimentos estão próprios para consumo.';
+  static String? declaracao(bool aceita) =>
+      aceita ? null : 'Confirme que os alimentos estão próprios para consumo.';
 
   /// Valida a doação inteira. Lista vazia significa "tudo certo".
   static List<String> validar(
     DadosNovaDoacao dados, {
     required DateTime agora,
     required DateTime hoje,
-  }) =>
-      [
-        titulo(dados.titulo),
-        quantidade(dados.quantidade),
-        descricao(dados.descricao),
-        validade(dados.validade, hoje: hoje),
-        janela(dados.janelaInicio, dados.janelaFim, agora: agora),
-        declaracao(dados.declaracaoAlimentosProprios),
-        if (dados.latitude != null || dados.longitude != null)
-          ValidadorUsuario.coordenadas(dados.latitude, dados.longitude),
-      ].whereType<String>().toList();
+  }) => [
+    titulo(dados.titulo),
+    quantidade(dados.quantidade),
+    descricao(dados.descricao),
+    validade(dados.validade, hoje: hoje),
+    janela(dados.janelaInicio, dados.janelaFim, agora: agora),
+    declaracao(dados.declaracaoAlimentosProprios),
+    if (dados.latitude != null || dados.longitude != null)
+      ValidadorUsuario.coordenadas(dados.latitude, dados.longitude),
+  ].whereType<String>().toList();
 }
