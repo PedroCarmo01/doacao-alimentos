@@ -1,0 +1,59 @@
+{
+  // Tarefas prontas. Use em: Ctrl+Shift+P > "Tasks: Run Task".
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend: iniciar (dart_frog dev)",
+      "type": "shell",
+      "command": "dart_frog dev",
+      "options": { "cwd": "${workspaceFolder}/desenvolvimento_app/backend" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: recriar dados de exemplo (seed)",
+      "type": "shell",
+      "command": "dart run tool/seed.dart",
+      "options": { "cwd": "${workspaceFolder}/desenvolvimento_app/backend" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: testes",
+      "type": "shell",
+      "command": "dart test",
+      "options": { "cwd": "${workspaceFolder}/desenvolvimento_app/backend" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Modelos: testes",
+      "type": "shell",
+      "command": "dart test",
+      "options": { "cwd": "${workspaceFolder}/desenvolvimento_app/shared_models" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "App: testes",
+      "type": "shell",
+      "command": "flutter test",
+      "options": { "cwd": "${workspaceFolder}/desenvolvimento_app/app" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tudo: baixar dependências (pub get)",
+      "type": "shell",
+      "command": "cd shared_models; dart pub get; cd ../backend; dart pub get; cd ../app; flutter pub get",
+      "options": { "cwd": "${workspaceFolder}/desenvolvimento_app" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Tudo: verificar antes do PR (format + analyze + test)",
+      "type": "shell",
+      "command": "cd shared_models; dart format .; dart analyze; dart test; cd ../backend; dart format .; dart analyze; dart test; cd ../app; dart format lib test; flutter analyze; flutter test",
+      "options": { "cwd": "${workspaceFolder}/desenvolvimento_app" },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+### =====================================================================
+### Coleção de requisições da API
+###
+### Como usar: instale a extensão "REST Client" (humao.rest-client) no VS Code
+### e clique em "Send Request", que aparece acima de cada requisição.
+###
+### Antes: backend rodando (dart_frog dev) e dados de exemplo criados
+### (dart run tool/seed.dart). Senha de todos os usuários: senha123.
+###
+### Cada pessoa testa a SUA fatia aqui. Rotas que ainda não foram
+### implementadas respondem 404, e isso é esperado.
+### =====================================================================
+
+@base = http://127.0.0.1:8080
+
+### Saúde da API (Sprint 0): deve responder 200 com "banco": "conectado"
+GET {{base}}/
+
+
+### =====================================================================
+### AUTENTICAÇÃO — Pessoa 1 (trilha/12)
+### =====================================================================
+
+# @name loginDoador
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "mercado@exemplo.com",
+  "senha": "senha123"
+}
+
+###
+# @name loginOng
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "maosamigas@exemplo.com",
+  "senha": "senha123"
+}
+
+### Senha errada: deve responder 401 CREDENCIAIS_INVALIDAS
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "mercado@exemplo.com",
+  "senha": "senha-errada"
+}
+
+### Quem sou eu? (precisa do loginDoador executado antes)
+GET {{base}}/auth/me
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+
+### Cadastro de uma nova ONG: 201 na primeira vez, 409 EMAIL_EM_USO na segunda
+POST {{base}}/auth/cadastro
+Content-Type: application/json
+
+{
+  "tipo": "ong",
+  "nome": "Coordenação Nova Esperança",
+  "email": "novaesperanca@exemplo.com",
+  "senha": "senha123",
+  "nomeOrganizacao": "ONG Nova Esperança",
+  "telefone": "(11) 99999-0000",
+  "endereco": "Rua Nova, 10",
+  "latitude": -23.5300,
+  "longitude": -46.1900
+}
+
+
+### =====================================================================
+### DOAÇÕES DO DOADOR — Pessoa 2 (trilha/13)
+### =====================================================================
+
+### Criar doação (datas calculadas na hora pelo REST Client)
+POST {{base}}/doacoes
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Legumes do dia",
+  "descricao": "Legumes com pequenas marcas, próprios para consumo.",
+  "categoria": "hortifruti",
+  "quantidade": "3 caixas",
+  "validade": "{{$datetime 'YYYY-MM-DD' 2 d}}",
+  "janelaInicio": "{{$datetime iso8601}}",
+  "janelaFim": "{{$datetime iso8601 4 h}}",
+  "declaracaoAlimentosProprios": true
+}
+
+### Minhas doações
+GET {{base}}/doacoes
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+
+### Detalhe de uma doação (troque o 1 por um id existente)
+GET {{base}}/doacoes/1
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+
+### Cancelar doação disponível: 204; se estiver reservada: 409
+DELETE {{base}}/doacoes/1
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+
+### ONG tentando criar doação: deve responder 403 SEM_PERMISSAO
+POST {{base}}/doacoes
+Authorization: Bearer {{loginOng.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Teste",
+  "categoria": "outros",
+  "quantidade": "1",
+  "validade": "{{$datetime 'YYYY-MM-DD' 1 d}}",
+  "janelaInicio": "{{$datetime iso8601}}",
+  "janelaFim": "{{$datetime iso8601 2 h}}",
+  "declaracaoAlimentosProprios": true
+}
+
+
+### =====================================================================
+### PROXIMIDADE — Pessoa 4 (trilha/14)
+### =====================================================================
+
+### Doações disponíveis perto da ONG logada (raio padrão do .env)
+GET {{base}}/proximas
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Com raio de 2 km
+GET {{base}}/proximas?raioKm=2
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+
+### =====================================================================
+### RESERVAS — Pessoa 3 (trilha/15)
+### =====================================================================
+
+### Reservar (troque o id por uma doação disponível)
+POST {{base}}/reservas
+Authorization: Bearer {{loginOng.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "doacaoId": 1
+}
+
+### Minhas reservas (ativas e histórico)
+GET {{base}}/reservas
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Cancelar reserva ativa (troque o 1 pelo id da reserva)
+DELETE {{base}}/reservas/1
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Confirmar retirada (ONG dona da reserva ou doador dono da doação)
+POST {{base}}/reservas/1/retirada
+Authorization: Bearer {{loginOng.response.body.$.token}}

@@ -1,0 +1,57 @@
+# Integração contínua (CI): roda a cada Pull Request e a cada push na main.
+# Se algo falhar, o PR mostra um X vermelho e não deve ser mesclado.
+# Veja trilha/04 (proteção da branch main exigindo este check).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  shared_models:
+    name: shared_models (formatação, análise, testes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desenvolvimento_app/shared_models
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: dart analyze
+      - run: dart test
+
+  backend:
+    name: backend (formatação, análise, testes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desenvolvimento_app/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: dart analyze
+      # Os testes usam Fakes e não precisam de MySQL.
+      - run: dart test
+
+  app:
+    name: app (formatação, análise, testes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desenvolvimento_app/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze
+      - run: flutter test

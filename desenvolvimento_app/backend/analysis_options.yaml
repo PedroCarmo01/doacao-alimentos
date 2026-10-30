@@ -1,0 +1,17 @@
+include: package:lints/recommended.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - .dart_frog/**
+
+linter:
+  rules:
+    always_declare_return_types: true
+    directives_ordering: true
+    prefer_const_constructors: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    # Rotas dinâmicas do Dart Frog usam colchetes no nome do arquivo
+    # (ex.: routes/doacoes/[id].dart), o que essa regra não aceita.
+    file_names: false

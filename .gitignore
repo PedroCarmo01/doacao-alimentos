@@ -1,0 +1,54 @@
+# ======================================================================
+# O que NÃO vai para o Git.
+# Regra de ouro: segredos (.env) e arquivos gerados automaticamente ficam
+# de fora. Código, scripts SQL, documentação e os pubspec.lock ENTRAM.
+# ======================================================================
+
+# --- Segredos ---------------------------------------------------------
+.env
+**/.env
+!**/.env.example
+
+# --- Dart / Flutter (gerados) -----------------------------------------
+.dart_tool/
+build/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+coverage/
+doc/api/
+*.iml
+
+# ATENÇÃO: pubspec.lock NÃO é ignorado de propósito. Em aplicativos ele
+# garante que todos usem exatamente as mesmas versões de pacotes
+# (recomendação oficial do Dart; achado A14 da análise técnica).
+
+# --- Dart Frog (gerado pelo dart_frog dev/build) ----------------------
+.dart_frog/
+
+# --- Android ----------------------------------------------------------
+**/android/.gradle/
+**/android/.kotlin/
+**/android/local.properties
+**/android/key.properties
+**/android/app/.cxx/
+*.jks
+*.keystore
+
+# --- iOS / macOS ------------------------------------------------------
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+.DS_Store
+
+# --- Editores ---------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# --- Sistema e logs ---------------------------------------------------
+Thumbs.db
+*.log

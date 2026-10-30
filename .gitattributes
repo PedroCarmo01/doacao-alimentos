@@ -1,0 +1,24 @@
+# Padroniza o fim de linha (LF) para todos os arquivos de texto.
+# Sem isso, quem usa Windows (CRLF) e quem usa Linux/Mac (LF) geram
+# "mudanças fantasmas": o Git mostra o arquivo inteiro como alterado.
+* text=auto eol=lf
+
+# Scripts do Windows precisam de CRLF.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# Arquivos binários: nunca converter.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.jar   binary
+*.apk   binary
+*.aab   binary
+*.jks   binary
+*.keystore binary
+*.docx  binary
+*.pdf   binary

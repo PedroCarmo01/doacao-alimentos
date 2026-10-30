@@ -1,0 +1,38 @@
+# =====================================================================
+# OPCIONAL: MySQL em container Docker.
+#
+# O caminho padrão do projeto é o MySQL 8.4 instalado no Windows
+# (trilha/03). Use este arquivo só se não conseguir instalar o MySQL nativo.
+# Passo a passo completo: trilha/apendice-a-docker-opcional.md
+#
+# Subir:   docker compose -f database/docker-compose.yml up -d
+# Parar:   docker compose -f database/docker-compose.yml down
+# Zerar:   docker compose -f database/docker-compose.yml down -v
+#
+# As senhas abaixo são SÓ para desenvolvimento local. No backend/.env use
+# DB_USUARIO=summit_app e DB_SENHA igual a MYSQL_PASSWORD.
+# =====================================================================
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: doacoes-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_dev_123
+      MYSQL_DATABASE: summit
+      MYSQL_USER: summit_app
+      MYSQL_PASSWORD: TroqueEstaSenha_123
+    ports:
+      - "3306:3306"
+    volumes:
+      - dados-mysql:/var/lib/mysql
+      # Na PRIMEIRA vez que o container sobe, cria as tabelas.
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot_dev_123"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  dados-mysql:

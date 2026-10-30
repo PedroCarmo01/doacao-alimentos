@@ -1,0 +1,28 @@
+name: summit_app
+description: App Flutter da plataforma de doação de alimentos (MVVM).
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.9.0  # Flutter 3.35+ (o shared_models também exige Dart 3.9)
+
+# Dependências escolhidas e justificadas em docs/23-analise-tecnica.md.
+# NÃO adicione pacotes sem combinar com o grupo (veja docs/adr/).
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_map: ^7.0.2            # mapa com OpenStreetMap (sem chave paga)
+  flutter_secure_storage: ^9.2.2 # guarda o token JWT de forma segura
+  geolocator: ^13.0.1            # GPS do aparelho
+  http: ^1.2.2                   # cliente HTTP oficial do time do Dart
+  latlong2: ^0.9.1               # tipo LatLng usado pelo flutter_map
+  shared_models:
+    path: ../shared_models       # modelos e validações compartilhados
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

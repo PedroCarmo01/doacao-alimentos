@@ -1,0 +1,16 @@
+name: shared_models
+description: >-
+  Modelos de dados, contratos da API, validações e utilitários compartilhados
+  entre o app Flutter e o backend Dart Frog.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+
+# Pacote Dart puro: NÃO pode depender de Flutter, de banco de dados nem de HTTP.
+# Assim ele pode ser usado tanto pelo app quanto pelo backend.
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0

@@ -1,0 +1,38 @@
+# ======================================================================
+# Donos de cada parte do código. Quando um PR altera um caminho abaixo, o
+# GitHub pede automaticamente a revisão do dono.
+#
+# FAÇA NO SPRINT 0: troque @pessoaN-usuario pelo usuário do GitHub de cada
+# integrante (ex.: @mariasilva). Usuários inexistentes geram um aviso no
+# GitHub, mas não quebram nada.
+#
+# A última regra que combinar com o arquivo é a que vale.
+# ======================================================================
+
+# Fundação e documentação: o líder revisa
+*                                              @lider-usuario
+
+# Pessoa 1 — Autenticação + modelos
+/desenvolvimento_app/shared_models/            @pessoa1-usuario
+/desenvolvimento_app/backend/lib/auth/         @pessoa1-usuario
+/desenvolvimento_app/backend/routes/auth/      @pessoa1-usuario
+/desenvolvimento_app/app/lib/features/auth/    @pessoa1-usuario
+
+# Pessoa 2 — Doador
+/desenvolvimento_app/backend/lib/doacoes/      @pessoa2-usuario
+/desenvolvimento_app/backend/routes/doacoes/   @pessoa2-usuario
+/desenvolvimento_app/app/lib/features/doador/  @pessoa2-usuario
+
+# Pessoa 3 — Reservas e expiração (backend)
+/desenvolvimento_app/backend/lib/reservas/     @pessoa3-usuario
+/desenvolvimento_app/backend/routes/reservas/  @pessoa3-usuario
+
+# Pessoa 4 — Infraestrutura, proximidade e mapa
+/database/                                     @pessoa4-usuario
+/.github/                                      @pessoa4-usuario
+/desenvolvimento_app/backend/lib/proximidade/  @pessoa4-usuario
+/desenvolvimento_app/backend/routes/proximas/  @pessoa4-usuario
+/desenvolvimento_app/app/lib/features/mapa/    @pessoa4-usuario
+
+# Pessoa 5 — Telas da ONG
+/desenvolvimento_app/app/lib/features/ong/     @pessoa5-usuario

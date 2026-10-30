@@ -1,0 +1,13 @@
+{
+  // O VS Code oferece instalar estas extensões ao abrir a pasta do projeto.
+  // Também dá para ver em: Extensions (Ctrl+Shift+X) > "Recommended".
+  "recommendations": [
+    "Dart-Code.dart-code",
+    "Dart-Code.flutter",
+    "VeryGoodVentures.dart-frog",
+    "humao.rest-client",
+    "usernamehw.errorlens",
+    "mhutchie.git-graph",
+    "bierner.markdown-mermaid"
+  ]
+}

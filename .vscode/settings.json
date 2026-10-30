@@ -1,0 +1,24 @@
+{
+  // Configurações compartilhadas por toda a equipe (ficam no Git).
+  "editor.formatOnSave": true,
+  "editor.rulers": [80],
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "dart.lineLength": 80,
+  "[dart]": {
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false
+  },
+  "search.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/.dart_frog": true
+  }
+}

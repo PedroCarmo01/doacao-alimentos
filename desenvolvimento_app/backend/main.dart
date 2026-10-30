@@ -1,0 +1,60 @@
+import 'dart:io';
+
+import 'package:dart_frog/dart_frog.dart';
+import 'package:shared_models/shared_models.dart';
+import 'package:summit_backend/core/config/env.dart';
+import 'package:summit_backend/core/db/database.dart';
+import 'package:summit_backend/core/seguranca/senha_service.dart';
+import 'package:summit_backend/core/seguranca/token_service.dart';
+
+// Recursos criados UMA vez, mesmo que o Dart Frog recarregue o código
+// (hot reload) durante o desenvolvimento.
+Database? _database;
+// ExpiracaoJob? _job;  // TODO(Pessoa 3): descomentar junto com o bloco abaixo.
+
+/// Ponto de entrada customizado do Dart Frog ("custom entrypoint").
+///
+/// O Dart Frog chama [run] ao iniciar o servidor. Aqui é a RAIZ DE COMPOSIÇÃO
+/// do backend: criamos os objetos de infraestrutura e os disponibilizamos
+/// para todas as rotas com `provider`. Nas rotas e middlewares, eles são
+/// lidos com `context.read<Database>()`, `context.read<Env>()` etc.
+///
+/// Arquivo de FUNDAÇÃO: altere só em PR combinado com o grupo.
+Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
+  final env = Env.carregar();
+  final database = _database ??= Database.conectar(env);
+  const relogio = RelogioSistema();
+  const senhas = SenhaService();
+  final tokens = TokenService(
+    segredo: env.jwtSegredo,
+    validade: env.jwtValidade,
+  );
+
+  // TODO(Pessoa 3): iniciar o job de expiração de reservas (trilha/15).
+  // _job ??= ExpiracaoJob(
+  //   ReservaService(
+  //     reservas: ReservaRepositoryMysql(database),
+  //     relogio: relogio,
+  //     prazo: env.prazoReserva,
+  //   ),
+  // )..iniciar();
+
+  final aplicacao = handler
+      .use(provider<SenhaService>((_) => senhas))
+      .use(provider<TokenService>((_) => tokens))
+      .use(provider<Relogio>((_) => relogio))
+      .use(provider<Database>((_) => database))
+      .use(provider<Env>((_) => env));
+
+  // Seguro por padrão: só o próprio computador (e o emulador Android, via
+  // 10.0.2.2) acessam. Para testar em celular físico, ESCUTAR_NA_REDE=true.
+  final endereco = env.escutarNaRede
+      ? InternetAddress.anyIPv4
+      : InternetAddress.loopbackIPv4;
+  stdout.writeln(
+    env.escutarNaRede
+        ? 'API aceitando conexões da rede local na porta $port.'
+        : 'API rodando em http://127.0.0.1:$port',
+  );
+  return serve(aplicacao, endereco, port);
+}

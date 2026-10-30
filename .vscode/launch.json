@@ -1,0 +1,42 @@
+{
+  // Perfis de execução do app. Use em: Run and Debug (Ctrl+Shift+D) > escolha > F5.
+  // O backend não tem perfil aqui: rode a tarefa "Backend: iniciar" (Ctrl+Shift+P > Run Task).
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "App — dados fictícios (sem backend)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/desenvolvimento_app/app",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define=USAR_FAKE=true"]
+    },
+    {
+      "name": "App — API local (emulador)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/desenvolvimento_app/app",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define=API_URL=http://10.0.2.2:8080"]
+    },
+    {
+      "name": "App — API local (celular físico)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/desenvolvimento_app/app",
+      "program": "lib/main.dart",
+      // Troque pelo IP do seu PC (PowerShell: ipconfig > "Endereço IPv4")
+      // e use ESCUTAR_NA_REDE=true no backend/.env.
+      "toolArgs": ["--dart-define=API_URL=http://192.168.0.10:8080"]
+    },
+    {
+      "name": "App — Chrome (API local)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/desenvolvimento_app/app",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": ["--dart-define=API_URL=http://127.0.0.1:8080"]
+    }
+  ]
+}
