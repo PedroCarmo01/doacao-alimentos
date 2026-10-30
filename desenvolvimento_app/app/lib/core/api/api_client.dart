@@ -34,7 +34,26 @@ class ApiClient {
   Future<Object?> post(String caminho, {Object? corpo}) =>
       _enviar('POST', caminho, corpo: corpo);
 
-  Future<Object?> delete(String caminho) => _enviar('DELETE', caminho);
+  Future<Object?> put(String caminho, {Object? corpo}) =>
+      _enviar('PUT', caminho, corpo: corpo);
+
+  /// O [corpo] é opcional (ex.: o motivo ao cancelar uma doação).
+  Future<Object?> delete(String caminho, {Object? corpo}) =>
+      _enviar('DELETE', caminho, corpo: corpo);
+
+  /// Envia um arquivo (foto) como `multipart/form-data`, no [campo] dado.
+  Future<Object?> enviarArquivo(
+    String caminho, {
+    required String campo,
+    required List<int> bytes,
+    required String nomeArquivo,
+  }) async {
+    final requisicao = http.MultipartRequest('POST', _uri(caminho, null))
+      ..files.add(
+        http.MultipartFile.fromBytes(campo, bytes, filename: nomeArquivo),
+      );
+    return _mandar(requisicao);
+  }
 
   /// Garante que a resposta é um objeto JSON (`{...}`).
   static Map<String, dynamic> objeto(Object? json) {
@@ -57,25 +76,32 @@ class ApiClient {
     throw const ApiException.respostaInvalida();
   }
 
+  Uri _uri(String caminho, Map<String, String>? consulta) =>
+      Uri.parse('$_urlBase$caminho').replace(
+        queryParameters: (consulta == null || consulta.isEmpty)
+            ? null
+            : consulta,
+      );
+
   Future<Object?> _enviar(
     String metodo,
     String caminho, {
     Object? corpo,
     Map<String, String>? consulta,
-  }) async {
-    final uri = Uri.parse('$_urlBase$caminho').replace(
-      queryParameters: (consulta == null || consulta.isEmpty) ? null : consulta,
-    );
-    final requisicao = http.Request(metodo, uri)
-      ..headers['Accept'] = 'application/json';
-
-    final token = await _armazenamentoToken.ler();
-    if (token != null) requisicao.headers['Authorization'] = 'Bearer $token';
-
+  }) {
+    final requisicao = http.Request(metodo, _uri(caminho, consulta));
     if (corpo != null) {
       requisicao.headers['Content-Type'] = 'application/json; charset=utf-8';
       requisicao.body = jsonEncode(corpo);
     }
+    return _mandar(requisicao);
+  }
+
+  /// Põe o token e os cabeçalhos, envia e interpreta a resposta.
+  Future<Object?> _mandar(http.BaseRequest requisicao) async {
+    requisicao.headers['Accept'] = 'application/json';
+    final token = await _armazenamentoToken.ler();
+    if (token != null) requisicao.headers['Authorization'] = 'Bearer $token';
 
     final http.Response resposta;
     try {

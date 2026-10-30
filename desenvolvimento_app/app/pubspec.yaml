@@ -15,6 +15,7 @@ dependencies:
   flutter_secure_storage: ^9.2.2 # guarda o token JWT de forma segura
   geolocator: ^13.0.1            # GPS do aparelho
   http: ^1.2.2                   # cliente HTTP oficial do time do Dart
+  image_picker: ^1.1.2           # tirar foto ou escolher da galeria (doações)
   latlong2: ^0.9.1               # tipo LatLng usado pelo flutter_map
   shared_preferences: ^2.3.2     # lembra se a pessoa já viu as boas-vindas
   shared_models:
@@ -30,3 +31,4 @@ flutter:
   # Imagens do próprio app (logo provisória; a definitiva entra na etapa 8).
   assets:
     - assets/imagens/
+    - assets/exemplos/ # fotos das doações de exemplo do modo Fake

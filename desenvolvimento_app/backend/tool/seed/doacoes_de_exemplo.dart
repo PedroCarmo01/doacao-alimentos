@@ -35,6 +35,7 @@ class DoacoesDeExemplo {
     await _disponivel(
       doador: _contas.mercado,
       titulo: 'Frutas e verduras do dia',
+      foto: 'frutas.jpg',
       categoria: 'hortifruti',
       quantidade: 5,
       unidade: 'caixas',
@@ -45,6 +46,7 @@ class DoacoesDeExemplo {
     await _disponivel(
       doador: _contas.mercado,
       titulo: 'Iogurtes perto do vencimento',
+      foto: 'iogurtes.jpg',
       categoria: 'laticinios',
       quantidade: 24,
       unidade: 'unidades',
@@ -55,6 +57,7 @@ class DoacoesDeExemplo {
     await _disponivel(
       doador: _contas.mercado,
       titulo: 'Frios fatiados',
+      foto: 'frios.jpg',
       categoria: 'carnesFrios',
       quantidade: 4,
       unidade: 'kg',
@@ -65,6 +68,7 @@ class DoacoesDeExemplo {
     await _disponivel(
       doador: _contas.padaria,
       titulo: 'Marmitas do almoço',
+      foto: 'marmitas.jpg',
       categoria: 'refeicoesProntas',
       quantidade: 20,
       unidade: 'unidades',
@@ -95,8 +99,9 @@ class DoacoesDeExemplo {
     String conservacao = 'ambiente',
     String? descricao,
     DateTime? preparadoEm,
-  }) {
-    return _ex.doacao(
+    String? foto,
+  }) async {
+    final id = await _ex.doacao(
       doadorId: doador,
       titulo: titulo,
       categoria: categoria,
@@ -109,10 +114,13 @@ class DoacoesDeExemplo {
       inicio: agora.subtract(const Duration(minutes: 30)),
       fim: agora.add(Duration(hours: horas)),
       local: _localDe(doador),
+      endereco: _enderecoDe(doador),
       status: 'disponivel',
       criadaEm: agora.subtract(const Duration(minutes: 30)),
       descricao: descricao,
     );
+    if (foto != null) await _ex.foto(id, foto);
+    return id;
   }
 
   /// Mãos Amigas está retirando as cestas do mercado agora (código 4821),
@@ -131,6 +139,7 @@ class DoacoesDeExemplo {
       inicio: agora.subtract(const Duration(minutes: 30)),
       fim: agora.add(const Duration(hours: 5)),
       local: ContasDeExemplo.localMercado,
+      endereco: _enderecoDe(_contas.mercado),
       status: 'reservada',
       criadaEm: agora.subtract(const Duration(minutes: 30)),
     );
@@ -195,6 +204,7 @@ class DoacoesDeExemplo {
       inicio: dia,
       fim: dia.add(const Duration(hours: 6)),
       local: ContasDeExemplo.localMercado,
+      endereco: _enderecoDe(_contas.mercado),
       status: status,
       criadaEm: dia,
     );
@@ -228,6 +238,12 @@ class DoacoesDeExemplo {
       contaDesistencia: true,
     );
     await _ex.bloqueio(ongId: ong, doacaoId: doacao, em: venceuEm);
+  }
+
+  String _enderecoDe(int doador) {
+    if (doador == _contas.padaria) return 'Avenida das Flores, 250';
+    if (doador == _contas.feirante) return 'Feira do Mercadão, banca 12';
+    return 'Rua Principal, 100 - Centro';
   }
 
   Coordenadas _localDe(int doador) {

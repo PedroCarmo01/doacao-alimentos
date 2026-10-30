@@ -2,23 +2,31 @@ import 'package:shared_models/shared_models.dart';
 
 import '../../core/api/api_client.dart';
 import '../fake/banco_fake.dart';
+import '../fotos/seletor_de_fotos.dart';
 
 /// CONTRATO das doações (lado do doador e busca da ONG).
 abstract interface class DoacaoRepository {
-  /// `POST /doacoes` (doador)
-  Future<Doacao> criar(DadosNovaDoacao dados);
+  /// `POST /doacoes` (doador) — RN10. Devolve a doação e quantas ONGs
+  /// próximas foram avisadas.
+  Future<RespostaPublicacao> publicar(DadosNovaDoacao dados);
 
-  /// `GET /doacoes` — doações do doador logado (todos os status).
-  Future<List<Doacao>> listarMinhas();
+  /// `PUT /doacoes/{id}` — só enquanto disponível (RN12).
+  Future<Doacao> editar(int doacaoId, DadosNovaDoacao dados);
 
-  /// `GET /doacoes/{id}` — doação + reserva ativa (se houver).
+  /// `POST /doacoes/{id}/fotos` — uma foto por vez (até 3).
+  Future<Doacao> enviarFoto(int doacaoId, FotoEscolhida foto);
+
+  /// `GET /doacoes?situacao=` — doações do doador logado (T10).
+  Future<List<Doacao>> listarMinhas(SituacaoDaLista situacao);
+
+  /// `GET /doacoes/{id}` — doação + retirada em andamento (se houver).
   Future<DetalheDoacao> detalhar(int doacaoId);
 
-  /// `DELETE /doacoes/{id}` — só enquanto estiver disponível.
-  Future<void> cancelar(int doacaoId);
+  /// `DELETE /doacoes/{id}` — RN12: [motivo] obrigatório se reservada.
+  Future<void> cancelar(int doacaoId, {String? motivo});
 
   /// `GET /proximas?raioKm=` — disponíveis perto da ONG logada, ordenadas
-  /// pela distância.
+  /// pela distância (etapa 3).
   Future<List<Doacao>> listarProximas({double? raioKm});
 }
 
@@ -28,14 +36,34 @@ class DoacaoRepositoryApi implements DoacaoRepository {
   final ApiClient _api;
 
   @override
-  Future<Doacao> criar(DadosNovaDoacao dados) async {
+  Future<RespostaPublicacao> publicar(DadosNovaDoacao dados) async {
     final json = await _api.post('/doacoes', corpo: dados.toJson());
+    return RespostaPublicacao.fromJson(ApiClient.objeto(json));
+  }
+
+  @override
+  Future<Doacao> editar(int doacaoId, DadosNovaDoacao dados) async {
+    final json = await _api.put('/doacoes/$doacaoId', corpo: dados.toJson());
     return Doacao.fromJson(ApiClient.objeto(json));
   }
 
   @override
-  Future<List<Doacao>> listarMinhas() async {
-    final json = await _api.get('/doacoes');
+  Future<Doacao> enviarFoto(int doacaoId, FotoEscolhida foto) async {
+    final json = await _api.enviarArquivo(
+      '/doacoes/$doacaoId/fotos',
+      campo: 'foto',
+      bytes: foto.bytes,
+      nomeArquivo: foto.nome,
+    );
+    return Doacao.fromJson(ApiClient.objeto(json));
+  }
+
+  @override
+  Future<List<Doacao>> listarMinhas(SituacaoDaLista situacao) async {
+    final json = await _api.get(
+      '/doacoes',
+      consulta: {'situacao': situacao.name},
+    );
     return [
       for (final item in ApiClient.lista(json, 'doacoes'))
         Doacao.fromJson(item),
@@ -49,7 +77,10 @@ class DoacaoRepositoryApi implements DoacaoRepository {
   }
 
   @override
-  Future<void> cancelar(int doacaoId) => _api.delete('/doacoes/$doacaoId');
+  Future<void> cancelar(int doacaoId, {String? motivo}) => _api.delete(
+    '/doacoes/$doacaoId',
+    corpo: motivo == null ? null : DadosCancelamento(motivo: motivo).toJson(),
+  );
 
   @override
   Future<List<Doacao>> listarProximas({double? raioKm}) async {
@@ -70,15 +101,28 @@ class DoacaoRepositoryFake implements DoacaoRepository {
   final BancoFake _banco;
 
   @override
-  Future<Doacao> criar(DadosNovaDoacao dados) async {
+  Future<RespostaPublicacao> publicar(DadosNovaDoacao dados) async {
     await _banco.simularRede();
-    return _banco.criarDoacao(dados);
+    return _banco.publicarDoacao(dados);
   }
 
   @override
-  Future<List<Doacao>> listarMinhas() async {
+  Future<Doacao> editar(int doacaoId, DadosNovaDoacao dados) async {
     await _banco.simularRede();
-    return _banco.doacoesDoDoadorLogado();
+    return _banco.editarDoacao(doacaoId, dados);
+  }
+
+  @override
+  Future<Doacao> enviarFoto(int doacaoId, FotoEscolhida foto) async {
+    await _banco.simularRede();
+    // No modo Fake a foto não sai do celular: guardamos o caminho dela.
+    return _banco.adicionarFoto(doacaoId, foto.caminho);
+  }
+
+  @override
+  Future<List<Doacao>> listarMinhas(SituacaoDaLista situacao) async {
+    await _banco.simularRede();
+    return _banco.doacoesDoDoadorLogado(situacao);
   }
 
   @override
@@ -88,9 +132,9 @@ class DoacaoRepositoryFake implements DoacaoRepository {
   }
 
   @override
-  Future<void> cancelar(int doacaoId) async {
+  Future<void> cancelar(int doacaoId, {String? motivo}) async {
     await _banco.simularRede();
-    _banco.cancelarDoacao(doacaoId);
+    _banco.cancelarDoacao(doacaoId, motivo: motivo);
   }
 
   @override

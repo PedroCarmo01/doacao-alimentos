@@ -27,6 +27,7 @@ class Env {
     required this.corsOrigem,
     required this.escutarNaRede,
     required this.consultarBrasilApi,
+    required this.pastaArquivos,
   });
 
   /// Lê o [arquivo] `.env` da pasta onde o comando foi executado.
@@ -61,6 +62,7 @@ class Env {
       corsOrigem: leitor.texto('CORS_ORIGEM', padrao: '*'),
       escutarNaRede: leitor.booleano('ESCUTAR_NA_REDE', padrao: false),
       consultarBrasilApi: leitor.booleano('CONSULTAR_BRASILAPI', padrao: true),
+      pastaArquivos: leitor.texto('PASTA_ARQUIVOS', padrao: 'arquivos'),
     );
   }
 
@@ -83,6 +85,9 @@ class Env {
   /// RN03: `false` = não consulta a BrasilAPI (para testar sem internet).
   /// Todo CNPJ com dígitos válidos vira "verificação pendente".
   final bool consultarBrasilApi;
+
+  /// Pasta onde as fotos das doações ficam (não vai para o Git).
+  final String pastaArquivos;
 }
 
 /// Lê e converte variáveis, com mensagens de erro claras.

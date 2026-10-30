@@ -90,7 +90,7 @@ erDiagram
 
 Índices: `(status, janela_fim)` para "disponíveis agora"; `(doador_id)` para "minhas doações"; `(latitude, longitude)` para a busca por proximidade.
 
-> Na etapa 1 só o **banco** mudou: o modelo `Doacao` do Dart e as rotas de doação são atualizados na etapa 2.
+> Desde a etapa 2, o modelo `Doacao` do Dart segue estas colunas. As fotos ficam em `fotos_doacao` (o arquivo em si fica na pasta `PASTA_ARQUIVOS` do backend, fora do Git).
 
 ### `fotos_doacao`
 

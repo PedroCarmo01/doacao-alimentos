@@ -23,11 +23,13 @@ Future<void> main() async {
   final exemplos = GravadorDeExemplos(
     banco,
     senhaHash: const SenhaService().gerarHash('senha123'),
+    pastaArquivos: env.pastaArquivos,
   );
   final agora = const RelogioSistema().agora();
 
   try {
     await exemplos.apagarTudo();
+    await exemplos.apagarFotos();
     final contas = await ContasDeExemplo.criar(exemplos, agora);
     final doacoes = DoacoesDeExemplo(
       exemplos,
@@ -60,6 +62,6 @@ Dados de exemplo criados. Senha de todos os usuários: senha123
   ong     suspensa@exemplo.com    Casa Esperança: suspensa por 30 h
   ong     distante@exemplo.com    Associação Distante (~45 km, fora do raio)
 
-Doações: 5 disponíveis, 1 reservada, 2 concluídas e 3 expiradas.
+Doações: 5 disponíveis (4 com foto), 1 reservada, 2 concluídas e 3 expiradas.
 Comunidade: 4 publicações. Chat: 1 conversa (mercado e Mãos Amigas).
 ''';

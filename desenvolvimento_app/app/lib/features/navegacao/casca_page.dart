@@ -4,7 +4,7 @@ import '../../core/dependencias.dart';
 import '../../core/routing/app_routes.dart';
 import '../../shared/widgets/barra_inferior.dart';
 import '../../shared/widgets/em_construcao.dart';
-import '../doador/presentation/home_doador_page.dart';
+import '../doador/home_doador_page.dart';
 import '../mapa/presentation/mapa_page.dart';
 import '../ong/presentation/home_ong_page.dart';
 import '../perfil/perfil_page.dart';
@@ -31,10 +31,12 @@ class _CascaPageState extends State<CascaPage> {
 
   late final bool _ehOng = widget.dependencias.sessao.usuario?.ehOng ?? false;
 
-  /// As abas são criadas uma vez só. O `IndexedStack` mantém todas vivas,
-  /// então ao trocar de aba a pessoa não perde o que estava vendo.
-  late final List<Widget> _abas = _criarAbas();
+  /// Muda quando o doador publica uma doação. Como ela entra na `key` da
+  /// tela de início, mudar o número RECRIA a tela, que busca a lista de novo.
+  int _versaoDoInicio = 0;
 
+  /// O `IndexedStack` mantém todas as abas vivas: ao trocar de aba, a
+  /// pessoa não perde o que estava vendo.
   List<Widget> _criarAbas() {
     final d = widget.dependencias;
     const mensagens = EmConstrucao(
@@ -51,7 +53,12 @@ class _CascaPageState extends State<CascaPage> {
       if (_ehOng)
         HomeOngPage(doacoes: d.doacoes, sessao: d.sessao)
       else
-        HomeDoadorPage(doacoes: d.doacoes, sessao: d.sessao),
+        HomeDoadorPage(
+          key: ValueKey(_versaoDoInicio),
+          doacoes: d.doacoes,
+          sessao: d.sessao,
+          relogio: d.relogio,
+        ),
       mensagens,
       // Doador: o botão do meio abre outra tela; esta posição fica vazia.
       if (_ehOng)
@@ -74,9 +81,15 @@ class _CascaPageState extends State<CascaPage> {
     const ItemDaBarra(icone: Icons.person_outline, rotulo: 'Perfil'),
   ];
 
-  void _aoTocar(int indice) {
+  Future<void> _aoTocar(int indice) async {
     if (indice == BarraInferior.indiceCentral && !_ehOng) {
-      Navigator.pushNamed(context, AppRoutes.novaDoacao);
+      final publicou = await Navigator.pushNamed(context, AppRoutes.novaDoacao);
+      if (publicou == true && mounted) {
+        setState(() {
+          _versaoDoInicio++;
+          _abaAtual = 0; // mostra a doação nova em "Minhas doações"
+        });
+      }
       return;
     }
     setState(() => _abaAtual = indice);
@@ -87,7 +100,7 @@ class _CascaPageState extends State<CascaPage> {
     return Scaffold(
       // O conteúdo passa por trás do "salto" do botão central.
       extendBody: true,
-      body: IndexedStack(index: _abaAtual, children: _abas),
+      body: IndexedStack(index: _abaAtual, children: _criarAbas()),
       bottomNavigationBar: BarraInferior(
         itens: _itens,
         indiceAtual: _abaAtual,

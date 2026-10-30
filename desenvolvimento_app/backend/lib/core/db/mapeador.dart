@@ -12,7 +12,8 @@ import 'database.dart';
 /// Nomes de coluna esperados (use estes aliases nas queries):
 /// - usuario: `id, nome, email, tipo`
 /// - perfil:  todas as colunas de `perfis` (nas queries: `p.*`)
-/// - doacao:  colunas de `doacoes` + opcionais `nome_doador`, `distancia_km`
+/// - doacao:  colunas de `doacoes` + opcionais `fotos` (nomes separados por
+///   vírgula), `nome_doador`, `distancia_km`, `nome_ong`, `prazo_retirada`
 /// - reserva: colunas de `reservas` + opcionais `titulo_doacao`, `nome_ong`
 abstract final class Mapeador {
   static Usuario usuario(Linha linha) => Usuario(
@@ -57,17 +58,26 @@ abstract final class Mapeador {
     titulo: _texto(linha, 'titulo'),
     descricao: linha['descricao'],
     categoria: CategoriaAlimento.values.byName(_texto(linha, 'categoria')),
-    quantidade: _texto(linha, 'quantidade'),
+    quantidade: _decimal(linha, 'quantidade_numero'),
+    unidade: Unidade.values.byName(_texto(linha, 'unidade')),
+    pesoKg: _decimal(linha, 'peso_kg'),
+    conservacao: Conservacao.values.byName(_texto(linha, 'conservacao')),
+    veiculo: _enumOpcional(linha, 'precisa_veiculo', VeiculoNecessario.values),
     validade: Datas.dataDeSql(_texto(linha, 'validade')),
+    preparadoEm: _instanteOpcional(linha, 'preparado_em'),
     janelaInicio: Datas.deSql(_texto(linha, 'janela_inicio')),
     janelaFim: Datas.deSql(_texto(linha, 'janela_fim')),
     endereco: linha['endereco'],
     latitude: _decimal(linha, 'latitude'),
     longitude: _decimal(linha, 'longitude'),
     status: StatusDoacao.values.byName(_texto(linha, 'status')),
+    motivoCancelamento: linha['motivo_cancelamento'],
     criadoEm: Datas.deSql(_texto(linha, 'criado_em')),
+    fotos: _lista(linha, 'fotos'),
     nomeDoador: linha['nome_doador'],
     distanciaKm: _decimalOpcional(linha, 'distancia_km'),
+    nomeOng: linha['nome_ong'],
+    prazoRetirada: _instanteOpcional(linha, 'prazo_retirada'),
   );
 
   static Reserva reserva(Linha linha) => Reserva(
@@ -77,10 +87,34 @@ abstract final class Mapeador {
     status: StatusReserva.values.byName(_texto(linha, 'status')),
     reservadoEm: Datas.deSql(_texto(linha, 'reservado_em')),
     expiraEm: Datas.deSql(_texto(linha, 'expira_em')),
-    retiradoEm: _instanteOpcional(linha, 'retirado_em'),
+    encerradaEm: _instanteOpcional(linha, 'encerrada_em'),
+    motivo: linha['motivo'],
     tituloDoacao: linha['titulo_doacao'],
     nomeOng: linha['nome_ong'],
   );
+
+  /// Colunas: `usuario_id, nome_organizacao, verificacao, nome_responsavel,
+  /// telefone, tipo_estabelecimento, transporte`.
+  static ResumoOrganizacao resumo(Linha linha) => ResumoOrganizacao(
+    usuarioId: _inteiro(linha, 'usuario_id'),
+    nomeOrganizacao: _texto(linha, 'nome_organizacao'),
+    verificacao: Verificacao.values.byName(_texto(linha, 'verificacao')),
+    nomeResponsavel: linha['nome_responsavel'],
+    telefone: linha['telefone'],
+    tipoEstabelecimento: _enumOpcional(
+      linha,
+      'tipo_estabelecimento',
+      TipoEstabelecimento.values,
+    ),
+    transporte: _enumOpcional(linha, 'transporte', Transporte.values),
+  );
+
+  /// Texto "a.jpg,b.jpg" (GROUP_CONCAT do MySQL) → lista. Nulo = vazia.
+  static List<String> _lista(Linha linha, String coluna) {
+    final valor = linha[coluna];
+    if (valor == null || valor.isEmpty) return const [];
+    return valor.split(',');
+  }
 
   static String _texto(Linha linha, String coluna) =>
       linha[coluna] ??

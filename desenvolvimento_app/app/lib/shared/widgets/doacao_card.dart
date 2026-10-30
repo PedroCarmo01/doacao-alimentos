@@ -3,19 +3,27 @@ import 'package:shared_models/shared_models.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatador.dart';
+import 'etiqueta_status.dart';
+import 'foto_da_doacao.dart';
 
-/// Cartão de uma doação, usado nas listas do doador e da ONG.
+/// Cartão de uma doação, usado nas listas do doador (T10) e da ONG (T20).
 ///
-/// [novidade] destaca a doação que acabou de aparecer (aviso da ONG).
+/// Mostra: foto, título, status COM TEXTO, quantidade e peso, horário
+/// limite e, se reservada, a ONG e o tempo que falta.
+/// [novidade] destaca a doação que acabou de aparecer (lista da ONG).
 class DoacaoCard extends StatelessWidget {
   const DoacaoCard({
     super.key,
     required this.doacao,
+    required this.agora,
     this.onTap,
     this.novidade = false,
   });
 
   final Doacao doacao;
+
+  /// O "agora" de quando a lista foi carregada (vem do `Relogio`).
+  final DateTime agora;
   final VoidCallback? onTap;
   final bool novidade;
 
@@ -33,54 +41,17 @@ class DoacaoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+          padding: const EdgeInsets.all(12),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.restaurant, color: AppColors.verde),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      doacao.titulo,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (novidade) const _Etiqueta('NOVA', AppColors.laranja),
-                  if (!novidade)
-                    _Etiqueta(
-                      doacao.status.rotulo,
-                      _corDoStatus(doacao.status),
-                    ),
-                ],
+              FotoDaDoacao(
+                caminho: doacao.fotos.firstOrNull,
+                categoria: doacao.categoria,
+                tamanho: 76,
               ),
-              const SizedBox(height: 8),
-              Text(
-                '${doacao.categoria.rotulo}  •  ${doacao.quantidade}',
-                style: const TextStyle(color: AppColors.cinza),
-              ),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 16,
-                runSpacing: 4,
-                children: [
-                  _Info(
-                    Icons.schedule,
-                    'Retirar até ${Formatador.diaHora(doacao.janelaFim)}',
-                  ),
-                  if (doacao.distanciaKm != null)
-                    _Info(
-                      Icons.place,
-                      Formatador.distancia(doacao.distanciaKm!),
-                    ),
-                  if (doacao.nomeDoador != null)
-                    _Info(Icons.storefront, doacao.nomeDoador!),
-                ],
-              ),
+              const SizedBox(width: 12),
+              Expanded(child: _textos(context)),
             ],
           ),
         ),
@@ -88,53 +59,58 @@ class DoacaoCard extends StatelessWidget {
     );
   }
 
-  static Color _corDoStatus(StatusDoacao status) => switch (status) {
-    StatusDoacao.disponivel => AppColors.verde,
-    StatusDoacao.reservada => AppColors.laranja,
-    StatusDoacao.concluida => AppColors.cinza,
-    StatusDoacao.cancelada => AppColors.erro,
-  };
-}
-
-class _Etiqueta extends StatelessWidget {
-  const _Etiqueta(this.texto, this.cor);
-
-  final String texto;
-  final Color cor;
-
-  @override
-  Widget build(BuildContext context) {
-    // O texto acompanha a cor: informação não depende só da cor
-    // (acessibilidade).
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: cor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        texto,
-        style: TextStyle(color: cor, fontSize: 12, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
-
-class _Info extends StatelessWidget {
-  const _Info(this.icone, this.texto);
-
-  final IconData icone;
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+  Widget _textos(BuildContext context) {
+    const cinza = TextStyle(color: AppColors.cinza);
+    final distancia = doacao.distanciaKm;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icone, size: 16, color: AppColors.cinza),
-        const SizedBox(width: 4),
-        Text(texto, style: const TextStyle(fontSize: 13)),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                doacao.titulo,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            const SizedBox(width: 8),
+            novidade
+                ? const Etiqueta(texto: 'NOVA', cor: AppColors.laranja)
+                : Etiqueta.doStatus(doacao.status),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '${doacao.quantidadeTexto} • '
+          '${Formatador.peso(doacao.pesoKg)}'
+          '${distancia == null ? '' : ' • ${Formatador.distancia(distancia)}'}',
+          style: cinza,
+        ),
+        const SizedBox(height: 4),
+        Text(_linhaDoHorario(), style: cinza),
       ],
     );
+  }
+
+  /// "Retirar até 18:00", "ONG X vem buscar • faltam 42 min" ou a data.
+  String _linhaDoHorario() {
+    final nomeOng = doacao.nomeOng;
+    final prazo = doacao.prazoRetirada;
+    if (doacao.status == StatusDoacao.reservada && nomeOng != null) {
+      final restante = prazo == null ? '' : ' • ${_falta(prazo)}';
+      return '$nomeOng vem buscar$restante';
+    }
+    if (doacao.status.ativa) {
+      return 'Retirar até ${Formatador.diaHora(doacao.janelaFim)}';
+    }
+    return 'Publicada em ${Formatador.diaHora(doacao.criadoEm)}';
+  }
+
+  String _falta(DateTime prazo) {
+    final restante = prazo.difference(agora);
+    if (restante.isNegative) return 'prazo acabou';
+    return 'faltam ${Formatador.duracaoCurta(restante)}';
   }
 }

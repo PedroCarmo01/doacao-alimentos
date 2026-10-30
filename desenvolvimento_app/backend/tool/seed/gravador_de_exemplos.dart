@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:shared_models/shared_models.dart';
+import 'package:summit_backend/arquivos/armazenamento_de_fotos.dart';
 import 'package:summit_backend/core/db/database.dart';
 import 'package:summit_backend/core/utils/datas.dart';
 
@@ -7,12 +10,47 @@ import 'package:summit_backend/core/utils/datas.dart';
 /// Fica separado do `seed.dart` para que lá apareça só a "história" dos
 /// dados (quem doou o quê, quem retirou), sem o SQL no meio.
 class GravadorDeExemplos {
-  GravadorDeExemplos(this._banco, {required this.senhaHash});
+  GravadorDeExemplos(
+    this._banco, {
+    required this.senhaHash,
+    required this.pastaArquivos,
+  }) : _fotos = ArmazenamentoEmPasta(pastaArquivos);
 
   final ExecutorSql _banco;
+  final ArmazenamentoEmPasta _fotos;
 
   /// Hash bcrypt de "senha123", calculado uma vez só (bcrypt é lento).
   final String senhaHash;
+
+  /// Pasta das fotos do servidor (PASTA_ARQUIVOS do .env).
+  final String pastaArquivos;
+
+  /// Onde ficam as fotos de exemplo (desenhos simples, não são reais).
+  static const pastaDasFotosDeExemplo = 'tool/seed/fotos';
+
+  /// Apaga as fotos que o servidor guardou (só os nomes gerados por ele).
+  Future<void> apagarFotos() async {
+    final pasta = Directory(pastaArquivos);
+    if (!await pasta.exists()) return;
+    await for (final item in pasta.list()) {
+      final nome = item.uri.pathSegments.last;
+      if (ArmazenamentoEmPasta.formatoDoNome.hasMatch(nome)) {
+        await item.delete();
+      }
+    }
+  }
+
+  /// Copia [exemplo] (ex.: "frutas.jpg") para a pasta do servidor, como se
+  /// o app tivesse enviado, e liga à doação na [ordem] dada.
+  Future<void> foto(int doacaoId, String exemplo, {int ordem = 1}) async {
+    final bytes = await File('$pastaDasFotosDeExemplo/$exemplo').readAsBytes();
+    final arquivo = await _fotos.salvar(bytes, FormatoDeFoto.dosBytes(bytes)!);
+    await _banco.inserir(
+      'INSERT INTO fotos_doacao (doacao_id, arquivo, ordem) '
+      'VALUES (:doacao, :arquivo, :ordem)',
+      {'doacao': doacaoId, 'arquivo': arquivo, 'ordem': ordem},
+    );
+  }
 
   /// Apaga tudo, na ordem "filhas antes das mães" (chaves estrangeiras).
   Future<void> apagarTudo() async {
@@ -114,16 +152,17 @@ class GravadorDeExemplos {
     required DateTime criadaEm,
     String? descricao,
     DateTime? preparadoEm,
+    String? endereco,
   }) {
     return _banco.inserir(
       '''
       INSERT INTO doacoes (doador_id, titulo, descricao, categoria,
                            quantidade_numero, unidade, peso_kg, conservacao,
                            validade, preparado_em, janela_inicio, janela_fim,
-                           latitude, longitude, status, criado_em)
+                           endereco, latitude, longitude, status, criado_em)
       VALUES (:doadorId, :titulo, :descricao, :categoria, :quantidade,
               :unidade, :peso, :conservacao, :validade, :preparadoEm,
-              :inicio, :fim, :lat, :lng, :status, :criadoEm)
+              :inicio, :fim, :endereco, :lat, :lng, :status, :criadoEm)
       ''',
       {
         'doadorId': doadorId,
@@ -138,6 +177,7 @@ class GravadorDeExemplos {
         'preparadoEm': preparadoEm == null ? null : Datas.paraSql(preparadoEm),
         'inicio': Datas.paraSql(inicio),
         'fim': Datas.paraSql(fim),
+        'endereco': endereco,
         'lat': local.latitude,
         'lng': local.longitude,
         'status': status,

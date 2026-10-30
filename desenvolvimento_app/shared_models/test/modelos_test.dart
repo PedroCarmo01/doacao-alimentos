@@ -50,7 +50,11 @@ void main() {
       doadorId: 1,
       titulo: 'Frutas do dia',
       categoria: CategoriaAlimento.hortifruti,
-      quantidade: '5 caixas',
+      quantidade: 5,
+      unidade: Unidade.caixas,
+      pesoKg: 25,
+      conservacao: Conservacao.ambiente,
+      fotos: const ['abc.jpg'],
       validade: DateTime.utc(2026, 9, 20),
       janelaInicio: DateTime.utc(2026, 9, 15, 14),
       janelaFim: DateTime.utc(2026, 9, 15, 20),
@@ -76,6 +80,29 @@ void main() {
       expect(copia.validade, doacao.validade);
       expect(copia.janelaFim, doacao.janelaFim);
       expect(copia.categoria, doacao.categoria);
+      expect(copia.fotos, ['abc.jpg']);
+      expect(copia.unidade, Unidade.caixas);
+    });
+
+    test('quantidadeTexto junta número e unidade', () {
+      expect(doacao.quantidadeTexto, '5 caixas');
+    });
+
+    test('RN12: edita só disponível; cancela disponível ou reservada', () {
+      final reservada = doacao.copyWith(status: StatusDoacao.reservada);
+      final concluida = doacao.copyWith(status: StatusDoacao.concluida);
+
+      expect(doacao.podeSerEditada, isTrue);
+      expect(doacao.cancelamentoExigeMotivo, isFalse);
+      expect(reservada.podeSerEditada, isFalse);
+      expect(reservada.podeSerCancelada, isTrue);
+      expect(reservada.cancelamentoExigeMotivo, isTrue);
+      expect(concluida.podeSerCancelada, isFalse);
+    });
+
+    test('RN13: expirada vai para o histórico', () {
+      expect(StatusDoacao.expirada.ativa, isFalse);
+      expect(StatusDoacao.reservada.ativa, isTrue);
     });
 
     test('só pode ser reservada se disponível e com a janela aberta', () {

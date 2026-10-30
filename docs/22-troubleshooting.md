@@ -13,6 +13,8 @@ Formato: **sintoma → causa provável → solução**. Use `Ctrl+F` com um peda
 | `The current Dart SDK version is X... requires ^3.9.0` | Flutter antigo | `flutter upgrade` |
 | Emulador muito lento ou não abre | pouca RAM / virtualização desligada | Feche o Chrome; habilite virtualização na BIOS; ou use celular físico ou `flutter run -d chrome` |
 | PowerShell: "execução de scripts foi desabilitada" | política do Windows | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
+| App fecha sozinho logo ao abrir no emulador (logcat: `SIGSEGV` no thread `1.raster`) | driver de vídeo do emulador depois de voltar de um *snapshot* | Feche o emulador e ligue **do zero**: Device Manager → ⋮ → **Cold Boot Now** (ou `emulator -avd Pixel_7 -no-snapshot-load`). Visto na etapa 2; não é erro do código |
+| Gradle: "Android sdkmanager did not install NDK" | o `sdkmanager` virou o novo *Android CLI* | `android sdk install ndk/28.2.13676358` (o executável fica em `Android\sdk\cmdline-tools\latest\bin`) |
 
 ## Dependências e compilação
 

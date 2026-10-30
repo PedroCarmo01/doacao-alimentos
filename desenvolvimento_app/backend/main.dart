@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:shared_models/shared_models.dart';
+import 'package:summit_backend/arquivos/armazenamento_de_fotos.dart';
 import 'package:summit_backend/core/config/env.dart';
 import 'package:summit_backend/core/db/database.dart';
 import 'package:summit_backend/core/seguranca/senha_service.dart';
@@ -61,7 +62,11 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
   //   ),
   // )..iniciar();
 
+  // Onde as fotos das doações ficam: uma pasta do servidor (fora do Git).
+  final ArmazenamentoDeFotos fotos = ArmazenamentoEmPasta(env.pastaArquivos);
+
   final aplicacao = handler
+      .use(provider<ArmazenamentoDeFotos>((_) => fotos))
       .use(provider<ConsultaCnpj>((_) => consultaCnpj))
       .use(provider<SenhaService>((_) => senhas))
       .use(provider<TokenService>((_) => tokens))

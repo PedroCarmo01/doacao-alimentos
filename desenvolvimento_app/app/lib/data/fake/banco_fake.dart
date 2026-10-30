@@ -2,6 +2,8 @@ import 'package:shared_models/shared_models.dart';
 
 import '../../core/api/api_exception.dart';
 import 'contas_fake.dart';
+import 'doacoes_fake.dart';
+import 'exemplos_fake.dart';
 import 'receita_fake.dart';
 
 /// "Backend de mentira" em memória, usado pelos repositórios Fake.
@@ -9,15 +11,16 @@ import 'receita_fake.dart';
 /// Para que serve:
 /// - Quem faz telas trabalha SEM backend (`--dart-define=USAR_FAKE=true`).
 /// - Testes de ViewModel rodam em milissegundos, sem rede.
-/// - Demonstração offline do fluxo completo.
+/// - Demonstração offline do fluxo completo (plano B da apresentação).
 ///
-/// Ele aplica as MESMAS regras do backend (usa os validadores do
-/// shared_models) e lança [ApiException] com os MESMOS códigos. Assim, trocar
-/// Fake por API não muda nada nas telas (princípio de substituição de Liskov).
+/// Ele aplica as MESMAS regras do backend e lança [ApiException] com os
+/// MESMOS códigos. Assim, trocar Fake por API não muda nada nas telas
+/// (princípio de substituição de Liskov). As regras ficam em classes
+/// menores: [ContasFake] (cadastro e login) e [DoacoesFake] (doações).
 ///
-/// Diferenças propositais: prazo de reserva de 2 minutos (para ver a
-/// expiração acontecer) e, a cada 45 segundos, uma "doação surpresa" aparece
-/// para testar o aviso de novidade da ONG.
+/// Diferenças propositais: prazo de retirada de 2 minutos (para ver a
+/// expiração acontecer) e, a cada 45 segundos, uma "doação surpresa"
+/// aparece para testar o aviso de novidade da ONG.
 class BancoFake {
   BancoFake({
     Relogio relogio = const RelogioSistema(),
@@ -27,11 +30,12 @@ class BancoFake {
     this.simularNovasDoacoes = true,
   }) : _relogio = relogio,
        _contas = ContasFake(relogio) {
-    _popular();
+    _doacoes = DoacoesFake(relogio, _contas, fusoHorarioUtc: fusoHorarioUtc);
+    ExemplosFake(_doacoes, _contas, agora: relogio.agora()).criar();
   }
 
   static const senhaPadrao = ContasFake.senhaPadrao;
-  static const raioPadraoKm = 10.0;
+  static const raioPadraoKm = Perfil.raioPadraoKm;
 
   final Relogio _relogio;
   final Duration atrasoDeRede;
@@ -39,34 +43,25 @@ class BancoFake {
   final int fusoHorarioUtc;
   final bool simularNovasDoacoes;
 
-  /// Contas e regras de cadastro (RN01–RN04) ficam numa classe própria.
   final ContasFake _contas;
-  final List<Doacao> _doacoes = [];
-  final List<Reserva> _reservas = [];
-  int _proximoId = 1;
+  late final DoacoesFake _doacoes;
   int? _logadoId;
   DateTime? _ultimaSimulacao;
 
-  static const _naoEncontrada = ApiException(
-    codigo: 'NAO_ENCONTRADO',
-    mensagem: 'Registro não encontrado.',
-    status: 404,
-  );
-
   static const _reservaNaoAtiva = ApiException(
     codigo: 'RESERVA_NAO_ATIVA',
-    mensagem: 'Esta reserva não está mais ativa.',
+    mensagem: 'Esta retirada não está mais em andamento.',
     status: 409,
   );
 
   /// Cópias somente leitura (úteis em testes).
-  List<Doacao> get doacoes => List.unmodifiable(_doacoes);
-  List<Reserva> get reservas => List.unmodifiable(_reservas);
+  List<Doacao> get doacoes => List.unmodifiable(_doacoes.doacoes);
+  List<Reserva> get reservas => List.unmodifiable(_doacoes.reservas);
 
   DateTime get _agora => _relogio.agora();
 
   /// Espera um pouco (para as telas mostrarem "carregando") e aplica a
-  /// expiração das reservas vencidas, como o job do backend faria.
+  /// expiração das retiradas vencidas, como o job do backend faria.
   Future<void> simularRede() async {
     if (atrasoDeRede > Duration.zero) {
       await Future<void>.delayed(atrasoDeRede);
@@ -101,91 +96,39 @@ class BancoFake {
 
   // -------------------------------------------------------------- doações
 
-  Doacao criarDoacao(DadosNovaDoacao dados) {
-    final conta = _exigirLogado(TipoUsuario.doador);
-    final agora = _agora;
-    final erros = ValidadorDoacao.validar(
-      dados,
-      agora: agora,
-      hoje: Calendario.dataNoFuso(agora, fusoHorarioUtc),
-    );
-    if (erros.isNotEmpty) {
-      throw ApiException(
-        codigo: 'VALIDACAO',
-        mensagem: erros.first,
-        status: 400,
-        detalhes: erros,
+  RespostaPublicacao publicarDoacao(DadosNovaDoacao dados) =>
+      RespostaPublicacao(
+        doacao: _doacoes.criar(_exigirLogado(TipoUsuario.doador), dados),
+        ongsAvisadas: 0, // RN11: os avisos entram na etapa 5
       );
-    }
-    final doacao = Doacao(
-      id: _proximoId++,
-      doadorId: conta.usuario.id,
-      titulo: dados.titulo.trim(),
-      descricao: dados.descricao,
-      categoria: dados.categoria,
-      quantidade: dados.quantidade.trim(),
-      validade: dados.validade,
-      janelaInicio: dados.janelaInicio,
-      janelaFim: dados.janelaFim,
-      endereco: dados.endereco ?? conta.perfil.endereco,
-      latitude: dados.latitude ?? conta.perfil.latitude,
-      longitude: dados.longitude ?? conta.perfil.longitude,
-      status: StatusDoacao.disponivel,
-      criadoEm: agora,
-      nomeDoador: conta.perfil.nomeOrganizacao,
-    );
-    _doacoes.add(doacao);
-    return doacao;
-  }
 
-  List<Doacao> doacoesDoDoadorLogado() {
-    final conta = _exigirLogado(TipoUsuario.doador);
-    return _doacoes.where((d) => d.doadorId == conta.usuario.id).toList()
-      ..sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
-  }
+  Doacao editarDoacao(int id, DadosNovaDoacao dados) =>
+      _doacoes.editar(_exigirLogado(TipoUsuario.doador), id, dados);
 
-  /// Regras de acesso (iguais às do backend): o doador vê só as próprias;
-  /// a ONG vê as disponíveis e a que ela mesma reservou.
-  DetalheDoacao detalharDoacao(int doacaoId) {
-    final conta = _exigirQualquerLogado();
-    final doacao = _doacao(doacaoId);
-    final reserva = _reservaAtivaDa(doacaoId);
-    final usuario = conta.usuario;
-    if (usuario.ehDoador && doacao.doadorId != usuario.id) throw _naoEncontrada;
-    if (usuario.ehOng &&
-        !doacao.podeSerReservada(_agora) &&
-        reserva?.ongId != usuario.id) {
-      throw _naoEncontrada;
-    }
-    return DetalheDoacao(doacao: doacao, reserva: reserva);
-  }
+  Doacao adicionarFoto(int id, String caminho) =>
+      _doacoes.adicionarFoto(_exigirLogado(TipoUsuario.doador), id, caminho);
 
-  void cancelarDoacao(int doacaoId) {
-    final conta = _exigirLogado(TipoUsuario.doador);
-    final doacao = _doacao(doacaoId);
-    if (doacao.doadorId != conta.usuario.id) throw _naoEncontrada;
-    if (!doacao.podeSerCancelada) {
-      throw const ApiException(
-        codigo: 'DOACAO_NAO_CANCELAVEL',
-        mensagem:
-            'Só é possível cancelar doações que ainda não foram '
-            'reservadas.',
-        status: 409,
-      );
-    }
-    _substituirDoacao(doacao.copyWith(status: StatusDoacao.cancelada));
-  }
+  void cancelarDoacao(int id, {String? motivo}) =>
+      _doacoes.cancelar(_exigirLogado(TipoUsuario.doador), id, motivo: motivo);
 
-  // ---------------------------------------------------------- proximidade
+  List<Doacao> doacoesDoDoadorLogado(SituacaoDaLista situacao) =>
+      _doacoes.doDoador(_exigirLogado(TipoUsuario.doador), situacao);
 
+  DetalheDoacao detalharDoacao(int id) =>
+      _doacoes.detalhar(_exigirQualquerLogado(), id);
+
+  /// Disponíveis no raio da ONG logada, da mais perto para a mais longe.
   List<Doacao> doacoesProximas({double? raioKm}) {
     final conta = _exigirLogado(TipoUsuario.ong);
     _talvezSimularNovaDoacao();
-    final raio = (raioKm ?? raioPadraoKm).clamp(0.5, 50.0);
-    final agora = _agora;
+    _doacoes.expirarJanelasEncerradas();
+    final raio = (raioKm ?? conta.perfil.raioKm).clamp(0.5, 50.0);
     final proximas = <Doacao>[];
-    for (final doacao in _doacoes) {
-      if (!doacao.podeSerReservada(agora)) continue;
+    for (final doacao in _doacoes.doacoes) {
+      if (!doacao.podeSerReservada(_agora)) continue;
+      if (_doacoes.bloqueios.contains('${conta.usuario.id}-${doacao.id}')) {
+        continue; // RN22
+      }
       final km = Geo.distanciaKm(conta.perfil.coordenadas, doacao.coordenadas);
       if (km <= raio) proximas.add(doacao.copyWith(distanciaKm: km));
     }
@@ -193,72 +136,71 @@ class BancoFake {
     return proximas;
   }
 
-  // -------------------------------------------------------------- reservas
+  // ------------------------------------------- retiradas (refeitas na etapa 4)
 
   Reserva reservar(int doacaoId) {
     final conta = _exigirLogado(TipoUsuario.ong);
-    final agora = _agora;
-    final doacao = _doacao(doacaoId);
-    if (!doacao.podeSerReservada(agora)) {
+    final doacao = _doacoes.porId(doacaoId);
+    if (!doacao.podeSerReservada(_agora)) {
       throw const ApiException(
         codigo: 'DOACAO_INDISPONIVEL',
-        mensagem:
-            'Esta doação acabou de ser reservada por outra ONG ou não '
-            'está mais disponível.',
+        mensagem: 'Que pena! Outra ONG aceitou esta doação primeiro.',
         status: 409,
       );
     }
-    // Regra: o prazo nunca passa do fim da janela de retirada.
-    final limite = agora.add(prazoReserva);
+    // RN21: o prazo nunca passa do fim do horário de retirada.
+    final limite = _agora.add(prazoReserva);
     final reserva = Reserva(
-      id: _proximoId++,
+      id: _doacoes.novoId(),
       doacaoId: doacaoId,
       ongId: conta.usuario.id,
       status: StatusReserva.ativa,
-      reservadoEm: agora,
+      reservadoEm: _agora,
       expiraEm: limite.isBefore(doacao.janelaFim) ? limite : doacao.janelaFim,
       tituloDoacao: doacao.titulo,
       nomeOng: conta.perfil.nomeOrganizacao,
     );
-    _reservas.add(reserva);
-    _substituirDoacao(doacao.copyWith(status: StatusDoacao.reservada));
+    _doacoes.reservas.add(reserva);
+    _doacoes.salvar(doacao.copyWith(status: StatusDoacao.reservada));
     return reserva;
   }
 
   List<Reserva> reservasDaOngLogada() {
     final conta = _exigirLogado(TipoUsuario.ong);
-    return _reservas.where((r) => r.ongId == conta.usuario.id).toList()
+    return _doacoes.reservas.where((r) => r.ongId == conta.usuario.id).toList()
       ..sort((a, b) => b.reservadoEm.compareTo(a.reservadoEm));
   }
 
   void cancelarReserva(int reservaId) {
     final conta = _exigirLogado(TipoUsuario.ong);
     final reserva = _reserva(reservaId);
-    if (reserva.ongId != conta.usuario.id) throw _naoEncontrada;
+    if (reserva.ongId != conta.usuario.id) throw DoacoesFake.naoEncontrada;
     if (!reserva.estaAtiva) throw _reservaNaoAtiva;
-    _substituirReserva(_comStatus(reserva, StatusReserva.cancelada));
-    _mudarStatusDoacao(reserva.doacaoId, StatusDoacao.disponivel);
+    _doacoes.trocarReserva(
+      reserva,
+      StatusReserva.canceladaOng,
+      encerradaEm: _agora,
+    );
+    _voltarParaDisponivel(reserva.doacaoId);
   }
 
-  /// A ONG dona da reserva OU o doador dono da doação podem confirmar.
+  /// A ONG dona da retirada OU o doador dono da doação podem confirmar.
   Reserva confirmarRetirada(int reservaId) {
-    final conta = _exigirQualquerLogado();
+    final usuario = _exigirQualquerLogado().usuario;
     final reserva = _reserva(reservaId);
-    final doacao = _doacao(reserva.doacaoId);
-    final usuario = conta.usuario;
+    final doacao = _doacoes.porId(reserva.doacaoId);
     final permitido = usuario.ehOng
         ? reserva.ongId == usuario.id
         : doacao.doadorId == usuario.id;
-    if (!permitido) throw _naoEncontrada;
+    if (!permitido) throw DoacoesFake.naoEncontrada;
     if (!reserva.estaAtiva) throw _reservaNaoAtiva;
-    final concluida = _comStatus(
+    _doacoes.trocarReserva(
       reserva,
       StatusReserva.concluida,
-      retiradoEm: _agora,
+      encerradaEm: _agora,
     );
-    _substituirReserva(concluida);
-    _substituirDoacao(doacao.copyWith(status: StatusDoacao.concluida));
-    return concluida;
+    _doacoes.salvar(doacao.copyWith(status: StatusDoacao.concluida));
+    return _reserva(reservaId);
   }
 
   // -------------------------------------------------------------- internos
@@ -289,219 +231,49 @@ class BancoFake {
     return conta;
   }
 
-  Doacao _doacao(int id) {
-    for (final doacao in _doacoes) {
-      if (doacao.id == id) return doacao;
-    }
-    throw _naoEncontrada;
-  }
+  Reserva _reserva(int id) =>
+      _doacoes.reservas.where((r) => r.id == id).firstOrNull ??
+      (throw DoacoesFake.naoEncontrada);
 
-  Reserva _reserva(int id) {
-    for (final reserva in _reservas) {
-      if (reserva.id == id) return reserva;
-    }
-    throw _naoEncontrada;
-  }
-
-  Reserva? _reservaAtivaDa(int doacaoId) {
-    for (final reserva in _reservas) {
-      if (reserva.doacaoId == doacaoId && reserva.estaAtiva) return reserva;
-    }
-    return null;
-  }
-
-  void _substituirDoacao(Doacao nova) {
-    final i = _doacoes.indexWhere((d) => d.id == nova.id);
-    if (i >= 0) _doacoes[i] = nova;
-  }
-
-  void _mudarStatusDoacao(int doacaoId, StatusDoacao status) =>
-      _substituirDoacao(_doacao(doacaoId).copyWith(status: status));
-
-  void _substituirReserva(Reserva nova) {
-    final i = _reservas.indexWhere((r) => r.id == nova.id);
-    if (i >= 0) _reservas[i] = nova;
-  }
-
-  static Reserva _comStatus(
-    Reserva reserva,
-    StatusReserva status, {
-    DateTime? retiradoEm,
-  }) => Reserva(
-    id: reserva.id,
-    doacaoId: reserva.doacaoId,
-    ongId: reserva.ongId,
-    status: status,
-    reservadoEm: reserva.reservadoEm,
-    expiraEm: reserva.expiraEm,
-    retiradoEm: retiradoEm ?? reserva.retiradoEm,
-    tituloDoacao: reserva.tituloDoacao,
-    nomeOng: reserva.nomeOng,
+  void _voltarParaDisponivel(int doacaoId) => _doacoes.salvar(
+    _doacoes.porId(doacaoId).copyWith(status: StatusDoacao.disponivel),
   );
 
   void _expirarReservasVencidas() {
-    final agora = _agora;
-    for (final reserva in List.of(_reservas)) {
-      if (reserva.estaVencida(agora)) {
-        _substituirReserva(_comStatus(reserva, StatusReserva.expirada));
-        _mudarStatusDoacao(reserva.doacaoId, StatusDoacao.disponivel);
+    for (final reserva in List.of(_doacoes.reservas)) {
+      if (reserva.estaVencida(_agora)) {
+        _doacoes.trocarReserva(
+          reserva,
+          StatusReserva.expirada,
+          encerradaEm: _agora,
+        );
+        _voltarParaDisponivel(reserva.doacaoId);
       }
     }
   }
 
+  /// Modo demonstração: a cada 45 s aparece uma doação nova do mercado.
   void _talvezSimularNovaDoacao() {
     if (!simularNovasDoacoes) return;
-    final agora = _agora;
     final ultima = _ultimaSimulacao;
-    if (ultima == null) {
-      _ultimaSimulacao = agora;
-      return;
-    }
-    if (agora.difference(ultima) < const Duration(seconds: 45)) return;
-    _ultimaSimulacao = agora;
-
-    final doador = _contas.primeiroDoador;
-    final numero = _doacoes.length + 1;
-    _doacoes.add(
-      Doacao(
-        id: _proximoId++,
-        doadorId: doador.usuario.id,
+    _ultimaSimulacao ??= _agora;
+    if (ultima == null || _agora.difference(ultima).inSeconds < 45) return;
+    _ultimaSimulacao = _agora;
+    final numero = _doacoes.doacoes.length + 1;
+    _doacoes.criar(
+      _contas.primeiroDoador,
+      DadosNovaDoacao(
         titulo: 'Doação surpresa nº $numero',
         descricao: 'Criada automaticamente no modo demonstração.',
-        categoria:
-            CategoriaAlimento.values[numero % CategoriaAlimento.values.length],
-        quantidade: '${2 + numero % 5} caixas',
-        validade: Calendario.dataNoFuso(
-          agora,
-          fusoHorarioUtc,
-        ).add(const Duration(days: 2)),
-        janelaInicio: agora,
-        janelaFim: agora.add(const Duration(hours: 3)),
-        endereco: doador.perfil.endereco,
-        latitude: doador.perfil.latitude,
-        longitude: doador.perfil.longitude,
-        status: StatusDoacao.disponivel,
-        criadoEm: agora,
-        nomeDoador: doador.perfil.nomeOrganizacao,
-      ),
-    );
-  }
-
-  /// Doações de exemplo. As contas (os 7 usuários do seed do backend) vêm
-  /// do [ContasFake]. As doações seguem o modelo antigo até a etapa 2.
-  void _popular() {
-    final agora = _agora;
-    final hoje = Calendario.dataNoFuso(agora, fusoHorarioUtc);
-    final mercado = _contas.porEmail('mercado@exemplo.com');
-    final padaria = _contas.porEmail('padaria@exemplo.com');
-    final maosAmigas = _contas.porEmail('maosamigas@exemplo.com');
-    final pratoCheio = _contas.porEmail('pratocheio@exemplo.com');
-
-    Doacao doacao(
-      Conta doador,
-      String titulo,
-      CategoriaAlimento categoria,
-      String quantidade,
-      int diasDeValidade,
-      Duration inicio,
-      Duration fim,
-      StatusDoacao status,
-    ) {
-      final nova = Doacao(
-        id: _proximoId++,
-        doadorId: doador.usuario.id,
-        titulo: titulo,
-        categoria: categoria,
-        quantidade: quantidade,
-        validade: hoje.add(Duration(days: diasDeValidade)),
-        janelaInicio: agora.add(inicio),
-        janelaFim: agora.add(fim),
-        endereco: doador.perfil.endereco,
-        latitude: doador.perfil.latitude,
-        longitude: doador.perfil.longitude,
-        status: status,
-        criadoEm: agora.subtract(const Duration(minutes: 30)),
-        nomeDoador: doador.perfil.nomeOrganizacao,
-      );
-      _doacoes.add(nova);
-      return nova;
-    }
-
-    doacao(
-      mercado,
-      'Frutas e verduras do dia',
-      CategoriaAlimento.hortifruti,
-      '5 caixas',
-      2,
-      const Duration(hours: -1),
-      const Duration(hours: 6),
-      StatusDoacao.disponivel,
-    );
-    doacao(
-      padaria,
-      'Pães do dia anterior',
-      CategoriaAlimento.padaria,
-      '30 unidades',
-      1,
-      Duration.zero,
-      const Duration(hours: 4),
-      StatusDoacao.disponivel,
-    );
-    doacao(
-      mercado,
-      'Iogurtes perto do vencimento',
-      CategoriaAlimento.laticinios,
-      '24 potes',
-      3,
-      const Duration(hours: 1),
-      const Duration(hours: 8),
-      StatusDoacao.disponivel,
-    );
-
-    final cestas = doacao(
-      mercado,
-      'Cestas de mercearia',
-      CategoriaAlimento.mercearia,
-      '10 cestas',
-      30,
-      Duration.zero,
-      const Duration(hours: 5),
-      StatusDoacao.reservada,
-    );
-    _reservas.add(
-      Reserva(
-        id: _proximoId++,
-        doacaoId: cestas.id,
-        ongId: maosAmigas.usuario.id,
-        status: StatusReserva.ativa,
-        reservadoEm: agora,
-        expiraEm: agora.add(prazoReserva),
-        tituloDoacao: cestas.titulo,
-        nomeOng: maosAmigas.perfil.nomeOrganizacao,
-      ),
-    );
-
-    final bolos = doacao(
-      padaria,
-      'Bolos e salgados',
-      CategoriaAlimento.refeicoesProntas,
-      '15 porções',
-      0,
-      const Duration(hours: -5),
-      const Duration(hours: -1),
-      StatusDoacao.concluida,
-    );
-    _reservas.add(
-      Reserva(
-        id: _proximoId++,
-        doacaoId: bolos.id,
-        ongId: pratoCheio.usuario.id,
-        status: StatusReserva.concluida,
-        reservadoEm: agora.subtract(const Duration(hours: 4)),
-        expiraEm: agora.subtract(const Duration(hours: 2)),
-        retiradoEm: agora.subtract(const Duration(hours: 3)),
-        tituloDoacao: bolos.titulo,
-        nomeOng: pratoCheio.perfil.nomeOrganizacao,
+        categoria: CategoriaAlimento.hortifruti,
+        quantidade: 2 + numero % 5,
+        unidade: Unidade.caixas,
+        pesoKg: 10,
+        conservacao: Conservacao.ambiente,
+        validade: Calendario.somenteData(_agora.add(const Duration(days: 2))),
+        janelaInicio: _agora,
+        janelaFim: _agora.add(const Duration(hours: 3)),
+        declaracaoAlimentosProprios: true,
       ),
     );
   }

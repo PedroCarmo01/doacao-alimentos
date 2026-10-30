@@ -7,6 +7,7 @@ class AppColors {
   static const verde = Color(0xFF2E7D32);
   static const verdeClaro = Color(0xFFE8F5E9);
   static const laranja = Color(0xFFF57C00);
+  static const azul = Color(0xFF1565C0);
   static const cinza = Color(0xFF757575);
   static const erro = Color(0xFFD32F2F);
   static const fundo = Color(0xFFF7F8FA);

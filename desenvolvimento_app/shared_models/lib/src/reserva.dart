@@ -1,24 +1,27 @@
 import 'util/json.dart';
 
-/// Ciclo de vida de uma reserva:
+/// Ciclo de vida de uma retirada (reserva):
 ///
-/// `ativa` → `concluida` (retirada feita), `expirada` (prazo acabou) ou
-/// `cancelada` (a ONG desistiu).
+/// `ativa` → `concluida` (código confirmado), `expirada` (prazo acabou),
+/// `canceladaOng` (a ONG desistiu) ou `canceladaDoador` (o doador cancelou
+/// a doação, RN12).
 enum StatusReserva {
-  ativa('Ativa'),
+  ativa('Em andamento'),
   concluida('Retirada'),
   expirada('Expirada'),
-  cancelada('Cancelada');
+  canceladaOng('A ONG desistiu'),
+  canceladaDoador('Cancelada pelo doador');
 
   const StatusReserva(this.rotulo);
 
   final String rotulo;
 }
 
-/// Reserva de uma doação por uma ONG, com prazo para retirada.
+/// Uma ONG aceitou uma doação e tem um prazo para retirar.
 ///
 /// [tituloDoacao] e [nomeOng] são campos de leitura que o backend preenche
-/// para facilitar a exibição nas listas.
+/// para facilitar a exibição nas listas. [codigoRetirada] só vai para a
+/// ONG dona da reserva (RN26).
 class Reserva {
   const Reserva({
     required this.id,
@@ -27,7 +30,9 @@ class Reserva {
     required this.status,
     required this.reservadoEm,
     required this.expiraEm,
-    this.retiradoEm,
+    this.encerradaEm,
+    this.codigoRetirada,
+    this.motivo,
     this.tituloDoacao,
     this.nomeOng,
   });
@@ -41,7 +46,9 @@ class Reserva {
       status: j.enumerado('status', StatusReserva.values),
       reservadoEm: j.instante('reservadoEm'),
       expiraEm: j.instante('expiraEm'),
-      retiradoEm: j.instanteOpcional('retiradoEm'),
+      encerradaEm: j.instanteOpcional('encerradaEm'),
+      codigoRetirada: j.textoOpcional('codigoRetirada'),
+      motivo: j.textoOpcional('motivo'),
       tituloDoacao: j.textoOpcional('tituloDoacao'),
       nomeOng: j.textoOpcional('nomeOng'),
     );
@@ -53,7 +60,11 @@ class Reserva {
   final StatusReserva status;
   final DateTime reservadoEm;
   final DateTime expiraEm;
-  final DateTime? retiradoEm;
+
+  /// Quando deixou de estar ativa (retirada, expirada ou cancelada).
+  final DateTime? encerradaEm;
+  final String? codigoRetirada;
+  final String? motivo;
   final String? tituloDoacao;
   final String? nomeOng;
 
@@ -76,7 +87,9 @@ class Reserva {
     'status': status.name,
     'reservadoEm': formatarInstante(reservadoEm),
     'expiraEm': formatarInstante(expiraEm),
-    'retiradoEm': retiradoEm == null ? null : formatarInstante(retiradoEm!),
+    'encerradaEm': encerradaEm == null ? null : formatarInstante(encerradaEm!),
+    if (codigoRetirada != null) 'codigoRetirada': codigoRetirada,
+    if (motivo != null) 'motivo': motivo,
     if (tituloDoacao != null) 'tituloDoacao': tituloDoacao,
     if (nomeOng != null) 'nomeOng': nomeOng,
   };

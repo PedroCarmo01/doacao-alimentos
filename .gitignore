@@ -26,6 +26,10 @@ doc/api/
 # --- Dart Frog (gerado pelo dart_frog dev/build) ----------------------
 .dart_frog/
 
+# --- Backend: fotos enviadas pelo app e chaves do Firebase (etapa 9) ---
+desenvolvimento_app/backend/arquivos/
+desenvolvimento_app/backend/segredos/
+
 # --- Android ----------------------------------------------------------
 **/android/.gradle/
 **/android/.kotlin/

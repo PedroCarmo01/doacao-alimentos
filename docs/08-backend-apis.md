@@ -5,7 +5,7 @@ Este documento é o **contrato**: o app (repositórios `...Api`) e o backend (ro
 - **Base local:** `http://127.0.0.1:8080` (no emulador Android: `http://10.0.2.2:8080`)
 - **Formato:** JSON UTF-8. Campos em **camelCase**.
 - **Datas:** instantes em ISO-8601 **UTC** (`"2026-09-15T14:30:00.000Z"`); validade como data (`"2026-09-16"`).
-- **Autenticação:** `Authorization: Bearer <token>` em todas as rotas, exceto `GET /`, `POST /auth/cadastro`, `POST /auth/login` e `GET /documentos/{numero}`. O token vale **30 dias** (`JWT_VALIDADE_DIAS`, RN05).
+- **Autenticação:** `Authorization: Bearer <token>` em todas as rotas, exceto `GET /`, `POST /auth/cadastro`, `POST /auth/login`, `GET /documentos/{numero}` e `GET /arquivos/{nome}`. O token vale **30 dias** (`JWT_VALIDADE_DIAS`, RN05).
 - **Testar na mão:** `desenvolvimento_app/backend/api.http` com a extensão REST Client.
 
 ## Formato de erro (todas as rotas)
@@ -29,7 +29,7 @@ Este documento é o **contrato**: o app (repositórios `...Api`) e o backend (ro
 | 403 | `SEM_PERMISSAO` | o perfil não pode fazer a ação (ex.: ONG criando doação) |
 | 404 | `NAO_ENCONTRADO` | não existe **ou não é seu** |
 | 405 | `METODO_NAO_PERMITIDO` | método HTTP não aceito na rota |
-| 409 | `EMAIL_EM_USO`, `DOCUMENTO_EM_USO`, `DOACAO_NAO_CANCELAVEL`, `DOACAO_INDISPONIVEL`, `RESERVA_NAO_ATIVA` | o estado atual não permite |
+| 409 | `EMAIL_EM_USO`, `DOCUMENTO_EM_USO`, `DOACAO_NAO_EDITAVEL`, `DOACAO_NAO_CANCELAVEL`, `LIMITE_DE_FOTOS`, `DOACAO_INDISPONIVEL`, `RESERVA_NAO_ATIVA` | o estado atual não permite |
 | 422 | `DOCUMENTO_INVALIDO`, `CNPJ_NAO_ENCONTRADO`, `CNPJ_INATIVO`, `CNPJ_NAO_E_ENTIDADE` | o documento foi recusado (RN02, RN03) |
 | 503 | `CONSULTA_INDISPONIVEL` | só na pré-consulta: a BrasilAPI não respondeu (dá para continuar o cadastro) |
 | 500 | `ERRO_INTERNO` | bug no servidor (detalhes só no terminal do backend) |
@@ -47,15 +47,18 @@ A coluna **Etapa** diz em qual etapa do desenvolvimento a rota ficou pronta.
 | GET | `/documentos/{numero}?tipo=` | público | 1 ✅ |
 | PUT | `/perfil` | logado | 1 ✅ |
 | POST | `/dispositivos` | logado | 1 ✅ (usada no push, etapa 9) |
+| POST | `/doacoes` | doador | 2 ✅ |
+| POST | `/doacoes/{id}/fotos` | doador dono | 2 ✅ |
+| GET | `/doacoes?situacao=` | doador | 2 ✅ |
+| GET | `/doacoes/{id}` | doador dono / ONG | 2 ✅ |
+| PUT | `/doacoes/{id}` | doador dono | 2 ✅ |
+| DELETE | `/doacoes/{id}` | doador dono | 2 ✅ |
+| GET | `/arquivos/{nome}` | público | 2 ✅ |
 
-Rotas da versão anterior, que serão refeitas nas etapas 2 a 4:
+Rotas da versão anterior, que serão refeitas nas etapas 3 e 4:
 
 | Método | Rota | Quem | Dono | Trilha |
 |---|---|---|---|---|
-| POST | `/doacoes` | doador | P2 | 13 |
-| GET | `/doacoes` | doador | P2 | 13 |
-| GET | `/doacoes/{id}` | doador dono / ONG | P2 | 13 |
-| DELETE | `/doacoes/{id}` | doador dono | P2 | 13 |
 | GET | `/proximas?raioKm=` | ONG | P4 | 14 |
 | POST | `/reservas` | ONG | P3 | 15 |
 | GET | `/reservas` | ONG | P3 | 15 |
@@ -188,67 +191,76 @@ Guarda o identificador de push do celular (tabela `dispositivos`). Se o token j�
 
 ---
 
-## Doações (doador)
+## Doações (doador) — etapa 2
 
 ### Objeto `Doacao`
 
 ```json
 {
-  "id": 1,
-  "doadorId": 1,
-  "titulo": "Frutas e verduras do dia",
-  "descricao": null,
+  "id": 1, "doadorId": 1,
+  "titulo": "Frutas e verduras do dia", "descricao": null,
   "categoria": "hortifruti",
-  "quantidade": "5 caixas",
-  "validade": "2026-09-17",
-  "janelaInicio": "2026-09-15T13:30:00.000Z",
-  "janelaFim": "2026-09-15T20:30:00.000Z",
-  "endereco": "Rua Principal, 100 - Centro",
-  "latitude": -23.5229,
-  "longitude": -46.188,
-  "status": "disponivel",
+  "quantidade": 5.0, "unidade": "caixas", "pesoKg": 25.0,
+  "conservacao": "ambiente", "veiculo": null,
+  "validade": "2026-09-17", "preparadoEm": null,
+  "janelaInicio": "2026-09-15T13:30:00.000Z", "janelaFim": "2026-09-15T20:30:00.000Z",
+  "endereco": "Rua Principal, 100 - Centro", "latitude": -23.5229, "longitude": -46.188,
+  "status": "disponivel", "motivoCancelamento": null,
   "criadoEm": "2026-09-15T14:30:00.000Z",
+  "fotos": ["3f2a9c0d...e1.jpg"],
   "nomeDoador": "Mercado Bom Preço",
-  "distanciaKm": 0.62
+  "nomeOng": null, "prazoRetirada": null, "distanciaKm": 0.62
 }
 ```
 
-- `categoria`: `hortifruti`, `padaria`, `laticinios`, `mercearia`, `refeicoesProntas`, `outros`.
-- `status`: `disponivel`, `reservada`, `concluida`, `cancelada`.
-- `nomeDoador` e `distanciaKm` são **de leitura** e só aparecem em algumas respostas (`distanciaKm` só em `/proximas`).
+- `categoria`: `hortifruti`, `padaria`, `laticinios`, `mercearia`, `refeicoesProntas`, `carnesFrios`, `bebidas`, `outros`.
+- `unidade`: `kg`, `unidades`, `caixas`, `pacotes`, `litros`. `conservacao`: `ambiente`, `refrigerado`, `congelado`. `veiculo`: `sacola`, `carro`, `van` (ou `null`).
+- `status`: `disponivel`, `reservada`, `concluida`, `cancelada`, `expirada` (RN13).
+- `fotos`: nomes dos arquivos, na ordem (até 3). A foto é baixada em `GET /arquivos/{nome}`.
+- **De leitura:** `nomeDoador`, `nomeOng` e `prazoRetirada` (quando reservada) e `distanciaKm` (só em `/proximas`).
 
-### `POST /doacoes` — `DadosNovaDoacao` → `201 Doacao`
+### `POST /doacoes` — `DadosNovaDoacao` → `201 {"doacao": Doacao, "ongsAvisadas": 0}`
 
 ```json
 {
-  "titulo": "Legumes do dia",
-  "descricao": "Pequenas marcas, próprios para consumo.",
-  "categoria": "hortifruti",
-  "quantidade": "3 caixas",
-  "validade": "2026-09-17",
-  "janelaInicio": "2026-09-15T14:30:00Z",
-  "janelaFim": "2026-09-15T18:30:00Z",
+  "titulo": "Pães do dia", "descricao": "Retirar pela porta lateral.",
+  "categoria": "padaria", "quantidade": 30, "unidade": "unidades", "pesoKg": 6,
+  "conservacao": "ambiente", "veiculo": "sacola",
+  "validade": "2026-09-15",
+  "janelaInicio": "2026-09-15T14:30:00Z", "janelaFim": "2026-09-15T18:30:00Z",
   "declaracaoAlimentosProprios": true
 }
 ```
 
-Regras (`ValidadorDoacao`): título 3–120; quantidade até 60; descrição até 500; **validade ≥ hoje** no fuso `FUSO_HORARIO`; janela com fim depois do início e no futuro; **declaração = true**. `latitude`, `longitude` e `endereco` são opcionais: sem eles, usa os do perfil. ONG: 403.
+Regras (`ValidadorDoacao`, RN10): só **doador** (ONG: 403); título 3–120; quantidade e peso > 0; descrição até 500; **validade ≥ hoje** no fuso `FUSO_HORARIO`; fim da retirada **depois do início e no futuro**; **declaração = true**. Refeições prontas: `preparadoEm` obrigatório, não no futuro, e `janelaFim` no máximo **4 h** depois dele. `latitude`, `longitude` e `endereco` são opcionais: sem eles, valem os do perfil. `ongsAvisadas` é 0 até a etapa 5 (RN11). As fotos vão depois, uma por vez.
 
-### `GET /doacoes` → `200 {"doacoes": [Doacao]}`
+### `POST /doacoes/{id}/fotos` — *multipart*, campo `foto` → `201 Doacao`
 
-As do doador logado, todos os status, mais recentes primeiro.
+Uma foto por requisição. Só o doador dono, enquanto a doação está `disponivel`. Até **3** (409 `LIMITE_DE_FOTOS`), **2 MB** cada, só **JPEG ou PNG**, conferido pelos primeiros bytes do arquivo e não pelo nome (400 `VALIDACAO`). O servidor salva em `PASTA_ARQUIVOS` com um nome aleatório de 32 caracteres.
+
+### `GET /arquivos/{nome}` → bytes da foto (pública)
+
+Pública porque o `Image.network` não manda o token, e o nome aleatório não dá para adivinhar. Só aceita nomes no formato que o servidor gera (`^[0-9a-f]{32}\.(jpg|png)$`): `../.env` responde 404. Cabeçalho `Cache-Control: public, max-age=604800, immutable`.
+
+### `GET /doacoes?situacao=ativas|historico` → `200 {"doacoes": [Doacao]}`
+
+As do doador logado, da mais nova para a mais antiga. **Ativas** = `disponivel` e `reservada`; **Histórico** = `concluida`, `cancelada` e `expirada`. Antes de listar, o servidor expira as doações cujo horário de retirada acabou (RN13).
 
 ### `GET /doacoes/{id}` → `200 DetalheDoacao`
 
 ```json
-{"doacao": {...}, "reserva": {...} }
+{"doacao": {...}, "reserva": {...}, "ong": {...}, "doador": null}
 ```
 
-`reserva` é a reserva **ativa** (ou `null`). O doador só vê as próprias. A ONG vê as que ainda podem ser reservadas **ou** a que ela mesma reservou. Fora disso: 404.
+`reserva` é a retirada **ativa** (ou `null`). O **doador** só vê as próprias e recebe `ong` (nome, selo, responsável, telefone, transporte). A **ONG** vê as que ainda pode aceitar (disponível, janela aberta, sem bloqueio RN22) **ou** a que ela mesma está retirando, e recebe `doador`. Fora disso: 404.
 
-### `DELETE /doacoes/{id}` → `204`
+### `PUT /doacoes/{id}` — `DadosNovaDoacao` → `200 Doacao`
 
-Só se `disponivel`. Senão: 409 `DOACAO_NAO_CANCELAVEL`.
+Mesmas regras do `POST`. Só enquanto `disponivel` (RN12); reservada: 409 `DOACAO_NAO_EDITAVEL`.
+
+### `DELETE /doacoes/{id}` — corpo opcional `{"motivo": "..."}` → `204`
+
+RN12: `disponivel` cancela sem motivo. `reservada` **exige** motivo (400 sem ele): a retirada vira `canceladaDoador`, **sem** contar desistência para a ONG, e a ONG é avisada na etapa 5. Concluída, cancelada ou expirada: 409 `DOACAO_NAO_CANCELAVEL`.
 
 ---
 

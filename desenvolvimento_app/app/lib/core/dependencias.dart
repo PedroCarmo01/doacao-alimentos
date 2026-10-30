@@ -4,6 +4,7 @@ import '../data/auth/auth_repository.dart';
 import '../data/documentos/documento_repository.dart';
 import '../data/doacoes/doacao_repository.dart';
 import '../data/fake/banco_fake.dart';
+import '../data/fotos/seletor_de_fotos.dart';
 import '../data/localizacao/cep_repository.dart';
 import '../data/localizacao/localizacao_service.dart';
 import '../data/reservas/reserva_repository.dart';
@@ -30,6 +31,7 @@ class Dependencias {
     required this.sistema,
     required this.localizacao,
     required this.cep,
+    required this.seletorDeFotos,
     required this.relogio,
     required this.modoFake,
   });
@@ -51,13 +53,19 @@ class Dependencias {
       sistema: SistemaRepositoryApi(api),
       localizacao: const LocalizacaoServiceGps(),
       cep: CepRepositoryBrasilApi(),
+      seletorDeFotos: SeletorDeFotosDoAparelho(),
       relogio: const RelogioSistema(),
       modoFake: false,
     );
   }
 
   /// Tudo em memória, sem backend (`--dart-define=USAR_FAKE=true`).
-  factory Dependencias.fake({BancoFake? banco}) {
+  /// [seletorDeFotos]: no celular, o modo Fake usa a câmera de verdade;
+  /// nos testes, passe o `SeletorDeFotosFake`.
+  factory Dependencias.fake({
+    BancoFake? banco,
+    SeletorDeFotos? seletorDeFotos,
+  }) {
     final dados = banco ?? BancoFake();
     final armazenamento = ArmazenamentoTokenMemoria();
     return Dependencias(
@@ -70,6 +78,7 @@ class Dependencias {
       sistema: const SistemaRepositoryFake(),
       localizacao: const LocalizacaoServiceFake(),
       cep: const CepRepositoryFake(),
+      seletorDeFotos: seletorDeFotos ?? SeletorDeFotosDoAparelho(),
       relogio: const RelogioSistema(),
       modoFake: true,
     );
@@ -84,6 +93,7 @@ class Dependencias {
   final SistemaRepository sistema;
   final LocalizacaoService localizacao;
   final CepRepository cep;
+  final SeletorDeFotos seletorDeFotos;
   final Relogio relogio;
   final bool modoFake;
 }

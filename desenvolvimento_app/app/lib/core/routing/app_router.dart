@@ -5,8 +5,8 @@ import '../../features/abertura/boas_vindas_page.dart';
 import '../../features/auth/cadastro/cadastro_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/auth/termos_page.dart';
-import '../../features/doador/presentation/detalhe_doacao_doador_page.dart';
-import '../../features/doador/presentation/nova_doacao_page.dart';
+import '../../features/doador/detalhe_doacao_doador_page.dart';
+import '../../features/doador/nova_doacao_page.dart';
 import '../../features/navegacao/casca_page.dart';
 import '../../features/ong/presentation/detalhe_doacao_ong_page.dart';
 import '../../features/ong/presentation/minhas_reservas_page.dart';
@@ -74,15 +74,17 @@ class AppRouter {
       ),
       AppRoutes.termos => const TermosPage(),
       AppRoutes.casca => CascaPage(dependencias: d),
+      // Argumento opcional: `int` = editar esta doação.
       AppRoutes.novaDoacao => NovaDoacaoPage(
         doacoes: d.doacoes,
+        seletor: d.seletorDeFotos,
         sessao: d.sessao,
         relogio: d.relogio,
+        doacaoId: argumento is int ? argumento : null,
       ),
       AppRoutes.detalheDoacaoDoador => DetalheDoacaoDoadorPage(
         doacaoId: _id(argumento),
         doacoes: d.doacoes,
-        reservas: d.reservas,
         relogio: d.relogio,
       ),
       AppRoutes.detalheDoacaoOng => DetalheDoacaoOngPage(

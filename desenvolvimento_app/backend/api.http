@@ -154,10 +154,11 @@ Content-Type: application/json
 
 
 ### =====================================================================
-### DOAÇÕES DO DOADOR — Pessoa 2 (trilha/13)
+### DOAÇÕES DO DOADOR — etapa 2 (RN10, RN12, RN13)
 ### =====================================================================
 
-### Criar doação (datas calculadas na hora pelo REST Client)
+### Publicar doação (datas calculadas na hora pelo REST Client)
+# @name publicar
 POST {{base}}/doacoes
 Authorization: Bearer {{loginDoador.response.body.$.token}}
 Content-Type: application/json
@@ -166,26 +167,82 @@ Content-Type: application/json
   "titulo": "Legumes do dia",
   "descricao": "Legumes com pequenas marcas, próprios para consumo.",
   "categoria": "hortifruti",
-  "quantidade": "3 caixas",
+  "quantidade": 3,
+  "unidade": "caixas",
+  "pesoKg": 15,
+  "conservacao": "ambiente",
+  "veiculo": "carro",
   "validade": "{{$datetime 'YYYY-MM-DD' 2 d}}",
   "janelaInicio": "{{$datetime iso8601}}",
   "janelaFim": "{{$datetime iso8601 4 h}}",
   "declaracaoAlimentosProprios": true
 }
 
-### Minhas doações
-GET {{base}}/doacoes
+### Enviar UMA foto para a doação publicada acima (até 3)
+POST {{base}}/doacoes/{{publicar.response.body.$.doacao.id}}/fotos
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+Content-Type: multipart/form-data; boundary=FRONTEIRA
+
+--FRONTEIRA
+Content-Disposition: form-data; name="foto"; filename="frutas.jpg"
+Content-Type: image/jpeg
+
+< ./tool/seed/fotos/frutas.jpg
+--FRONTEIRA--
+
+### Minhas doações: abas Ativas e Histórico
+GET {{base}}/doacoes?situacao=ativas
 Authorization: Bearer {{loginDoador.response.body.$.token}}
 
-### Detalhe de uma doação (troque o 1 por um id existente)
-GET {{base}}/doacoes/1
+###
+GET {{base}}/doacoes?situacao=historico
 Authorization: Bearer {{loginDoador.response.body.$.token}}
 
-### Cancelar doação disponível: 204; se estiver reservada: 409
-DELETE {{base}}/doacoes/1
+### Detalhe da doação publicada acima
+GET {{base}}/doacoes/{{publicar.response.body.$.doacao.id}}
 Authorization: Bearer {{loginDoador.response.body.$.token}}
 
-### ONG tentando criar doação: deve responder 403 SEM_PERMISSAO
+### Editar (só enquanto disponível; reservada: 409 DOACAO_NAO_EDITAVEL)
+PUT {{base}}/doacoes/{{publicar.response.body.$.doacao.id}}
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Legumes e verduras do dia",
+  "categoria": "hortifruti",
+  "quantidade": 4,
+  "unidade": "caixas",
+  "pesoKg": 20,
+  "conservacao": "ambiente",
+  "validade": "{{$datetime 'YYYY-MM-DD' 2 d}}",
+  "janelaInicio": "{{$datetime iso8601}}",
+  "janelaFim": "{{$datetime iso8601 4 h}}",
+  "declaracaoAlimentosProprios": true
+}
+
+### Cancelar a doação disponível: 204
+DELETE {{base}}/doacoes/{{publicar.response.body.$.doacao.id}}
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+
+### Validade de ontem: 400 "Não é permitido doar alimentos vencidos." (RN10)
+POST {{base}}/doacoes
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Pães velhos",
+  "categoria": "padaria",
+  "quantidade": 10,
+  "unidade": "unidades",
+  "pesoKg": 2,
+  "conservacao": "ambiente",
+  "validade": "{{$datetime 'YYYY-MM-DD' -1 d}}",
+  "janelaInicio": "{{$datetime iso8601}}",
+  "janelaFim": "{{$datetime iso8601 2 h}}",
+  "declaracaoAlimentosProprios": true
+}
+
+### ONG tentando publicar: 403 SEM_PERMISSAO (RN10)
 POST {{base}}/doacoes
 Authorization: Bearer {{loginOng.response.body.$.token}}
 Content-Type: application/json
@@ -193,13 +250,15 @@ Content-Type: application/json
 {
   "titulo": "Teste",
   "categoria": "outros",
-  "quantidade": "1",
+  "quantidade": 1,
+  "unidade": "unidades",
+  "pesoKg": 1,
+  "conservacao": "ambiente",
   "validade": "{{$datetime 'YYYY-MM-DD' 1 d}}",
   "janelaInicio": "{{$datetime iso8601}}",
   "janelaFim": "{{$datetime iso8601 2 h}}",
   "declaracaoAlimentosProprios": true
 }
-
 
 ### =====================================================================
 ### PROXIMIDADE — Pessoa 4 (trilha/14)

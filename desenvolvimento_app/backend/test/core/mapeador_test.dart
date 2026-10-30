@@ -12,7 +12,12 @@ void main() {
         'titulo': 'Frutas do dia',
         'descricao': null,
         'categoria': 'hortifruti',
-        'quantidade': '5 caixas',
+        'quantidade_numero': '5.00',
+        'unidade': 'caixas',
+        'peso_kg': '25.00',
+        'conservacao': 'ambiente',
+        'precisa_veiculo': null,
+        'fotos': 'a.jpg,b.jpg',
         'validade': '2026-09-20',
         'janela_inicio': '2026-09-15 14:00:00',
         'janela_fim': '2026-09-15 20:00:00',
@@ -31,6 +36,8 @@ void main() {
       expect(doacao.janelaInicio, DateTime.utc(2026, 9, 15, 14));
       expect(doacao.latitude, closeTo(-23.5229, 0.000001));
       expect(doacao.distanciaKm, 1.25);
+      expect(doacao.quantidadeTexto, '5 caixas');
+      expect(doacao.fotos, ['a.jpg', 'b.jpg']);
       // E o JSON que vai para o app sai em camelCase:
       expect(doacao.toJson()['doadorId'], 1);
     });

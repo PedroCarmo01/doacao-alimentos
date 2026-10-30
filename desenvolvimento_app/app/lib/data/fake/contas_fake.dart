@@ -125,6 +125,17 @@ class ContasFake {
   }
 
   /// Os 7 usuários do seed (mesmos e-mails, documentos e lugares).
+  /// Os mesmos endereços do seed do backend.
+  static const _enderecos = {
+    'mercado@exemplo.com': 'Rua Principal, 100 - Centro',
+    'padaria@exemplo.com': 'Avenida das Flores, 250',
+    'feirante@exemplo.com': 'Feira do Mercadão, banca 12',
+    'maosamigas@exemplo.com': 'Rua da Solidariedade, 45',
+    'pratocheio@exemplo.com': 'Travessa do Bem, 12',
+    'suspensa@exemplo.com': 'Rua das Acácias, 300',
+    'distante@exemplo.com': 'Praça da Sé - São Paulo',
+  };
+
   void _popular() {
     void criar(
       TipoUsuario tipo,
@@ -149,6 +160,7 @@ class ContasFake {
         nomeOrganizacao: organizacao,
         documento: documento,
         telefone: '(11) 4799-0000',
+        endereco: _enderecos[email],
         cep: '08780000',
         latitude: latitude,
         longitude: longitude,

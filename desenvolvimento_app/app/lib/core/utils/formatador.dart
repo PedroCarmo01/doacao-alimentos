@@ -30,6 +30,22 @@ abstract final class Formatador {
       '${_dois(duracao.inHours)}:${_dois(duracao.inMinutes % 60)}:'
       '${_dois(duracao.inSeconds % 60)}';
 
+  /// `42 min` ou `1 h 05 min` (prazos de retirada).
+  static String duracaoCurta(Duration duracao) {
+    final minutos = duracao.inMinutes % 60;
+    if (duracao.inHours == 0) return '${duracao.inMinutes} min';
+    return '${duracao.inHours} h ${_dois(minutos)} min';
+  }
+
+  /// `6 kg` ou `4,8 kg`
+  static String peso(double kg) {
+    final inteiro = kg == kg.truncateToDouble();
+    final numero = inteiro
+        ? kg.toStringAsFixed(0)
+        : kg.toStringAsFixed(1).replaceAll('.', ',');
+    return '$numero kg';
+  }
+
   /// `850 m` ou `2,4 km`
   static String distancia(double km) => km < 1
       ? '${(km * 1000).round()} m'

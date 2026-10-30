@@ -146,62 +146,114 @@ void main() {
     final hoje = DateTime.utc(2026, 9, 15);
 
     DadosNovaDoacao doacao({
+      CategoriaAlimento categoria = CategoriaAlimento.padaria,
       DateTime? validade,
       DateTime? inicio,
       DateTime? fim,
+      DateTime? preparadoEm,
+      double quantidade = 30,
+      double pesoKg = 6,
       bool declaracao = true,
     }) => DadosNovaDoacao(
       titulo: 'Pães do dia',
-      categoria: CategoriaAlimento.padaria,
-      quantidade: '30 unidades',
+      categoria: categoria,
+      quantidade: quantidade,
+      unidade: Unidade.unidades,
+      pesoKg: pesoKg,
+      conservacao: Conservacao.ambiente,
       validade: validade ?? DateTime.utc(2026, 9, 16),
+      preparadoEm: preparadoEm,
       janelaInicio: inicio ?? DateTime.utc(2026, 9, 15, 13),
       janelaFim: fim ?? DateTime.utc(2026, 9, 15, 18),
       declaracaoAlimentosProprios: declaracao,
     );
 
+    List<String> validar(DadosNovaDoacao dados) =>
+        ValidadorDoacao.validar(dados, agora: agora, hoje: hoje);
+
     test('doação válida não tem erros', () {
+      expect(validar(doacao()), isEmpty);
+    });
+
+    test('RN10: validade de ontem é recusada', () {
       expect(
-        ValidadorDoacao.validar(doacao(), agora: agora, hoje: hoje),
-        isEmpty,
+        validar(doacao(validade: DateTime.utc(2026, 9, 14))),
+        contains('Não é permitido doar alimentos vencidos.'),
       );
     });
 
-    test('não aceita alimento vencido', () {
-      final erros = ValidadorDoacao.validar(
-        doacao(validade: DateTime.utc(2026, 9, 14)),
-        agora: agora,
-        hoje: hoje,
-      );
-
-      expect(erros, contains('Não é permitido doar alimentos vencidos.'));
-    });
-
-    test('validade igual a hoje é aceita', () {
+    test('RN10: validade igual a hoje é aceita', () {
       expect(ValidadorDoacao.validade(hoje, hoje: hoje), isNull);
     });
 
-    test('fim da janela precisa ser depois do início', () {
-      final erros = ValidadorDoacao.validar(
+    test('RN10: fim da retirada precisa ser depois do início', () {
+      final erros = validar(
         doacao(
           inicio: DateTime.utc(2026, 9, 15, 18),
           fim: DateTime.utc(2026, 9, 15, 13),
         ),
-        agora: agora,
-        hoje: hoje,
+      );
+
+      expect(erros, contains('O fim da retirada deve ser depois do início.'));
+    });
+
+    test('RN10: fim da retirada no passado é recusado', () {
+      final erros = validar(
+        doacao(
+          inicio: DateTime.utc(2026, 9, 15, 8),
+          fim: DateTime.utc(2026, 9, 15, 11),
+        ),
       );
 
       expect(erros, isNotEmpty);
     });
 
-    test('declaração de alimentos próprios é obrigatória', () {
-      final erros = ValidadorDoacao.validar(
-        doacao(declaracao: false),
-        agora: agora,
-        hoje: hoje,
-      );
+    test('RN10: declaração de alimentos próprios é obrigatória', () {
+      expect(validar(doacao(declaracao: false)), hasLength(1));
+    });
 
-      expect(erros, hasLength(1));
+    test('quantidade e peso precisam ser maiores que zero', () {
+      expect(validar(doacao(quantidade: 0, pesoKg: 0)), hasLength(2));
+    });
+
+    test('lerNumero aceita vírgula ou ponto', () {
+      expect(ValidadorDoacao.lerNumero('2,5'), 2.5);
+      expect(ValidadorDoacao.lerNumero('2.5'), 2.5);
+      expect(ValidadorDoacao.lerNumero('abc'), isNull);
+    });
+
+    group('refeições prontas', () {
+      test('pedem o horário de preparo', () {
+        expect(
+          validar(doacao(categoria: CategoriaAlimento.refeicoesProntas)),
+          contains('Informe o horário de preparo.'),
+        );
+      });
+
+      test('retirada até 4 h depois do preparo é aceita', () {
+        final dados = doacao(
+          categoria: CategoriaAlimento.refeicoesProntas,
+          preparadoEm: DateTime.utc(2026, 9, 15, 11),
+          fim: DateTime.utc(2026, 9, 15, 15),
+        );
+
+        expect(validar(dados), isEmpty);
+      });
+
+      test('retirada mais de 4 h depois do preparo é recusada', () {
+        final dados = doacao(
+          categoria: CategoriaAlimento.refeicoesProntas,
+          preparadoEm: DateTime.utc(2026, 9, 15, 11),
+          fim: DateTime.utc(2026, 9, 15, 16),
+        );
+
+        expect(validar(dados).single, startsWith('Refeições prontas devem'));
+      });
+    });
+
+    test('RN12: cancelar doação reservada exige motivo', () {
+      expect(ValidadorDoacao.motivoCancelamento(''), isNotNull);
+      expect(ValidadorDoacao.motivoCancelamento('Estragou'), isNull);
     });
   });
 }

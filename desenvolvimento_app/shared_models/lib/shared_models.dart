@@ -15,6 +15,7 @@ export 'src/geo/geo.dart';
 export 'src/perfil.dart';
 export 'src/reserva.dart';
 export 'src/tempo/relogio.dart';
+export 'src/tipos_de_doacao.dart';
 export 'src/tipos_de_perfil.dart';
 export 'src/usuario.dart';
 export 'src/validacao/validador_doacao.dart';
