@@ -13,8 +13,11 @@ import 'usuario_autenticado.dart';
 class TokenService {
   TokenService({
     required String segredo,
-    this.validade = const Duration(hours: 12),
+    this.validade = TokenService.validadePadrao,
   }) : _chave = SecretKey(segredo);
+
+  /// RN05: o login vale 30 dias (o `.env` pode mudar com JWT_VALIDADE_DIAS).
+  static const validadePadrao = Duration(days: 30);
 
   final SecretKey _chave;
   final Duration validade;

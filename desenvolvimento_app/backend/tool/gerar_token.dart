@@ -39,7 +39,7 @@ void main(List<String> argumentos) {
 
   print(
     'Token do usuário $id (${tipo.name}), válido por '
-    '${env.jwtValidade.inHours} h:\n',
+    '${env.jwtValidade.inDays} dias:\n',
   );
   print(token);
   print('\nUse no cabeçalho:  Authorization: Bearer $token');

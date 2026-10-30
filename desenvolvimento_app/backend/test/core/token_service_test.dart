@@ -1,3 +1,4 @@
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:shared_models/shared_models.dart';
 import 'package:summit_backend/core/erros/app_exception.dart';
 import 'package:summit_backend/core/seguranca/token_service.dart';
@@ -15,6 +16,16 @@ void main() {
 
       expect(usuario.id, 7);
       expect(usuario.ehOng, isTrue);
+    });
+
+    test('RN05: o login vale 30 dias por padrão', () {
+      final servico = TokenService(segredo: segredo);
+
+      final token = servico.gerar(usuarioId: 7, tipo: TipoUsuario.ong);
+      final dados = JWT.decode(token).payload as Map;
+      final validadeEmSegundos = (dados['exp'] as int) - (dados['iat'] as int);
+
+      expect(Duration(seconds: validadeEmSegundos), const Duration(days: 30));
     });
 
     test('token assinado com outro segredo é recusado', () {

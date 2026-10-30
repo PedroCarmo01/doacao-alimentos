@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:shared_models/shared_models.dart';
 
-import '../../features/auth/presentation/cadastro_page.dart';
-import '../../features/auth/presentation/escolha_perfil_page.dart';
-import '../../features/auth/presentation/login_page.dart';
+import '../../features/abertura/abertura_page.dart';
+import '../../features/abertura/boas_vindas_page.dart';
+import '../../features/auth/cadastro/cadastro_page.dart';
+import '../../features/auth/login_page.dart';
+import '../../features/auth/termos_page.dart';
 import '../../features/doador/presentation/detalhe_doacao_doador_page.dart';
-import '../../features/doador/presentation/home_doador_page.dart';
 import '../../features/doador/presentation/nova_doacao_page.dart';
-import '../../features/mapa/presentation/mapa_page.dart';
+import '../../features/navegacao/casca_page.dart';
 import '../../features/ong/presentation/detalhe_doacao_ong_page.dart';
-import '../../features/ong/presentation/home_ong_page.dart';
 import '../../features/ong/presentation/minhas_reservas_page.dart';
 import '../dependencias.dart';
 import 'app_routes.dart';
 
 /// Cria a tela de cada rota e entrega a ela as dependências de que precisa.
 ///
-/// Os CONSTRUTORES das páginas são o "contrato" entre a fundação e cada
-/// pessoa: quem implementa uma tela troca o conteúdo do arquivo, mas mantém o
-/// construtor. Assim ninguém precisa editar este arquivo (evita conflitos).
-///
-/// Arquivo de FUNDAÇÃO: altere só em PR combinado com o grupo.
+/// As telas recebem só as interfaces de que precisam (nunca a
+/// `Dependencias` inteira): assim fica claro do que cada uma depende.
 class AppRouter {
   AppRouter(this._dependencias);
 
   final Dependencias _dependencias;
 
+  /// Rotas que abrem sem login.
   static const _rotasPublicas = {
     AppRoutes.inicio,
+    AppRoutes.boasVindas,
     AppRoutes.login,
     AppRoutes.cadastro,
+    AppRoutes.termos,
   };
 
   Route<void> gerar(RouteSettings configuracao) {
@@ -52,26 +51,29 @@ class AppRouter {
   Widget _criarTela(String nome, Object? argumento) {
     final d = _dependencias;
     return switch (nome) {
-      AppRoutes.inicio => EscolhaPerfilPage(
-        sistema: d.sistema,
+      AppRoutes.inicio => AberturaPage(
         auth: d.auth,
         sessao: d.sessao,
+        preferencias: d.preferencias,
       ),
-      AppRoutes.login => LoginPage(
-        tipo: _tipo(argumento),
-        auth: d.auth,
-        sessao: d.sessao,
-      ),
-      AppRoutes.cadastro => CadastroPage(
-        tipo: _tipo(argumento),
-        auth: d.auth,
-        sessao: d.sessao,
+      AppRoutes.boasVindas => BoasVindasPage(
+        preferencias: d.preferencias,
         localizacao: d.localizacao,
       ),
-      AppRoutes.inicioDoador => HomeDoadorPage(
-        doacoes: d.doacoes,
+      AppRoutes.login => LoginPage(
+        auth: d.auth,
         sessao: d.sessao,
+        aviso: argumento is String ? argumento : null,
       ),
+      AppRoutes.cadastro => CadastroPage(
+        auth: d.auth,
+        sessao: d.sessao,
+        documentos: d.documentos,
+        localizacao: d.localizacao,
+        cep: d.cep,
+      ),
+      AppRoutes.termos => const TermosPage(),
+      AppRoutes.casca => CascaPage(dependencias: d),
       AppRoutes.novaDoacao => NovaDoacaoPage(
         doacoes: d.doacoes,
         sessao: d.sessao,
@@ -83,7 +85,6 @@ class AppRouter {
         reservas: d.reservas,
         relogio: d.relogio,
       ),
-      AppRoutes.inicioOng => HomeOngPage(doacoes: d.doacoes, sessao: d.sessao),
       AppRoutes.detalheDoacaoOng => DetalheDoacaoOngPage(
         doacaoId: _id(argumento),
         doacoes: d.doacoes,
@@ -94,13 +95,9 @@ class AppRouter {
         reservas: d.reservas,
         relogio: d.relogio,
       ),
-      AppRoutes.mapa => MapaPage(doacoes: d.doacoes, sessao: d.sessao),
       _ => const _PaginaNaoEncontrada(),
     };
   }
-
-  static TipoUsuario _tipo(Object? argumento) =>
-      argumento is TipoUsuario ? argumento : TipoUsuario.doador;
 
   static int _id(Object? argumento) => argumento is int ? argumento : 0;
 }

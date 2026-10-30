@@ -133,14 +133,83 @@ void main() {
         'perfil': {
           'usuarioId': 3,
           'nomeOrganizacao': 'ONG Mãos Amigas',
+          'tipoDocumento': 'cnpj',
+          'documento': '11222333000181',
+          'verificacao': 'verificada',
           'latitude': -23.51,
           'longitude': -46.18,
+          'buscaAtiva': true,
+          'raioKm': 10,
         },
       });
 
       expect(resposta.token, 'abc.def.ghi');
       expect(resposta.conta.usuario.ehOng, isTrue);
       expect(resposta.conta.perfil.nomeOrganizacao, 'ONG Mãos Amigas');
+      expect(resposta.conta.perfil.ehVerificada, isTrue);
+    });
+  });
+
+  group('Perfil', () {
+    test('ida e volta pelo JSON preserva os campos novos', () {
+      final perfil = Perfil(
+        usuarioId: 7,
+        nomeOrganizacao: 'Feira do Zé',
+        tipoDocumento: TipoDocumento.cpf,
+        documento: '12345678909',
+        tipoEstabelecimento: TipoEstabelecimento.feira,
+        latitude: -23.5,
+        longitude: -46.1,
+        infoExtra: 'Feira de sábado',
+        suspensaAte: DateTime.utc(2026, 11, 12, 17),
+      );
+
+      final copia = Perfil.fromJson(perfil.toJson());
+
+      expect(copia.toJson(), perfil.toJson());
+      expect(copia.verificacao, Verificacao.pendente); // padrão
+      expect(copia.raioKm, Perfil.raioPadraoKm);
+    });
+
+    test('RN24: suspensa só enquanto suspensaAte está no futuro', () {
+      final perfil = Perfil(
+        usuarioId: 1,
+        nomeOrganizacao: 'ONG',
+        tipoDocumento: TipoDocumento.cnpj,
+        documento: '11222333000181',
+        latitude: 0,
+        longitude: 0,
+        suspensaAte: DateTime.utc(2026, 11, 12, 17),
+      );
+
+      expect(perfil.estaSuspensa(DateTime.utc(2026, 11, 12, 16)), isTrue);
+      expect(perfil.estaSuspensa(DateTime.utc(2026, 11, 12, 18)), isFalse);
+    });
+  });
+
+  group('InfoCnpj', () {
+    InfoCnpj info({String situacao = 'ATIVA', int? natureza = 3999}) =>
+        InfoCnpj(
+          cnpj: '11222333000181',
+          razaoSocial: 'ASSOCIACAO EXEMPLO',
+          nomeFantasia: '',
+          situacao: situacao,
+          codigoNaturezaJuridica: natureza,
+        );
+
+    test('RN03: natureza jurídica 3xxx é entidade sem fins lucrativos', () {
+      expect(info().semFinsLucrativos, isTrue);
+      expect(info(natureza: 2062).semFinsLucrativos, isFalse);
+      expect(info(natureza: null).semFinsLucrativos, isFalse);
+    });
+
+    test('RN03: só a situação ATIVA conta como ativa', () {
+      expect(info().ativa, isTrue);
+      expect(info(situacao: 'BAIXADA').ativa, isFalse);
+    });
+
+    test('sem nome fantasia, sugere a razão social', () {
+      expect(info().nomeSugerido, 'ASSOCIACAO EXEMPLO');
     });
   });
 }

@@ -1,50 +1,31 @@
 import 'package:flutter/material.dart';
 
-import '../../core/routing/app_routes.dart';
-import '../../core/sessao/sessao.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Tela provisória do Sprint 0 (walking skeleton).
+/// Tela provisória para o que ainda não foi construído.
 ///
-/// Cada placeholder diz quem é o responsável e qual etapa da trilha tem o
-/// passo a passo. Quando a pessoa implementar a tela de verdade, este widget
-/// deixa de ser usado naquele arquivo.
+/// Diz o que a tela vai fazer e em qual etapa do plano
+/// de construção ela fica pronta.
 class EmConstrucao extends StatelessWidget {
   const EmConstrucao({
     super.key,
     required this.titulo,
-    required this.responsavel,
     required this.etapa,
-    this.sessao,
+    required this.descricao,
   });
 
   final String titulo;
-  final String responsavel;
-  final String etapa;
 
-  /// Se informado, mostra o botão "Sair" (telas iniciais de cada perfil).
-  final Sessao? sessao;
+  /// Número da etapa do plano em que a tela fica pronta.
+  final int etapa;
 
-  Future<void> _sair(BuildContext context) async {
-    await sessao?.encerrar();
-    if (!context.mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.inicio, (_) => false);
-  }
+  /// O que a tela vai fazer, em uma frase.
+  final String descricao;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(titulo),
-        actions: [
-          if (sessao != null)
-            IconButton(
-              tooltip: 'Sair',
-              icon: const Icon(Icons.logout),
-              onPressed: () => _sair(context),
-            ),
-        ],
-      ),
+      appBar: AppBar(title: Text(titulo)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -58,21 +39,17 @@ class EmConstrucao extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Tela em construção',
+                'Em construção',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
-              Text('Responsável: $responsavel', textAlign: TextAlign.center),
+              Text(descricao, textAlign: TextAlign.center),
               const SizedBox(height: 4),
               Text(
-                'Passo a passo: $etapa',
+                'Fica pronta na etapa $etapa.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: AppColors.cinza),
               ),
-              if (sessao?.usuario != null) ...[
-                const SizedBox(height: 16),
-                Text('Logado como ${sessao!.usuario!.email}'),
-              ],
             ],
           ),
         ),

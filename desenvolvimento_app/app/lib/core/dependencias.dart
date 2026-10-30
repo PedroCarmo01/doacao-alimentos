@@ -1,13 +1,16 @@
 import 'package:shared_models/shared_models.dart';
 
 import '../data/auth/auth_repository.dart';
+import '../data/documentos/documento_repository.dart';
 import '../data/doacoes/doacao_repository.dart';
 import '../data/fake/banco_fake.dart';
+import '../data/localizacao/cep_repository.dart';
 import '../data/localizacao/localizacao_service.dart';
 import '../data/reservas/reserva_repository.dart';
 import '../data/sistema/sistema_repository.dart';
 import 'api/api_client.dart';
 import 'config/app_config.dart';
+import 'preferencias/preferencias.dart';
 import 'sessao/armazenamento_token.dart';
 import 'sessao/sessao.dart';
 
@@ -16,16 +19,17 @@ import 'sessao/sessao.dart';
 /// É o ÚNICO lugar que sabe quais classes CONCRETAS são usadas. Todo o resto
 /// do app conhece só as interfaces (`AuthRepository`, `DoacaoRepository`...).
 /// Trocar API por Fake é escolher outro construtor aqui.
-///
-/// Arquivo de FUNDAÇÃO: altere só em PR combinado com o grupo.
 class Dependencias {
   Dependencias({
     required this.sessao,
+    required this.preferencias,
     required this.auth,
+    required this.documentos,
     required this.doacoes,
     required this.reservas,
     required this.sistema,
     required this.localizacao,
+    required this.cep,
     required this.relogio,
     required this.modoFake,
   });
@@ -39,11 +43,14 @@ class Dependencias {
     );
     return Dependencias(
       sessao: Sessao(armazenamento),
+      preferencias: PreferenciasDoAparelho(),
       auth: AuthRepositoryApi(api, armazenamento),
+      documentos: DocumentoRepositoryApi(api),
       doacoes: DoacaoRepositoryApi(api),
       reservas: ReservaRepositoryApi(api),
       sistema: SistemaRepositoryApi(api),
       localizacao: const LocalizacaoServiceGps(),
+      cep: CepRepositoryBrasilApi(),
       relogio: const RelogioSistema(),
       modoFake: false,
     );
@@ -55,22 +62,28 @@ class Dependencias {
     final armazenamento = ArmazenamentoTokenMemoria();
     return Dependencias(
       sessao: Sessao(armazenamento),
+      preferencias: PreferenciasMemoria(),
       auth: AuthRepositoryFake(dados, armazenamento),
+      documentos: DocumentoRepositoryFake(dados),
       doacoes: DoacaoRepositoryFake(dados),
       reservas: ReservaRepositoryFake(dados),
       sistema: const SistemaRepositoryFake(),
       localizacao: const LocalizacaoServiceFake(),
+      cep: const CepRepositoryFake(),
       relogio: const RelogioSistema(),
       modoFake: true,
     );
   }
 
   final Sessao sessao;
+  final Preferencias preferencias;
   final AuthRepository auth;
+  final DocumentoRepository documentos;
   final DoacaoRepository doacoes;
   final ReservaRepository reservas;
   final SistemaRepository sistema;
   final LocalizacaoService localizacao;
+  final CepRepository cep;
   final Relogio relogio;
   final bool modoFake;
 }

@@ -4,9 +4,10 @@ import '../../../core/sessao/sessao.dart';
 import '../../../data/doacoes/doacao_repository.dart';
 import '../../../shared/widgets/em_construcao.dart';
 
-/// TELA: Minhas doações (início do doador) — PLACEHOLDER do Sprint 0.
+/// TELA: Minhas doações (início do doador) — provisória.
 ///
-/// Responsável: Pessoa 2. Passo a passo: trilha/18-app-doador.md
+/// Provisória: a etapa indicada no EmConstrucao (05-PLANO-DE-CONSTRUCAO.md)
+/// troca o conteúdo desta tela.
 /// ATENÇÃO: mantenha o CONSTRUTOR. Ele é o contrato usado pelo AppRouter.
 class HomeDoadorPage extends StatelessWidget {
   const HomeDoadorPage({
@@ -19,10 +20,9 @@ class HomeDoadorPage extends StatelessWidget {
   final Sessao sessao;
 
   @override
-  Widget build(BuildContext context) => EmConstrucao(
+  Widget build(BuildContext context) => const EmConstrucao(
     titulo: 'Minhas doações',
-    responsavel: 'Pessoa 2',
-    etapa: 'trilha/18-app-doador.md',
-    sessao: sessao,
+    etapa: 2,
+    descricao: 'Suas doações ativas e o histórico, com fotos e status.',
   );
 }

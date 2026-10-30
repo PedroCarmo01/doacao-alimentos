@@ -1,35 +1,34 @@
-import 'package:shared_models/shared_models.dart';
-
 /// Nomes de todas as rotas do app, em um só lugar.
 ///
 /// Use sempre as constantes (`AppRoutes.login`), nunca o texto solto: um erro
 /// de digitação vira erro de compilação, e não uma tela em branco.
 abstract final class AppRoutes {
+  /// T1 — abertura: decide para onde ir (início, boas-vindas ou login).
   static const inicio = '/';
 
-  /// Argumento: [TipoUsuario].
+  /// T2 — boas-vindas (só na primeira vez).
+  static const boasVindas = '/boas-vindas';
+
+  /// T3 — login. Argumento opcional: `String` com um aviso para mostrar
+  /// no topo (ex.: "Sua sessão expirou. Entre novamente.").
   static const login = '/login';
 
-  /// Argumento: [TipoUsuario].
+  /// T4 — cadastro em etapas.
   static const cadastro = '/cadastro';
 
-  static const inicioDoador = '/doador';
+  /// Texto dos Termos de Uso e da Política de Privacidade.
+  static const termos = '/termos';
+
+  /// Casca com a barra inferior de 5 itens (doador ou ONG).
+  static const casca = '/inicio';
+
   static const novaDoacao = '/doador/nova-doacao';
 
   /// Argumento: `int` (id da doação).
   static const detalheDoacaoDoador = '/doador/doacao';
 
-  static const inicioOng = '/ong';
-
   /// Argumento: `int` (id da doação).
   static const detalheDoacaoOng = '/ong/doacao';
 
   static const minhasReservas = '/ong/reservas';
-  static const mapa = '/ong/mapa';
-
-  /// Tela inicial de cada tipo de usuário, depois do login.
-  static String inicioDoTipo(TipoUsuario tipo) => switch (tipo) {
-    TipoUsuario.doador => inicioDoador,
-    TipoUsuario.ong => inicioOng,
-  };
 }

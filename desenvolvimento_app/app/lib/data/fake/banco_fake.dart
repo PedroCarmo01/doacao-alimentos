@@ -1,6 +1,8 @@
 import 'package:shared_models/shared_models.dart';
 
 import '../../core/api/api_exception.dart';
+import 'contas_fake.dart';
+import 'receita_fake.dart';
 
 /// "Backend de mentira" em memória, usado pelos repositórios Fake.
 ///
@@ -23,11 +25,12 @@ class BancoFake {
     this.prazoReserva = const Duration(minutes: 2),
     this.fusoHorarioUtc = -3,
     this.simularNovasDoacoes = true,
-  }) : _relogio = relogio {
+  }) : _relogio = relogio,
+       _contas = ContasFake(relogio) {
     _popular();
   }
 
-  static const senhaPadrao = 'senha123';
+  static const senhaPadrao = ContasFake.senhaPadrao;
   static const raioPadraoKm = 10.0;
 
   final Relogio _relogio;
@@ -36,7 +39,8 @@ class BancoFake {
   final int fusoHorarioUtc;
   final bool simularNovasDoacoes;
 
-  final Map<int, _ContaFake> _contas = {};
+  /// Contas e regras de cadastro (RN01–RN04) ficam numa classe própria.
+  final ContasFake _contas;
   final List<Doacao> _doacoes = [];
   final List<Reserva> _reservas = [];
   int _proximoId = 1;
@@ -72,59 +76,15 @@ class BancoFake {
 
   // ---------------------------------------------------------------- contas
 
-  Conta cadastrar(DadosCadastro dadosRecebidos) {
-    final dados = dadosRecebidos.normalizado();
-    final erros = ValidadorUsuario.validarCadastro(dados);
-    if (erros.isNotEmpty) {
-      throw ApiException(
-        codigo: 'VALIDACAO',
-        mensagem: erros.first,
-        status: 400,
-        detalhes: erros,
-      );
-    }
-    if (_contas.values.any((c) => c.conta.usuario.email == dados.email)) {
-      throw const ApiException(
-        codigo: 'EMAIL_EM_USO',
-        mensagem: 'Este e-mail já está cadastrado.',
-        status: 409,
-      );
-    }
-    final id = _proximoId++;
-    final conta = Conta(
-      usuario: Usuario(
-        id: id,
-        nome: dados.nome,
-        email: dados.email,
-        tipo: dados.tipo,
-      ),
-      perfil: Perfil(
-        usuarioId: id,
-        nomeOrganizacao: dados.nomeOrganizacao,
-        telefone: dados.telefone,
-        endereco: dados.endereco,
-        latitude: dados.latitude,
-        longitude: dados.longitude,
-      ),
-    );
-    _contas[id] = _ContaFake(conta, dados.senha);
-    return conta;
-  }
+  /// RN01–RN04 (ver [ContasFake.cadastrar]).
+  Conta cadastrar(DadosCadastro dados) => _contas.cadastrar(dados);
 
-  Conta autenticar(String email, String senha) {
-    final procurado = email.trim().toLowerCase();
-    for (final registro in _contas.values) {
-      if (registro.conta.usuario.email == procurado &&
-          registro.senha == senha) {
-        return registro.conta;
-      }
-    }
-    throw const ApiException(
-      codigo: 'CREDENCIAIS_INVALIDAS',
-      mensagem: 'E-mail ou senha incorretos.',
-      status: 401,
-    );
-  }
+  Conta autenticar(String email, String senha) =>
+      _contas.autenticar(email, senha);
+
+  /// Pré-consulta do CNPJ, como `GET /documentos/{numero}` (RN03).
+  InfoCnpj consultarCnpj(String numero, TipoUsuario tipo) =>
+      ReceitaFake.preConsultar(numero, tipo);
 
   /// Token falso no formato `fake-<id>`. Também marca quem está logado.
   String tokenPara(Conta conta) {
@@ -134,7 +94,7 @@ class BancoFake {
 
   Conta? contaDoToken(String? token) {
     if (token == null || !token.startsWith('fake-')) return null;
-    final conta = _contas[int.tryParse(token.substring(5))]?.conta;
+    final conta = _contas.porId(int.tryParse(token.substring(5)));
     if (conta != null) _logadoId = conta.usuario.id;
     return conta;
   }
@@ -304,7 +264,7 @@ class BancoFake {
   // -------------------------------------------------------------- internos
 
   Conta _exigirQualquerLogado() {
-    final conta = _contas[_logadoId]?.conta;
+    final conta = _contas.porId(_logadoId);
     if (conta == null) {
       throw const ApiException(
         codigo: 'NAO_AUTENTICADO',
@@ -400,9 +360,7 @@ class BancoFake {
     if (agora.difference(ultima) < const Duration(seconds: 45)) return;
     _ultimaSimulacao = agora;
 
-    final doador = _contas.values
-        .map((registro) => registro.conta)
-        .firstWhere((conta) => conta.usuario.ehDoador);
+    final doador = _contas.primeiroDoador;
     final numero = _doacoes.length + 1;
     _doacoes.add(
       Doacao(
@@ -429,77 +387,15 @@ class BancoFake {
     );
   }
 
-  /// Mesmos dados do `backend/tool/seed.dart`.
+  /// Doações de exemplo. As contas (os 7 usuários do seed do backend) vêm
+  /// do [ContasFake]. As doações seguem o modelo antigo até a etapa 2.
   void _popular() {
     final agora = _agora;
     final hoje = Calendario.dataNoFuso(agora, fusoHorarioUtc);
-
-    Conta conta(
-      TipoUsuario tipo,
-      String nome,
-      String email,
-      String organizacao,
-      String endereco,
-      double latitude,
-      double longitude,
-    ) => cadastrar(
-      DadosCadastro(
-        tipo: tipo,
-        nome: nome,
-        email: email,
-        senha: senhaPadrao,
-        nomeOrganizacao: organizacao,
-        endereco: endereco,
-        latitude: latitude,
-        longitude: longitude,
-      ),
-    );
-
-    final mercado = conta(
-      TipoUsuario.doador,
-      'Gerente do Mercado',
-      'mercado@exemplo.com',
-      'Mercado Bom Preço',
-      'Rua Principal, 100 - Centro',
-      -23.5229,
-      -46.1880,
-    );
-    final padaria = conta(
-      TipoUsuario.doador,
-      'Dono da Padaria',
-      'padaria@exemplo.com',
-      'Padaria Pão Quente',
-      'Avenida das Flores, 250',
-      -23.5262,
-      -46.1932,
-    );
-    final maosAmigas = conta(
-      TipoUsuario.ong,
-      'Coordenação Mãos Amigas',
-      'maosamigas@exemplo.com',
-      'ONG Mãos Amigas',
-      'Rua da Solidariedade, 45',
-      -23.5180,
-      -46.1850,
-    );
-    final pratoCheio = conta(
-      TipoUsuario.ong,
-      'Coordenação Prato Cheio',
-      'pratocheio@exemplo.com',
-      'Instituto Prato Cheio',
-      'Travessa do Bem, 12',
-      -23.5400,
-      -46.2100,
-    );
-    conta(
-      TipoUsuario.ong,
-      'Coordenação Distante',
-      'distante@exemplo.com',
-      'Associação Distante',
-      'Praça da Sé - São Paulo',
-      -23.5505,
-      -46.6333,
-    );
+    final mercado = _contas.porEmail('mercado@exemplo.com');
+    final padaria = _contas.porEmail('padaria@exemplo.com');
+    final maosAmigas = _contas.porEmail('maosamigas@exemplo.com');
+    final pratoCheio = _contas.porEmail('pratocheio@exemplo.com');
 
     Doacao doacao(
       Conta doador,
@@ -609,11 +505,4 @@ class BancoFake {
       ),
     );
   }
-}
-
-class _ContaFake {
-  _ContaFake(this.conta, this.senha);
-
-  final Conta conta;
-  final String senha;
 }

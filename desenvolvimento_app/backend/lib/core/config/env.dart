@@ -26,6 +26,7 @@ class Env {
     required this.fusoHorarioUtc,
     required this.corsOrigem,
     required this.escutarNaRede,
+    required this.consultarBrasilApi,
   });
 
   /// Lê o [arquivo] `.env` da pasta onde o comando foi executado.
@@ -50,15 +51,16 @@ class Env {
       dbTls: leitor.booleano('DB_TLS', padrao: true),
       jwtSegredo: segredo,
       jwtValidade: Duration(
-        hours: leitor.inteiro('JWT_VALIDADE_HORAS', padrao: 12),
+        days: leitor.inteiro('JWT_VALIDADE_DIAS', padrao: 30),
       ),
       prazoReserva: Duration(
-        minutes: leitor.inteiro('RESERVA_MINUTOS', padrao: 120),
+        minutes: leitor.inteiro('RESERVA_MINUTOS', padrao: 60),
       ),
       raioPadraoKm: leitor.decimal('RAIO_PADRAO_KM', padrao: 10),
       fusoHorarioUtc: leitor.inteiro('FUSO_HORARIO', padrao: -3),
       corsOrigem: leitor.texto('CORS_ORIGEM', padrao: '*'),
       escutarNaRede: leitor.booleano('ESCUTAR_NA_REDE', padrao: false),
+      consultarBrasilApi: leitor.booleano('CONSULTAR_BRASILAPI', padrao: true),
     );
   }
 
@@ -69,12 +71,18 @@ class Env {
   final String dbSenha;
   final bool dbTls;
   final String jwtSegredo;
+
+  /// RN05: quanto tempo o login vale (JWT_VALIDADE_DIAS, padrão 30 dias).
   final Duration jwtValidade;
   final Duration prazoReserva;
   final double raioPadraoKm;
   final int fusoHorarioUtc;
   final String corsOrigem;
   final bool escutarNaRede;
+
+  /// RN03: `false` = não consulta a BrasilAPI (para testar sem internet).
+  /// Todo CNPJ com dígitos válidos vira "verificação pendente".
+  final bool consultarBrasilApi;
 }
 
 /// Lê e converte variáveis, com mensagens de erro claras.

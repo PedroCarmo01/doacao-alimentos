@@ -5,9 +5,10 @@ import '../../../data/doacoes/doacao_repository.dart';
 import '../../../data/reservas/reserva_repository.dart';
 import '../../../shared/widgets/em_construcao.dart';
 
-/// TELA: Detalhe da doação (doador) — PLACEHOLDER do Sprint 0.
+/// TELA: Detalhe da doação (doador) — provisória.
 ///
-/// Responsável: Pessoa 2. Passo a passo: trilha/18-app-doador.md
+/// Provisória: a etapa indicada no EmConstrucao (05-PLANO-DE-CONSTRUCAO.md)
+/// troca o conteúdo desta tela.
 /// ATENÇÃO: mantenha o CONSTRUTOR. Ele é o contrato usado pelo AppRouter.
 class DetalheDoacaoDoadorPage extends StatelessWidget {
   const DetalheDoacaoDoadorPage({
@@ -26,7 +27,7 @@ class DetalheDoacaoDoadorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => EmConstrucao(
     titulo: 'Doação #$doacaoId',
-    responsavel: 'Pessoa 2',
-    etapa: 'trilha/18-app-doador.md',
+    etapa: 2,
+    descricao: 'Fotos, dados e linha do tempo da doação.',
   );
 }

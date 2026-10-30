@@ -11,7 +11,7 @@ import 'database.dart';
 ///
 /// Nomes de coluna esperados (use estes aliases nas queries):
 /// - usuario: `id, nome, email, tipo`
-/// - perfil:  `usuario_id, nome_organizacao, telefone, endereco, latitude, longitude`
+/// - perfil:  todas as colunas de `perfis` (nas queries: `p.*`)
 /// - doacao:  colunas de `doacoes` + opcionais `nome_doador`, `distancia_km`
 /// - reserva: colunas de `reservas` + opcionais `titulo_doacao`, `nome_ong`
 abstract final class Mapeador {
@@ -25,10 +25,26 @@ abstract final class Mapeador {
   static Perfil perfil(Linha linha) => Perfil(
     usuarioId: _inteiro(linha, 'usuario_id'),
     nomeOrganizacao: _texto(linha, 'nome_organizacao'),
+    tipoEstabelecimento: _enumOpcional(
+      linha,
+      'tipo_estabelecimento',
+      TipoEstabelecimento.values,
+    ),
+    tipoDocumento: TipoDocumento.values.byName(_texto(linha, 'tipo_documento')),
+    documento: _texto(linha, 'documento'),
+    razaoSocial: linha['razao_social'],
+    verificacao: Verificacao.values.byName(_texto(linha, 'verificacao')),
     telefone: linha['telefone'],
     endereco: linha['endereco'],
+    cep: linha['cep'],
     latitude: _decimal(linha, 'latitude'),
     longitude: _decimal(linha, 'longitude'),
+    familiasAtendidas: _inteiroOpcional(linha, 'familias_atendidas'),
+    transporte: _enumOpcional(linha, 'transporte', Transporte.values),
+    buscaAtiva: _booleano(linha, 'busca_ativa'),
+    raioKm: _decimal(linha, 'raio_km'),
+    suspensaAte: _instanteOpcional(linha, 'suspensa_ate'),
+    infoExtra: linha['info_extra'],
   );
 
   /// Linha de um `JOIN` entre `usuarios` e `perfis`.
@@ -78,6 +94,24 @@ abstract final class Mapeador {
 
   static double _decimal(Linha linha, String coluna) =>
       double.parse(_texto(linha, coluna));
+
+  static int? _inteiroOpcional(Linha linha, String coluna) {
+    final valor = linha[coluna];
+    return valor == null ? null : int.parse(valor);
+  }
+
+  /// O MySQL guarda BOOLEAN como número: '1' = verdadeiro, '0' = falso.
+  static bool _booleano(Linha linha, String coluna) =>
+      _texto(linha, coluna) == '1';
+
+  static T? _enumOpcional<T extends Enum>(
+    Linha linha,
+    String coluna,
+    List<T> valores,
+  ) {
+    final valor = linha[coluna];
+    return valor == null ? null : valores.byName(valor);
+  }
 
   static double? _decimalOpcional(Linha linha, String coluna) {
     final valor = linha[coluna];

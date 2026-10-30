@@ -21,8 +21,15 @@ abstract interface class AuthRepository {
 
   /// `GET /auth/me`. Devolve `null` se não houver token salvo ou se ele não
   /// for mais válido.
+  ///
+  /// RN05: se o token VENCEU (30 dias), apaga o token e lança a
+  /// `ApiException` com código `TOKEN_EXPIRADO`, para a tela de abertura
+  /// mostrar "Sua sessão expirou. Entre novamente.".
   Future<Conta?> contaAtual();
 }
+
+/// Código que o backend usa quando o token passou dos 30 dias (RN05).
+const codigoTokenExpirado = 'TOKEN_EXPIRADO';
 
 class AuthRepositoryApi implements AuthRepository {
   AuthRepositoryApi(this._api, this._armazenamento);
@@ -49,12 +56,11 @@ class AuthRepositoryApi implements AuthRepository {
       final json = await _api.get('/auth/me');
       return Conta.fromJson(ApiClient.objeto(json));
     } on ApiException catch (e) {
-      // 401: token expirado/inválido. 404: rota ainda não implementada.
-      if (e.status == 401 || e.status == 404) {
-        await _armazenamento.apagar();
-        return null;
-      }
-      rethrow;
+      if (!e.sessaoExpirada) rethrow; // ex.: servidor fora do ar
+      // 401: o token não serve mais. Apaga para não tentar de novo.
+      await _armazenamento.apagar();
+      if (e.codigo == codigoTokenExpirado) rethrow;
+      return null; // token inválido (ex.: banco recriado): só vai ao login
     }
   }
 }

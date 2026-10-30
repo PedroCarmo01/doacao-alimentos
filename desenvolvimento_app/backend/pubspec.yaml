@@ -13,6 +13,7 @@ dependencies:
   dart_frog: ^1.1.0           # framework HTTP (rotas por arquivo)
   dart_jsonwebtoken: ^2.14.0  # tokens JWT
   dotenv: ^4.2.0              # lê o arquivo .env
+  http: ^1.2.2                # consulta à BrasilAPI (CNPJ)
   mysql_client: ^0.0.27       # driver MySQL (pool + TLS)
   shared_models:
     path: ../shared_models

@@ -16,6 +16,7 @@ dependencies:
   geolocator: ^13.0.1            # GPS do aparelho
   http: ^1.2.2                   # cliente HTTP oficial do time do Dart
   latlong2: ^0.9.1               # tipo LatLng usado pelo flutter_map
+  shared_preferences: ^2.3.2     # lembra se a pessoa já viu as boas-vindas
   shared_models:
     path: ../shared_models       # modelos e validações compartilhados
 

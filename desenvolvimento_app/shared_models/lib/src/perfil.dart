@@ -1,4 +1,5 @@
 import 'geo/geo.dart';
+import 'tipos_de_perfil.dart';
 import 'usuario.dart';
 import 'util/json.dart';
 
@@ -6,14 +7,31 @@ import 'util/json.dart';
 ///
 /// Relação 1:1 com [Usuario]: o [usuarioId] também identifica o perfil
 /// (no banco, é a chave primária da tabela `perfis`).
+///
+/// Alguns campos só fazem sentido para um dos tipos:
+/// - só doador: [tipoEstabelecimento];
+/// - só ONG: [familiasAtendidas], [transporte], [buscaAtiva], [raioKm],
+///   [suspensaAte].
 class Perfil {
   const Perfil({
     required this.usuarioId,
     required this.nomeOrganizacao,
+    required this.tipoDocumento,
+    required this.documento,
     required this.latitude,
     required this.longitude,
+    this.verificacao = Verificacao.pendente,
+    this.tipoEstabelecimento,
+    this.razaoSocial,
     this.telefone,
     this.endereco,
+    this.cep,
+    this.familiasAtendidas,
+    this.transporte,
+    this.buscaAtiva = true,
+    this.raioKm = raioPadraoKm,
+    this.suspensaAte,
+    this.infoExtra,
   });
 
   factory Perfil.fromJson(Map<String, dynamic> json) {
@@ -21,29 +39,90 @@ class Perfil {
     return Perfil(
       usuarioId: j.inteiro('usuarioId'),
       nomeOrganizacao: j.texto('nomeOrganizacao'),
+      tipoDocumento: j.enumerado('tipoDocumento', TipoDocumento.values),
+      documento: j.texto('documento'),
+      verificacao: j.enumerado('verificacao', Verificacao.values),
+      tipoEstabelecimento: j.enumeradoOpcional(
+        'tipoEstabelecimento',
+        TipoEstabelecimento.values,
+      ),
+      razaoSocial: j.textoOpcional('razaoSocial'),
       telefone: j.textoOpcional('telefone'),
       endereco: j.textoOpcional('endereco'),
+      cep: j.textoOpcional('cep'),
       latitude: j.decimal('latitude'),
       longitude: j.decimal('longitude'),
+      familiasAtendidas: j.inteiroOpcional('familiasAtendidas'),
+      transporte: j.enumeradoOpcional('transporte', Transporte.values),
+      buscaAtiva: j.booleano('buscaAtiva'),
+      raioKm: j.decimal('raioKm'),
+      suspensaAte: j.instanteOpcional('suspensaAte'),
+      infoExtra: j.textoOpcional('infoExtra'),
     );
   }
 
+  /// Raio de busca da ONG quando ela ainda não escolheu outro.
+  static const raioPadraoKm = 10.0;
+
   final int usuarioId;
   final String nomeOrganizacao;
+  final TipoDocumento tipoDocumento;
+
+  /// Só números (14 do CNPJ ou 11 do CPF).
+  final String documento;
+  final Verificacao verificacao;
+  final TipoEstabelecimento? tipoEstabelecimento;
+
+  /// Nome oficial na Receita Federal (vem da BrasilAPI).
+  final String? razaoSocial;
   final String? telefone;
   final String? endereco;
+  final String? cep;
   final double latitude;
   final double longitude;
+  final int? familiasAtendidas;
+  final Transporte? transporte;
+
+  /// ONG: `true` = recebe avisos de doações novas (T20).
+  final bool buscaAtiva;
+
+  /// ONG: até quantos km ela busca doações.
+  final double raioKm;
+
+  /// ONG: até quando está suspensa por desistências (RN24), em UTC.
+  final DateTime? suspensaAte;
+
+  /// Texto livre: "nome e dias da feira", "qual tipo" ou os dias e horários
+  /// em que a ONG costuma retirar.
+  final String? infoExtra;
 
   Coordenadas get coordenadas => Coordenadas(latitude, longitude);
+
+  bool get ehVerificada => verificacao == Verificacao.verificada;
+
+  /// RN24: a ONG está suspensa em [agora]?
+  bool estaSuspensa(DateTime agora) =>
+      suspensaAte != null && suspensaAte!.isAfter(agora);
 
   Map<String, dynamic> toJson() => {
     'usuarioId': usuarioId,
     'nomeOrganizacao': nomeOrganizacao,
+    'tipoDocumento': tipoDocumento.name,
+    'documento': documento,
+    'verificacao': verificacao.name,
+    'tipoEstabelecimento': tipoEstabelecimento?.name,
+    'razaoSocial': razaoSocial,
     'telefone': telefone,
     'endereco': endereco,
+    'cep': cep,
     'latitude': latitude,
     'longitude': longitude,
+    'familiasAtendidas': familiasAtendidas,
+    'transporte': transporte?.name,
+    'buscaAtiva': buscaAtiva,
+    'raioKm': raioKm,
+    'suspensaAte': suspensaAte == null ? null : formatarInstante(suspensaAte!),
+    'infoExtra': infoExtra,
   };
 }
 

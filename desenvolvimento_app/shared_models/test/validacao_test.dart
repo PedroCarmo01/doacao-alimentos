@@ -20,18 +20,123 @@ void main() {
       expect(ValidadorUsuario.telefone('9999-0000'), isNotNull);
     });
 
+    // CNPJ e CPF fictícios, com os dígitos verificadores corretos.
+    final cnpj = ValidadorDocumento.completarCnpj('112223330001');
+    final cpf = ValidadorDocumento.completarCpf('123456789');
+
+    DadosCadastro cadastro({
+      TipoUsuario tipo = TipoUsuario.ong,
+      TipoEstabelecimento? estabelecimento,
+      String? documento,
+      String? telefone = '(11) 99999-0000',
+      bool aceitouTermos = true,
+    }) => DadosCadastro(
+      tipo: tipo,
+      tipoEstabelecimento: estabelecimento,
+      nome: 'Ana Lima',
+      email: 'ana@exemplo.com',
+      senha: 'senha123',
+      nomeOrganizacao: 'ONG Mãos Amigas',
+      documento: documento ?? cnpj,
+      telefone: telefone,
+      latitude: -23.51,
+      longitude: -46.18,
+      aceitouTermos: aceitouTermos,
+    );
+
     test('cadastro completo e válido não tem erros', () {
-      const dados = DadosCadastro(
-        tipo: TipoUsuario.ong,
-        nome: 'Ana Lima',
-        email: 'ana@exemplo.com',
-        senha: 'senha123',
-        nomeOrganizacao: 'ONG Mãos Amigas',
-        latitude: -23.51,
-        longitude: -46.18,
+      expect(ValidadorUsuario.validarCadastro(cadastro()), isEmpty);
+    });
+
+    test('RN02: ONG precisa de CNPJ (CPF é recusado)', () {
+      final erros = ValidadorUsuario.validarCadastro(cadastro(documento: cpf));
+
+      expect(erros, contains('ONG precisa se cadastrar com o CNPJ.'));
+    });
+
+    test('RN02: feirante e produtor rural podem usar CPF', () {
+      for (final tipo in [
+        TipoEstabelecimento.feira,
+        TipoEstabelecimento.produtorRural,
+        TipoEstabelecimento.outro,
+      ]) {
+        final dados = cadastro(
+          tipo: TipoUsuario.doador,
+          estabelecimento: tipo,
+          documento: cpf,
+        );
+        expect(
+          ValidadorUsuario.validarCadastro(dados),
+          isEmpty,
+          reason: '$tipo',
+        );
+      }
+    });
+
+    test('RN02: supermercado com CPF é recusado', () {
+      final erros = ValidadorUsuario.validarCadastro(
+        cadastro(
+          tipo: TipoUsuario.doador,
+          estabelecimento: TipoEstabelecimento.supermercado,
+          documento: cpf,
+        ),
       );
 
-      expect(ValidadorUsuario.validarCadastro(dados), isEmpty);
+      expect(erros.single, startsWith('Este tipo de estabelecimento precisa'));
+    });
+
+    test('RN02: CNPJ com dígito errado é recusado', () {
+      final errado = '${cnpj.substring(0, 13)}0' == cnpj
+          ? '${cnpj.substring(0, 13)}1'
+          : '${cnpj.substring(0, 13)}0';
+
+      expect(
+        ValidadorUsuario.validarCadastro(cadastro(documento: errado)),
+        contains(startsWith('CNPJ inválido')),
+      );
+    });
+
+    test('doador precisa escolher o tipo de estabelecimento', () {
+      final erros = ValidadorUsuario.validarCadastro(
+        cadastro(tipo: TipoUsuario.doador),
+      );
+
+      expect(erros, contains('Escolha o tipo de estabelecimento.'));
+    });
+
+    test('telefone e aceite dos termos são obrigatórios no cadastro', () {
+      final erros = ValidadorUsuario.validarCadastro(
+        cadastro(telefone: null, aceitouTermos: false),
+      );
+
+      expect(erros, hasLength(2));
+    });
+
+    test('normalizado() limpa a máscara e descarta campos do outro tipo', () {
+      final dados = DadosCadastro(
+        tipo: TipoUsuario.ong,
+        tipoEstabelecimento: TipoEstabelecimento.padaria,
+        nome: ' Ana ',
+        email: ' Ana@Exemplo.com ',
+        senha: 'senha123',
+        nomeOrganizacao: 'ONG',
+        documento: ValidadorDocumento.formatar(cnpj),
+        cep: '08780-000',
+        latitude: 0,
+        longitude: 0,
+        aceitouTermos: true,
+      ).normalizado();
+
+      expect(dados.documento, cnpj);
+      expect(dados.cep, '08780000');
+      expect(dados.email, 'ana@exemplo.com');
+      expect(dados.tipoEstabelecimento, isNull); // RN01: ONG não tem
+      expect(dados.tipoDocumento, TipoDocumento.cnpj);
+    });
+
+    test('raio da ONG só aceita as opções da tela', () {
+      expect(ValidadorUsuario.raioKm(10), isNull);
+      expect(ValidadorUsuario.raioKm(7), isNotNull);
     });
   });
 

@@ -7,7 +7,8 @@ import '../../../shared/widgets/em_construcao.dart';
 
 /// TELA: Detalhe da doação (ONG), com o botão Reservar — PLACEHOLDER.
 ///
-/// Responsável: Pessoa 5. Passo a passo: trilha/19-app-ong.md
+/// Provisória: a etapa indicada no EmConstrucao (05-PLANO-DE-CONSTRUCAO.md)
+/// troca o conteúdo desta tela.
 /// ATENÇÃO: mantenha o CONSTRUTOR. Ele é o contrato usado pelo AppRouter.
 class DetalheDoacaoOngPage extends StatelessWidget {
   const DetalheDoacaoOngPage({
@@ -26,7 +27,7 @@ class DetalheDoacaoOngPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => EmConstrucao(
     titulo: 'Doação #$doacaoId',
-    responsavel: 'Pessoa 5',
-    etapa: 'trilha/19-app-ong.md',
+    etapa: 3,
+    descricao: 'Fotos, dados da doação e o botão Vou retirar.',
   );
 }

@@ -43,6 +43,9 @@ class LeitorJson {
     _erro(chave, 'é obrigatório e deve ser um número inteiro');
   }
 
+  int? inteiroOpcional(String chave) =>
+      _json[chave] == null ? null : inteiro(chave);
+
   double decimal(String chave) {
     final valor = _json[chave];
     if (valor is num) return valor.toDouble();
@@ -94,6 +97,9 @@ class LeitorJson {
     final aceitos = valores.map((opcao) => opcao.name).join(', ');
     _erro(chave, 'deve ser um destes valores: $aceitos');
   }
+
+  T? enumeradoOpcional<T extends Enum>(String chave, List<T> valores) =>
+      _json[chave] == null ? null : enumerado(chave, valores);
 
   LeitorJson objeto(String chave) {
     final valor = _json[chave];

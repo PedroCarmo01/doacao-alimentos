@@ -53,7 +53,21 @@ Content-Type: application/json
 GET {{base}}/auth/me
 Authorization: Bearer {{loginDoador.response.body.$.token}}
 
-### Cadastro de uma nova ONG: 201 na primeira vez, 409 EMAIL_EM_USO na segunda
+### Token vencido/ausente: 401 (sem o cabeçalho Authorization)
+GET {{base}}/auth/me
+
+### Pré-consulta do CNPJ (RN03): associação ATIVA → 200 (só os números!)
+GET {{base}}/documentos/11222333000181?tipo=ong
+
+### Pré-consulta: CNPJ de empresa como ONG → 422 CNPJ_NAO_E_ENTIDADE
+GET {{base}}/documentos/00000000000191?tipo=ong
+
+### Pré-consulta: dígito errado → 422 DOCUMENTO_INVALIDO
+GET {{base}}/documentos/11222333000182
+
+### Cadastro de ONG (RN01–RN04): 201 na primeira vez, 409 EMAIL_EM_USO na segunda
+# 11.222.333/0001-81 é uma associação ATIVA de verdade (natureza 3999).
+# Recrie os dados com o seed para repetir este teste.
 POST {{base}}/auth/cadastro
 Content-Type: application/json
 
@@ -63,10 +77,79 @@ Content-Type: application/json
   "email": "novaesperanca@exemplo.com",
   "senha": "senha123",
   "nomeOrganizacao": "ONG Nova Esperança",
+  "documento": "11.222.333/0001-81",
   "telefone": "(11) 99999-0000",
   "endereco": "Rua Nova, 10",
+  "cep": "08780-000",
   "latitude": -23.5300,
-  "longitude": -46.1900
+  "longitude": -46.1900,
+  "familiasAtendidas": 30,
+  "transporte": "carro",
+  "aceitouTermos": true
+}
+
+### Cadastro de ONG com CNPJ de empresa → 422 CNPJ_NAO_E_ENTIDADE
+POST {{base}}/auth/cadastro
+Content-Type: application/json
+
+{
+  "tipo": "ong",
+  "nome": "Fulano de Tal",
+  "email": "fulano@exemplo.com",
+  "senha": "senha123",
+  "nomeOrganizacao": "Não é ONG",
+  "documento": "00000000000191",
+  "telefone": "(11) 99999-0000",
+  "latitude": -23.5300,
+  "longitude": -46.1900,
+  "aceitouTermos": true
+}
+
+### Cadastro de feirante com CPF (RN02) → 201, verificação pendente
+POST {{base}}/auth/cadastro
+Content-Type: application/json
+
+{
+  "tipo": "doador",
+  "tipoEstabelecimento": "feira",
+  "nome": "Maria da Feira",
+  "email": "mariafeira@exemplo.com",
+  "senha": "senha123",
+  "nomeOrganizacao": "Banca da Maria",
+  "documento": "123.456.789-09",
+  "telefone": "(11) 97777-0000",
+  "infoExtra": "Feira de domingo",
+  "latitude": -23.5210,
+  "longitude": -46.1850,
+  "aceitouTermos": true
+}
+
+### Editar o perfil da ONG (busca ativa e raio) → 200
+PUT {{base}}/perfil
+Authorization: Bearer {{loginOng.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "nome": "Coordenação Mãos Amigas",
+  "nomeOrganizacao": "ONG Mãos Amigas",
+  "telefone": "(11) 4799-1111",
+  "endereco": "Rua da Solidariedade, 45",
+  "latitude": -23.5180,
+  "longitude": -46.1850,
+  "familiasAtendidas": 120,
+  "transporte": "carro",
+  "buscaAtiva": true,
+  "raioKm": 5
+}
+
+### Registrar o celular para o push real (etapa futura) → 204
+POST {{base}}/dispositivos
+Authorization: Bearer {{loginOng.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "token": "token-de-teste-do-firebase",
+  "plataforma": "android"
 }
 
 

@@ -6,10 +6,18 @@ import 'package:summit_backend/core/config/env.dart';
 import 'package:summit_backend/core/db/database.dart';
 import 'package:summit_backend/core/seguranca/senha_service.dart';
 import 'package:summit_backend/core/seguranca/token_service.dart';
+import 'package:summit_backend/documentos/consulta_cnpj.dart';
+import 'package:summit_backend/documentos/consulta_cnpj_brasil_api.dart';
+import 'package:summit_backend/documentos/consulta_cnpj_fake.dart';
+import 'package:summit_backend/documentos/documento_service.dart';
+import 'package:summit_backend/documentos/reverificacao_job.dart';
+import 'package:summit_backend/perfil/perfil_repository_mysql.dart';
 
 // Recursos criados UMA vez, mesmo que o Dart Frog recarregue o código
 // (hot reload) durante o desenvolvimento.
 Database? _database;
+ConsultaCnpj? _consultaCnpj;
+ReverificacaoJob? _reverificacao;
 // ExpiracaoJob? _job;  // TODO(Pessoa 3): descomentar junto com o bloco abaixo.
 
 /// Ponto de entrada customizado do Dart Frog ("custom entrypoint").
@@ -30,6 +38,20 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
     validade: env.jwtValidade,
   );
 
+  // POLIMORFISMO: o resto do backend só conhece a interface ConsultaCnpj.
+  // CONSULTAR_BRASILAPI=false troca a consulta real por uma sem internet.
+  final consultaCnpj = _consultaCnpj ??= env.consultarBrasilApi
+      ? ConsultaCnpjBrasilApi()
+      : ConsultaCnpjFake();
+
+  // RN03: a cada 10 min, tenta de novo verificar os CNPJs "pendentes".
+  _reverificacao ??= ReverificacaoJob(
+    DocumentoService(
+      consulta: consultaCnpj,
+      perfis: PerfilRepositoryMysql(database),
+    ),
+  )..iniciar();
+
   // TODO(Pessoa 3): iniciar o job de expiração de reservas (trilha/15).
   // _job ??= ExpiracaoJob(
   //   ReservaService(
@@ -40,6 +62,7 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
   // )..iniciar();
 
   final aplicacao = handler
+      .use(provider<ConsultaCnpj>((_) => consultaCnpj))
       .use(provider<SenhaService>((_) => senhas))
       .use(provider<TokenService>((_) => tokens))
       .use(provider<Relogio>((_) => relogio))
