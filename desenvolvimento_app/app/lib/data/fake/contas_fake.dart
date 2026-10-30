@@ -82,6 +82,50 @@ class ContasFake {
     );
   }
 
+  /// Mesmas regras do `PerfilService` do backend (`PUT /perfil`).
+  Conta atualizarPerfil(int usuarioId, DadosPerfil recebidos) {
+    final dados = recebidos.normalizado();
+    final erros = ValidadorUsuario.validarPerfil(dados);
+    if (erros.isNotEmpty) {
+      throw ApiException(
+        codigo: 'VALIDACAO',
+        mensagem: erros.first,
+        status: 400,
+        detalhes: erros,
+      );
+    }
+    final registro = _registros[usuarioId]!;
+    final antiga = registro.conta;
+    final ehOng = antiga.usuario.ehOng;
+    final perfil = antiga.perfil;
+    final nova = Conta(
+      usuario: antiga.usuario.copyWith(nome: dados.nome),
+      perfil: Perfil(
+        usuarioId: usuarioId,
+        nomeOrganizacao: dados.nomeOrganizacao,
+        tipoEstabelecimento: perfil.tipoEstabelecimento,
+        tipoDocumento: perfil.tipoDocumento,
+        documento: perfil.documento,
+        razaoSocial: perfil.razaoSocial,
+        verificacao: perfil.verificacao,
+        telefone: dados.telefone,
+        endereco: dados.endereco,
+        cep: dados.cep,
+        latitude: dados.latitude,
+        longitude: dados.longitude,
+        // RN01: doador não tem campos de ONG.
+        familiasAtendidas: ehOng ? dados.familiasAtendidas : null,
+        transporte: ehOng ? dados.transporte : null,
+        buscaAtiva: ehOng ? dados.buscaAtiva : true,
+        raioKm: ehOng ? dados.raioKm : Perfil.raioPadraoKm,
+        suspensaAte: perfil.suspensaAte,
+        infoExtra: dados.infoExtra,
+      ),
+    );
+    _registros[usuarioId] = _ContaComSenha(nova, registro.senha);
+    return nova;
+  }
+
   bool _existe(bool Function(Conta conta) teste) =>
       _registros.values.any((registro) => teste(registro.conta));
 

@@ -7,6 +7,7 @@ import '../data/fake/banco_fake.dart';
 import '../data/fotos/seletor_de_fotos.dart';
 import '../data/localizacao/cep_repository.dart';
 import '../data/localizacao/localizacao_service.dart';
+import '../data/perfil/perfil_repository.dart';
 import '../data/reservas/reserva_repository.dart';
 import '../data/sistema/sistema_repository.dart';
 import 'api/api_client.dart';
@@ -26,6 +27,7 @@ class Dependencias {
     required this.preferencias,
     required this.auth,
     required this.documentos,
+    required this.perfis,
     required this.doacoes,
     required this.reservas,
     required this.sistema,
@@ -48,6 +50,7 @@ class Dependencias {
       preferencias: PreferenciasDoAparelho(),
       auth: AuthRepositoryApi(api, armazenamento),
       documentos: DocumentoRepositoryApi(api),
+      perfis: PerfilRepositoryApi(api),
       doacoes: DoacaoRepositoryApi(api),
       reservas: ReservaRepositoryApi(api),
       sistema: SistemaRepositoryApi(api),
@@ -73,6 +76,7 @@ class Dependencias {
       preferencias: PreferenciasMemoria(),
       auth: AuthRepositoryFake(dados, armazenamento),
       documentos: DocumentoRepositoryFake(dados),
+      perfis: PerfilRepositoryFake(dados),
       doacoes: DoacaoRepositoryFake(dados),
       reservas: ReservaRepositoryFake(dados),
       sistema: const SistemaRepositoryFake(),
@@ -88,6 +92,7 @@ class Dependencias {
   final Preferencias preferencias;
   final AuthRepository auth;
   final DocumentoRepository documentos;
+  final PerfilRepository perfis;
   final DoacaoRepository doacoes;
   final ReservaRepository reservas;
   final SistemaRepository sistema;

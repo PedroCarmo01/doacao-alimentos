@@ -54,12 +54,12 @@ A coluna **Etapa** diz em qual etapa do desenvolvimento a rota ficou pronta.
 | PUT | `/doacoes/{id}` | doador dono | 2 ✅ |
 | DELETE | `/doacoes/{id}` | doador dono | 2 ✅ |
 | GET | `/arquivos/{nome}` | público | 2 ✅ |
+| GET | `/proximas?raioKm=` | ONG | 3 ✅ |
 
-Rotas da versão anterior, que serão refeitas nas etapas 3 e 4:
+Rotas da versão anterior, que serão refeitas na etapa 4:
 
 | Método | Rota | Quem | Dono | Trilha |
 |---|---|---|---|---|
-| GET | `/proximas?raioKm=` | ONG | P4 | 14 |
 | POST | `/reservas` | ONG | P3 | 15 |
 | GET | `/reservas` | ONG | P3 | 15 |
 | DELETE | `/reservas/{id}` | ONG dona | P3 | 15 |
@@ -269,8 +269,11 @@ RN12: `disponivel` cancela sem motivo. `reservada` **exige** motivo (400 sem ele
 ### `GET /proximas?raioKm=5` → `200 {"doacoes": [Doacao]}`
 
 - Centro: a localização do **perfil** da ONG (não vem do app).
-- `raioKm` opcional (padrão `RAIO_PADRAO_KM`), limitado a 0,5–50. Não numérico: 400.
-- Só doações `disponivel` com a janela aberta, com `distanciaKm`, **ordenadas da mais perto para a mais longe**.
+- `raioKm` opcional. Sem ele, vale o **raio salvo no perfil** (T20/T50; muda com `PUT /perfil`). Limitado a 0,5–50. Não numérico: 400.
+- Só doações `disponivel` com a janela de retirada aberta (`janela_fim > agora`), com `distanciaKm`, `fotos` e `nomeDoador`, **ordenadas da mais perto para a mais longe**.
+- **RN22:** não traz as doações que essa ONG está bloqueada para aceitar (`bloqueios_doacao`, depois de desistir).
+- Como funciona: o banco filtra um **retângulo** ao redor da ONG (usa o índice de latitude/longitude); o service calcula a distância exata (Haversine) e tira os "cantos" fora do círculo.
+- ONG suspensa (RN24) **vê** a lista; só não aceita (etapa 4).
 - Doador: 403.
 
 ---

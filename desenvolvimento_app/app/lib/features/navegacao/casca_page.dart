@@ -5,8 +5,8 @@ import '../../core/routing/app_routes.dart';
 import '../../shared/widgets/barra_inferior.dart';
 import '../../shared/widgets/em_construcao.dart';
 import '../doador/home_doador_page.dart';
-import '../mapa/presentation/mapa_page.dart';
-import '../ong/presentation/home_ong_page.dart';
+import '../mapa/mapa_page.dart';
+import '../ong/home_ong_page.dart';
 import '../perfil/perfil_page.dart';
 
 /// "Casca" do app depois do login: a barra inferior de 5 itens e a aba
@@ -51,7 +51,12 @@ class _CascaPageState extends State<CascaPage> {
     );
     return [
       if (_ehOng)
-        HomeOngPage(doacoes: d.doacoes, sessao: d.sessao)
+        HomeOngPage(
+          doacoes: d.doacoes,
+          perfis: d.perfis,
+          sessao: d.sessao,
+          relogio: d.relogio,
+        )
       else
         HomeDoadorPage(
           key: ValueKey(_versaoDoInicio),

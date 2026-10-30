@@ -18,6 +18,7 @@ dependencies:
   image_picker: ^1.1.2           # tirar foto ou escolher da galeria (doações)
   latlong2: ^0.9.1               # tipo LatLng usado pelo flutter_map
   shared_preferences: ^2.3.2     # lembra se a pessoa já viu as boas-vindas
+  url_launcher: ^6.3.1           # "Como chegar": abre o app de mapas
   shared_models:
     path: ../shared_models       # modelos e validações compartilhados
 

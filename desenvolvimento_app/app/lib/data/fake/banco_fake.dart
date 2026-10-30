@@ -81,6 +81,10 @@ class BancoFake {
   InfoCnpj consultarCnpj(String numero, TipoUsuario tipo) =>
       ReceitaFake.preConsultar(numero, tipo);
 
+  /// `PUT /perfil` (busca ativa, raio e dados da organização).
+  Conta atualizarPerfil(DadosPerfil dados) =>
+      _contas.atualizarPerfil(_exigirQualquerLogado().usuario.id, dados);
+
   /// Token falso no formato `fake-<id>`. Também marca quem está logado.
   String tokenPara(Conta conta) {
     _logadoId = conta.usuario.id;

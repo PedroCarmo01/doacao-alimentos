@@ -261,16 +261,20 @@ Content-Type: application/json
 }
 
 ### =====================================================================
-### PROXIMIDADE — Pessoa 4 (trilha/14)
+### PROXIMIDADE — etapa 3
 ### =====================================================================
 
-### Doações disponíveis perto da ONG logada (raio padrão do .env)
+### Doações disponíveis perto da ONG logada (raio salvo no perfil)
 GET {{base}}/proximas
 Authorization: Bearer {{loginOng.response.body.$.token}}
 
 ### Com raio de 2 km
 GET {{base}}/proximas?raioKm=2
 Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Doador não pode buscar (403)
+GET {{base}}/proximas
+Authorization: Bearer {{loginDoador.response.body.$.token}}
 
 
 ### =====================================================================

@@ -8,8 +8,8 @@ import '../../features/auth/termos_page.dart';
 import '../../features/doador/detalhe_doacao_doador_page.dart';
 import '../../features/doador/nova_doacao_page.dart';
 import '../../features/navegacao/casca_page.dart';
-import '../../features/ong/presentation/detalhe_doacao_ong_page.dart';
-import '../../features/ong/presentation/minhas_reservas_page.dart';
+import '../../features/ong/detalhe_doacao_ong_page.dart';
+import '../../features/ong/minhas_reservas_page.dart';
 import '../dependencias.dart';
 import 'app_routes.dart';
 
@@ -90,7 +90,7 @@ class AppRouter {
       AppRoutes.detalheDoacaoOng => DetalheDoacaoOngPage(
         doacaoId: _id(argumento),
         doacoes: d.doacoes,
-        reservas: d.reservas,
+        sessao: d.sessao,
         relogio: d.relogio,
       ),
       AppRoutes.minhasReservas => MinhasReservasPage(

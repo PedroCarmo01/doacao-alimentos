@@ -50,5 +50,11 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- "Como chegar" (url_launcher): o Android 11+ só deixa o app ver
+             os apps que abrem links https se pedirmos aqui. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
     </queries>
 </manifest>

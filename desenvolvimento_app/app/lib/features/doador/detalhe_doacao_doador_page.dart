@@ -8,6 +8,7 @@ import '../../shared/widgets/estados.dart';
 import '../../shared/widgets/etiqueta_status.dart';
 import '../../shared/widgets/primary_button.dart';
 import 'detalhe_doacao_doador_view_model.dart';
+import '../../shared/widgets/detalhe_da_doacao.dart';
 import 'partes_do_detalhe.dart';
 
 /// T12 — Detalhe da doação (doador): fotos, dados, linha do tempo, a ONG
