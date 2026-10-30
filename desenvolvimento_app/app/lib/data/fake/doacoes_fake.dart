@@ -139,7 +139,7 @@ class DoacoesFake {
       if (doacao.doadorId != usuario.id) throw naoEncontrada;
       return DetalheDoacao(
         doacao: doacao,
-        reserva: reserva,
+        reserva: reserva?.semCodigo(), // RN26: o código é só da ONG
         ong: reserva == null ? null : _resumo(reserva.ongId),
       );
     }
@@ -170,21 +170,14 @@ class DoacoesFake {
     StatusReserva status, {
     DateTime? encerradaEm,
     String? motivo,
+    bool? contouDesistencia,
   }) {
-    final nova = Reserva(
-      id: reserva.id,
-      doacaoId: reserva.doacaoId,
-      ongId: reserva.ongId,
+    reservas[reservas.indexOf(reserva)] = reserva.copyWith(
       status: status,
-      reservadoEm: reserva.reservadoEm,
-      expiraEm: reserva.expiraEm,
-      encerradaEm: encerradaEm ?? reserva.encerradaEm,
-      codigoRetirada: reserva.codigoRetirada,
-      motivo: motivo ?? reserva.motivo,
-      tituloDoacao: reserva.tituloDoacao,
-      nomeOng: reserva.nomeOng,
+      encerradaEm: encerradaEm,
+      motivo: motivo,
+      contouDesistencia: contouDesistencia,
     );
-    reservas[reservas.indexOf(reserva)] = nova;
     salvar(porId(reserva.doacaoId));
   }
 

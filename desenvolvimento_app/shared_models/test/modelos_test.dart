@@ -145,6 +145,98 @@ void main() {
       expect(reserva.estaVencida(DateTime.utc(2026, 9, 15, 15)), isFalse);
       expect(reserva.estaVencida(DateTime.utc(2026, 9, 15, 16)), isTrue);
     });
+
+    test('RN23: tolerância de 5 min contada a partir do aceite', () {
+      const cinco = Duration(minutes: 5);
+      final aceite = reserva.reservadoEm;
+      expect(
+        reserva.dentroDaTolerancia(
+          aceite.add(const Duration(minutes: 5)),
+          cinco,
+        ),
+        isTrue,
+      );
+      expect(
+        reserva.dentroDaTolerancia(
+          aceite.add(const Duration(minutes: 6)),
+          cinco,
+        ),
+        isFalse,
+      );
+    });
+
+    test('RN26: semCodigo tira o código e mantém o resto', () {
+      final comCodigo = Reserva.fromJson({
+        ...reserva.toJson(),
+        'codigoRetirada': '4821',
+      });
+      final json = comCodigo.semCodigo().toJson();
+      expect(comCodigo.codigoRetirada, '4821');
+      expect(json.containsKey('codigoRetirada'), isFalse);
+      expect(json['id'], 7);
+    });
+  });
+
+  group('RegrasDaRetirada', () {
+    const regras = RegrasDaRetirada();
+    final agora = DateTime.utc(2026, 9, 15, 14);
+
+    test('RN21: prazo de 60 min quando a janela vai além', () {
+      expect(
+        regras.prazoFinal(
+          agora: agora,
+          janelaFim: agora.add(const Duration(hours: 3)),
+        ),
+        agora.add(const Duration(minutes: 60)),
+      );
+    });
+
+    test('RN21: o prazo nunca passa do fim do horário de retirada', () {
+      final fim = agora.add(const Duration(minutes: 20));
+      expect(regras.prazoFinal(agora: agora, janelaFim: fim), fim);
+    });
+
+    test('vai e volta em JSON', () {
+      final volta = RegrasDaRetirada.fromJson(
+        const RegrasDaRetirada(prazo: Duration(minutes: 2)).toJson(),
+      );
+      expect(volta.prazo, const Duration(minutes: 2));
+      expect(volta.suspensao, const Duration(hours: 48));
+    });
+  });
+
+  group('SituacaoDaOng', () {
+    SituacaoDaOng com(int desistencias, int ativas) => SituacaoDaOng(
+      desistenciasRecentes: desistencias,
+      regras: const RegrasDaRetirada(),
+      ativas: [
+        for (var i = 0; i < ativas; i++)
+          Reserva(
+            id: i,
+            doacaoId: i,
+            ongId: 1,
+            status: StatusReserva.ativa,
+            reservadoEm: DateTime.utc(2026),
+            expiraEm: DateTime.utc(2026, 1, 2),
+          ),
+      ],
+    );
+
+    test('RN24: na 2ª desistência avisa que a próxima suspende', () {
+      expect(com(1, 0).proximaDesistenciaSuspende, isFalse);
+      expect(com(2, 0).proximaDesistenciaSuspende, isTrue);
+    });
+
+    test('RN25: duas retiradas em andamento atingem o limite', () {
+      expect(com(0, 1).atingiuLimite, isFalse);
+      expect(com(0, 2).atingiuLimite, isTrue);
+    });
+
+    test('vai e volta em JSON com as retiradas', () {
+      final volta = SituacaoDaOng.fromJson(com(2, 1).toJson());
+      expect(volta.ativas, hasLength(1));
+      expect(volta.desistenciasRecentes, 2);
+    });
   });
 
   group('RespostaAutenticacao', () {

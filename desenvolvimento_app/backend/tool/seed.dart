@@ -36,7 +36,7 @@ Future<void> main() async {
       contas,
       agora: agora,
       hoje: Calendario.dataNoFuso(agora, env.fusoHorarioUtc),
-      prazoReserva: env.prazoReserva,
+      prazoReserva: env.regrasDaRetirada.prazo,
     );
     await doacoes.criar();
     await criarComunidadeDeExemplo(

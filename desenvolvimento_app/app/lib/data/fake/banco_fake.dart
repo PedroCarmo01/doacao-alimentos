@@ -5,6 +5,7 @@ import 'contas_fake.dart';
 import 'doacoes_fake.dart';
 import 'exemplos_fake.dart';
 import 'receita_fake.dart';
+import 'retiradas_fake.dart';
 
 /// "Backend de mentira" em memória, usado pelos repositórios Fake.
 ///
@@ -16,7 +17,8 @@ import 'receita_fake.dart';
 /// Ele aplica as MESMAS regras do backend e lança [ApiException] com os
 /// MESMOS códigos. Assim, trocar Fake por API não muda nada nas telas
 /// (princípio de substituição de Liskov). As regras ficam em classes
-/// menores: [ContasFake] (cadastro e login) e [DoacoesFake] (doações).
+/// menores: [ContasFake] (cadastro e login), [DoacoesFake] (doações) e
+/// [RetiradasFake] (aceite, código, desistência e suspensão).
 ///
 /// Diferenças propositais: prazo de retirada de 2 minutos (para ver a
 /// expiração acontecer) e, a cada 45 segundos, uma "doação surpresa"
@@ -31,6 +33,12 @@ class BancoFake {
   }) : _relogio = relogio,
        _contas = ContasFake(relogio) {
     _doacoes = DoacoesFake(relogio, _contas, fusoHorarioUtc: fusoHorarioUtc);
+    retiradas = RetiradasFake(
+      relogio,
+      _contas,
+      _doacoes,
+      RegrasDaRetirada(prazo: prazoReserva),
+    );
     ExemplosFake(_doacoes, _contas, agora: relogio.agora()).criar();
   }
 
@@ -45,14 +53,11 @@ class BancoFake {
 
   final ContasFake _contas;
   late final DoacoesFake _doacoes;
+
+  /// As regras de aceite e retirada (usadas pelo `ReservaRepositoryFake`).
+  late final RetiradasFake retiradas;
   int? _logadoId;
   DateTime? _ultimaSimulacao;
-
-  static const _reservaNaoAtiva = ApiException(
-    codigo: 'RESERVA_NAO_ATIVA',
-    mensagem: 'Esta retirada não está mais em andamento.',
-    status: 409,
-  );
 
   /// Cópias somente leitura (úteis em testes).
   List<Doacao> get doacoes => List.unmodifiable(_doacoes.doacoes);
@@ -66,7 +71,7 @@ class BancoFake {
     if (atrasoDeRede > Duration.zero) {
       await Future<void>.delayed(atrasoDeRede);
     }
-    _expirarReservasVencidas();
+    retiradas.expirarVencidas();
   }
 
   // ---------------------------------------------------------------- contas
@@ -140,72 +145,13 @@ class BancoFake {
     return proximas;
   }
 
-  // ------------------------------------------- retiradas (refeitas na etapa 4)
+  // ------------------------------------------------------------ retiradas
 
-  Reserva reservar(int doacaoId) {
-    final conta = _exigirLogado(TipoUsuario.ong);
-    final doacao = _doacoes.porId(doacaoId);
-    if (!doacao.podeSerReservada(_agora)) {
-      throw const ApiException(
-        codigo: 'DOACAO_INDISPONIVEL',
-        mensagem: 'Que pena! Outra ONG aceitou esta doação primeiro.',
-        status: 409,
-      );
-    }
-    // RN21: o prazo nunca passa do fim do horário de retirada.
-    final limite = _agora.add(prazoReserva);
-    final reserva = Reserva(
-      id: _doacoes.novoId(),
-      doacaoId: doacaoId,
-      ongId: conta.usuario.id,
-      status: StatusReserva.ativa,
-      reservadoEm: _agora,
-      expiraEm: limite.isBefore(doacao.janelaFim) ? limite : doacao.janelaFim,
-      tituloDoacao: doacao.titulo,
-      nomeOng: conta.perfil.nomeOrganizacao,
-    );
-    _doacoes.reservas.add(reserva);
-    _doacoes.salvar(doacao.copyWith(status: StatusDoacao.reservada));
-    return reserva;
-  }
+  /// A conta logada, se for ONG (senão, 403 como no backend).
+  Conta ongLogada() => _exigirLogado(TipoUsuario.ong);
 
-  List<Reserva> reservasDaOngLogada() {
-    final conta = _exigirLogado(TipoUsuario.ong);
-    return _doacoes.reservas.where((r) => r.ongId == conta.usuario.id).toList()
-      ..sort((a, b) => b.reservadoEm.compareTo(a.reservadoEm));
-  }
-
-  void cancelarReserva(int reservaId) {
-    final conta = _exigirLogado(TipoUsuario.ong);
-    final reserva = _reserva(reservaId);
-    if (reserva.ongId != conta.usuario.id) throw DoacoesFake.naoEncontrada;
-    if (!reserva.estaAtiva) throw _reservaNaoAtiva;
-    _doacoes.trocarReserva(
-      reserva,
-      StatusReserva.canceladaOng,
-      encerradaEm: _agora,
-    );
-    _voltarParaDisponivel(reserva.doacaoId);
-  }
-
-  /// A ONG dona da retirada OU o doador dono da doação podem confirmar.
-  Reserva confirmarRetirada(int reservaId) {
-    final usuario = _exigirQualquerLogado().usuario;
-    final reserva = _reserva(reservaId);
-    final doacao = _doacoes.porId(reserva.doacaoId);
-    final permitido = usuario.ehOng
-        ? reserva.ongId == usuario.id
-        : doacao.doadorId == usuario.id;
-    if (!permitido) throw DoacoesFake.naoEncontrada;
-    if (!reserva.estaAtiva) throw _reservaNaoAtiva;
-    _doacoes.trocarReserva(
-      reserva,
-      StatusReserva.concluida,
-      encerradaEm: _agora,
-    );
-    _doacoes.salvar(doacao.copyWith(status: StatusDoacao.concluida));
-    return _reserva(reservaId);
-  }
+  /// A conta logada, se for doador.
+  Conta doadorLogado() => _exigirLogado(TipoUsuario.doador);
 
   // -------------------------------------------------------------- internos
 
@@ -233,27 +179,6 @@ class BancoFake {
       );
     }
     return conta;
-  }
-
-  Reserva _reserva(int id) =>
-      _doacoes.reservas.where((r) => r.id == id).firstOrNull ??
-      (throw DoacoesFake.naoEncontrada);
-
-  void _voltarParaDisponivel(int doacaoId) => _doacoes.salvar(
-    _doacoes.porId(doacaoId).copyWith(status: StatusDoacao.disponivel),
-  );
-
-  void _expirarReservasVencidas() {
-    for (final reserva in List.of(_doacoes.reservas)) {
-      if (reserva.estaVencida(_agora)) {
-        _doacoes.trocarReserva(
-          reserva,
-          StatusReserva.expirada,
-          encerradaEm: _agora,
-        );
-        _voltarParaDisponivel(reserva.doacaoId);
-      }
-    }
   }
 
   /// Modo demonstração: a cada 45 s aparece uma doação nova do mercado.

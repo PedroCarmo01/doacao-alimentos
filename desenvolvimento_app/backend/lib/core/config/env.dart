@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dotenv/dotenv.dart';
+import 'package:shared_models/shared_models.dart';
 
 /// Configurações do backend.
 ///
@@ -21,7 +22,7 @@ class Env {
     required this.dbTls,
     required this.jwtSegredo,
     required this.jwtValidade,
-    required this.prazoReserva,
+    required this.regrasDaRetirada,
     required this.raioPadraoKm,
     required this.fusoHorarioUtc,
     required this.corsOrigem,
@@ -54,8 +55,22 @@ class Env {
       jwtValidade: Duration(
         days: leitor.inteiro('JWT_VALIDADE_DIAS', padrao: 30),
       ),
-      prazoReserva: Duration(
-        minutes: leitor.inteiro('RESERVA_MINUTOS', padrao: 60),
+      regrasDaRetirada: RegrasDaRetirada(
+        prazo: Duration(minutes: leitor.inteiro('RESERVA_MINUTOS', padrao: 60)),
+        tolerancia: Duration(
+          minutes: leitor.inteiro('TOLERANCIA_MINUTOS', padrao: 5),
+        ),
+        desistenciasParaSuspender: leitor.inteiro(
+          'DESISTENCIAS_PARA_SUSPENDER',
+          padrao: 3,
+        ),
+        janelaDesistencias: Duration(
+          days: leitor.inteiro('JANELA_DESISTENCIAS_DIAS', padrao: 30),
+        ),
+        suspensao: Duration(
+          hours: leitor.inteiro('SUSPENSAO_HORAS', padrao: 48),
+        ),
+        retiradasSimultaneas: leitor.inteiro('RESERVAS_SIMULTANEAS', padrao: 2),
       ),
       raioPadraoKm: leitor.decimal('RAIO_PADRAO_KM', padrao: 10),
       fusoHorarioUtc: leitor.inteiro('FUSO_HORARIO', padrao: -3),
@@ -76,7 +91,9 @@ class Env {
 
   /// RN05: quanto tempo o login vale (JWT_VALIDADE_DIAS, padrão 30 dias).
   final Duration jwtValidade;
-  final Duration prazoReserva;
+
+  /// RN21–RN25: prazo, tolerância, suspensão e limite de retiradas.
+  final RegrasDaRetirada regrasDaRetirada;
   final double raioPadraoKm;
   final int fusoHorarioUtc;
   final String corsOrigem;

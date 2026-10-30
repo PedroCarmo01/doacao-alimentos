@@ -30,6 +30,14 @@ abstract final class Formatador {
       '${_dois(duracao.inHours)}:${_dois(duracao.inMinutes % 60)}:'
       '${_dois(duracao.inSeconds % 60)}';
 
+  /// Contador regressivo: `58:41` ou, com 1 hora ou mais, `1:02:05`.
+  static String contador(Duration duracao) {
+    final minutosESegundos =
+        '${_dois(duracao.inMinutes % 60)}:${_dois(duracao.inSeconds % 60)}';
+    if (duracao.inHours == 0) return minutosESegundos;
+    return '${duracao.inHours}:$minutosESegundos';
+  }
+
   /// `42 min` ou `1 h 05 min` (prazos de retirada).
   static String duracaoCurta(Duration duracao) {
     final minutos = duracao.inMinutes % 60;

@@ -165,6 +165,7 @@ void main() {
       final frutas = await doacaoComTitulo('Frutas e verduras do dia');
       final vm = DetalheDoacaoDoadorViewModel(
         doacoes: deps.doacoes,
+        reservas: deps.reservas,
         relogio: relogio,
         doacaoId: frutas.id,
       );
@@ -178,6 +179,7 @@ void main() {
       final cestas = await doacaoComTitulo('Cestas de mercearia');
       final vm = DetalheDoacaoDoadorViewModel(
         doacoes: deps.doacoes,
+        reservas: deps.reservas,
         relogio: relogio,
         doacaoId: cestas.id,
       );

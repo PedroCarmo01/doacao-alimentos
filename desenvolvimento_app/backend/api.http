@@ -278,10 +278,10 @@ Authorization: Bearer {{loginDoador.response.body.$.token}}
 
 
 ### =====================================================================
-### RESERVAS — Pessoa 3 (trilha/15)
+### RETIRADAS (reservas) — etapa 4
 ### =====================================================================
 
-### Reservar (troque o id por uma doação disponível)
+### "Vou retirar" (troque o id por uma doação disponível de /proximas)
 POST {{base}}/reservas
 Authorization: Bearer {{loginOng.response.body.$.token}}
 Content-Type: application/json
@@ -290,14 +290,34 @@ Content-Type: application/json
   "doacaoId": 1
 }
 
-### Minhas reservas (ativas e histórico)
-GET {{base}}/reservas
+### Minhas retiradas em andamento (com o código)
+GET {{base}}/reservas?situacao=ativas
 Authorization: Bearer {{loginOng.response.body.$.token}}
 
-### Cancelar reserva ativa (troque o 1 pelo id da reserva)
+### Histórico de retiradas
+GET {{base}}/reservas?situacao=historico
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Situação da ONG (desistências, suspensão, retiradas, regras)
+GET {{base}}/reservas/situacao-da-ong
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Desistir (troque o 1 pelo id da retirada). Diz se contou como desistência.
 DELETE {{base}}/reservas/1
 Authorization: Bearer {{loginOng.response.body.$.token}}
 
-### Confirmar retirada (ONG dona da reserva ou doador dono da doação)
-POST {{base}}/reservas/1/retirada
-Authorization: Bearer {{loginOng.response.body.$.token}}
+### Doador confirma com o código (seed: Cestas de mercearia, código 4821;
+### troque o 1 pelo id da retirada, que aparece em /reservas da ONG)
+POST {{base}}/reservas/1/confirmar
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "codigo": "4821"
+}
+
+### Doador: "A ONG não compareceu" (só depois do prazo)
+POST {{base}}/reservas/1/nao-compareceu
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+
+

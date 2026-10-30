@@ -199,6 +199,7 @@ class ExemplosFake {
         reservadoEm: aceitaEm,
         expiraEm: aceitaEm.add(const Duration(hours: 1)),
         encerradaEm: aceitaEm.add(const Duration(minutes: 40)),
+        contouDesistencia: status == StatusReserva.expirada, // RN24
         tituloDoacao: doacao.titulo,
         nomeOng: ong.perfil.nomeOrganizacao,
       ),

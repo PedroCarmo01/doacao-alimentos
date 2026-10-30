@@ -4,10 +4,12 @@ import '../../core/dependencias.dart';
 import '../../core/routing/app_routes.dart';
 import '../../shared/widgets/barra_inferior.dart';
 import '../../shared/widgets/em_construcao.dart';
+import '../../shared/widgets/faixa_de_retirada.dart';
 import '../doador/home_doador_page.dart';
 import '../mapa/mapa_page.dart';
 import '../ong/home_ong_page.dart';
 import '../perfil/perfil_page.dart';
+import 'faixa_de_retirada_view_model.dart';
 
 /// "Casca" do app depois do login: a barra inferior de 5 itens e a aba
 /// escolhida em cima dela (seção 2 da especificação).
@@ -16,6 +18,8 @@ import '../perfil/perfil_page.dart';
 ///   O botão do meio ABRE o formulário de nova doação (não é uma aba).
 /// - ONG: Início • Mensagens • **Mapa** • Comunidade • Perfil.
 ///   O botão do meio é a aba do mapa.
+///
+/// Em cima de tudo, a faixa laranja da retirada em andamento (etapa 4).
 class CascaPage extends StatefulWidget {
   const CascaPage({super.key, required this.dependencias});
 
@@ -34,6 +38,46 @@ class _CascaPageState extends State<CascaPage> {
   /// Muda quando o doador publica uma doação. Como ela entra na `key` da
   /// tela de início, mudar o número RECRIA a tela, que busca a lista de novo.
   int _versaoDoInicio = 0;
+
+  late final FaixaDeRetiradaViewModel _faixa;
+
+  @override
+  void initState() {
+    super.initState();
+    final d = widget.dependencias;
+    _faixa = FaixaDeRetiradaViewModel(
+      reservas: d.reservas,
+      doacoes: d.doacoes,
+      sessao: d.sessao,
+      relogio: d.relogio,
+    )..iniciar();
+  }
+
+  @override
+  void dispose() {
+    _faixa.dispose();
+    super.dispose();
+  }
+
+  /// Tocar na faixa: abre a retirada (ONG) ou a doação (doador).
+  Future<void> _abrirDaFaixa() async {
+    final unica = _faixa.retiradaUnica;
+    final doacao = _faixa.doacaoACaminho;
+    if (_ehOng) {
+      await Navigator.pushNamed(
+        context,
+        unica == null ? AppRoutes.minhasReservas : AppRoutes.retirada,
+        arguments: unica?.id,
+      );
+    } else if (doacao != null) {
+      await Navigator.pushNamed(
+        context,
+        AppRoutes.detalheDoacaoDoador,
+        arguments: doacao.id,
+      );
+    }
+    _faixa.atualizar();
+  }
 
   /// O `IndexedStack` mantém todas as abas vivas: ao trocar de aba, a
   /// pessoa não perde o que estava vendo.
@@ -98,6 +142,7 @@ class _CascaPageState extends State<CascaPage> {
       return;
     }
     setState(() => _abaAtual = indice);
+    _faixa.atualizar(); // ao trocar de aba, confere se algo mudou
   }
 
   @override
@@ -105,7 +150,29 @@ class _CascaPageState extends State<CascaPage> {
     return Scaffold(
       // O conteúdo passa por trás do "salto" do botão central.
       extendBody: true,
-      body: IndexedStack(index: _abaAtual, children: _criarAbas()),
+      body: ListenableBuilder(
+        listenable: _faixa,
+        builder: (context, abas) {
+          if (!_faixa.visivel) return abas!;
+          return Column(
+            children: [
+              FaixaDeRetirada(texto: _faixa.texto, aoTocar: _abrirDaFaixa),
+              // A faixa já ocupa o espaço da barra de status: as telas de
+              // baixo não precisam desse espaço de novo.
+              Expanded(
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  child: abas!,
+                ),
+              ),
+            ],
+          );
+        },
+        // As abas são criadas fora do builder: o contador redesenha só a
+        // faixa, não as telas.
+        child: IndexedStack(index: _abaAtual, children: _criarAbas()),
+      ),
       bottomNavigationBar: BarraInferior(
         itens: _itens,
         indiceAtual: _abaAtual,

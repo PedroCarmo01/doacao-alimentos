@@ -256,4 +256,13 @@ void main() {
       expect(ValidadorDoacao.motivoCancelamento('Estragou'), isNull);
     });
   });
+
+  group('ValidadorReserva', () {
+    test('RN27: o código tem exatamente 4 números', () {
+      expect(ValidadorReserva.codigo('4821'), isNull);
+      expect(ValidadorReserva.codigo('482'), isNotNull);
+      expect(ValidadorReserva.codigo('48a1'), isNotNull);
+      expect(ValidadorReserva.codigo(null), isNotNull);
+    });
+  });
 }

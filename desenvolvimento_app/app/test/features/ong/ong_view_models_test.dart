@@ -145,6 +145,7 @@ void main() {
     final frutas = lista.firstWhere((d) => d.titulo.startsWith('Frutas'));
     final vm = DetalheDoacaoOngViewModel(
       doacoes: deps.doacoes,
+      reservas: deps.reservas,
       sessao: deps.sessao,
       relogio: relogio,
       doacaoId: frutas.id,

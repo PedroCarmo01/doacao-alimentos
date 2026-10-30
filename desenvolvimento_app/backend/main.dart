@@ -3,23 +3,32 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:shared_models/shared_models.dart';
 import 'package:summit_backend/arquivos/armazenamento_de_fotos.dart';
+import 'package:summit_backend/auth/usuario_repository_mysql.dart';
 import 'package:summit_backend/core/config/env.dart';
 import 'package:summit_backend/core/db/database.dart';
 import 'package:summit_backend/core/seguranca/senha_service.dart';
 import 'package:summit_backend/core/seguranca/token_service.dart';
+import 'package:summit_backend/doacoes/doacao_repository_mysql.dart';
+import 'package:summit_backend/doacoes/doacao_service.dart';
 import 'package:summit_backend/documentos/consulta_cnpj.dart';
 import 'package:summit_backend/documentos/consulta_cnpj_brasil_api.dart';
 import 'package:summit_backend/documentos/consulta_cnpj_fake.dart';
 import 'package:summit_backend/documentos/documento_service.dart';
 import 'package:summit_backend/documentos/reverificacao_job.dart';
 import 'package:summit_backend/perfil/perfil_repository_mysql.dart';
+import 'package:summit_backend/reservas/confirmacao_service.dart';
+import 'package:summit_backend/reservas/expiracao_job.dart';
+import 'package:summit_backend/reservas/gerador_de_codigo.dart';
+import 'package:summit_backend/reservas/penalidades.dart';
+import 'package:summit_backend/reservas/reserva_repository_mysql.dart';
+import 'package:summit_backend/reservas/reserva_service.dart';
 
 // Recursos criados UMA vez, mesmo que o Dart Frog recarregue o código
 // (hot reload) durante o desenvolvimento.
 Database? _database;
 ConsultaCnpj? _consultaCnpj;
 ReverificacaoJob? _reverificacao;
-// ExpiracaoJob? _job;  // TODO(Pessoa 3): descomentar junto com o bloco abaixo.
+ExpiracaoJob? _expiracao;
 
 /// Ponto de entrada customizado do Dart Frog ("custom entrypoint").
 ///
@@ -53,20 +62,51 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
     ),
   )..iniciar();
 
-  // TODO(Pessoa 3): iniciar o job de expiração de reservas (trilha/15).
-  // _job ??= ExpiracaoJob(
-  //   ReservaService(
-  //     reservas: ReservaRepositoryMysql(database),
-  //     relogio: relogio,
-  //     prazo: env.prazoReserva,
-  //   ),
-  // )..iniciar();
+  // Retiradas (etapa 4). Os serviços são criados aqui, uma vez, porque o
+  // job de expiração usa os mesmos que as rotas de /reservas.
+  final reservas = ReservaRepositoryMysql(database);
+  final doacoes = DoacaoRepositoryMysql(database);
+  final usuarios = UsuarioRepositoryMysql(database);
+  final penalidades = Penalidades(
+    reservas: reservas,
+    usuarios: usuarios,
+    regras: env.regrasDaRetirada,
+  );
+  final reservaService = ReservaService(
+    reservas: reservas,
+    doacoes: doacoes,
+    usuarios: usuarios,
+    penalidades: penalidades,
+    regras: env.regrasDaRetirada,
+    codigos: GeradorDeCodigoAleatorio(),
+    relogio: relogio,
+  );
+  final confirmacaoService = ConfirmacaoService(
+    reservas: reservas,
+    doacoes: doacoes,
+    penalidades: penalidades,
+    relogio: relogio,
+  );
+
+  // RN29: a cada 30 s, expira as retiradas vencidas e as doações cujo
+  // horário de retirada acabou (RN13).
+  _expiracao ??= ExpiracaoJob(
+    reservas: reservaService,
+    doacoes: DoacaoService(
+      doacoes: doacoes,
+      usuarios: usuarios,
+      relogio: relogio,
+      fusoHorarioUtc: env.fusoHorarioUtc,
+    ),
+  )..iniciar();
 
   // Onde as fotos das doações ficam: uma pasta do servidor (fora do Git).
   final ArmazenamentoDeFotos fotos = ArmazenamentoEmPasta(env.pastaArquivos);
 
   final aplicacao = handler
       .use(provider<ArmazenamentoDeFotos>((_) => fotos))
+      .use(provider<ReservaService>((_) => reservaService))
+      .use(provider<ConfirmacaoService>((_) => confirmacaoService))
       .use(provider<ConsultaCnpj>((_) => consultaCnpj))
       .use(provider<SenhaService>((_) => senhas))
       .use(provider<TokenService>((_) => tokens))

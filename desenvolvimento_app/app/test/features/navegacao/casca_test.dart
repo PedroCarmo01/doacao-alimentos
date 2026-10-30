@@ -65,6 +65,8 @@ void main() {
 
     await tester.tap(find.text('Perfil').last);
     await tester.pumpAndSettle();
+    expect(find.text('ONG Mãos Amigas'), findsOneWidget);
+    expect(find.text('Verificada'), findsOneWidget);
     // A tela de teste é pequena: rola a lista do perfil até o botão.
     await tester.scrollUntilVisible(
       find.byKey(const Key('botao_sair')),
@@ -75,8 +77,16 @@ void main() {
       ),
     );
 
-    expect(find.text('ONG Mãos Amigas'), findsOneWidget);
-    expect(find.text('Verificada'), findsOneWidget);
     expect(find.byKey(const Key('botao_sair')), findsOneWidget);
+  });
+
+  testWidgets('ONG com retirada em andamento vê a faixa laranja', (
+    tester,
+  ) async {
+    await abrirCascaComo(tester, 'maosamigas@exemplo.com');
+    await tester.pump(); // a primeira consulta da faixa
+
+    expect(find.byKey(const Key('faixa_retirada')), findsOneWidget);
+    expect(find.textContaining('Retirada em andamento'), findsOneWidget);
   });
 }

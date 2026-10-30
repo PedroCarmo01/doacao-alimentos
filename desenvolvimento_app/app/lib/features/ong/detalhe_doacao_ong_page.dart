@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_models/shared_models.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/routing/app_routes.dart';
 import '../../core/sessao/sessao.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatador.dart';
 import '../../core/utils/rota_no_mapa.dart';
 import '../../data/doacoes/doacao_repository.dart';
+import '../../data/reservas/reserva_repository.dart';
 import '../../shared/widgets/detalhe_da_doacao.dart';
 import '../../shared/widgets/estados.dart';
 import '../../shared/widgets/primary_button.dart';
@@ -14,19 +16,20 @@ import '../../shared/widgets/selo_verificacao.dart';
 import 'detalhe_doacao_ong_view_model.dart';
 
 /// T22 — Detalhe da doação (ONG): fotos, dados, distância, o doador com o
-/// selo de verificação e **Como chegar**. O botão "Vou retirar" funciona a
-/// partir da etapa 4.
+/// selo de verificação, **Como chegar** e o botão **Vou retirar** (RN20).
 class DetalheDoacaoOngPage extends StatefulWidget {
   const DetalheDoacaoOngPage({
     super.key,
     required this.doacaoId,
     required this.doacoes,
+    required this.reservas,
     required this.sessao,
     required this.relogio,
   });
 
   final int doacaoId;
   final DoacaoRepository doacoes;
+  final ReservaRepository reservas;
   final Sessao sessao;
   final Relogio relogio;
 
@@ -42,6 +45,7 @@ class _DetalheDoacaoOngPageState extends State<DetalheDoacaoOngPage> {
     super.initState();
     _viewModel = DetalheDoacaoOngViewModel(
       doacoes: widget.doacoes,
+      reservas: widget.reservas,
       sessao: widget.sessao,
       relogio: widget.relogio,
       doacaoId: widget.doacaoId,
@@ -148,23 +152,100 @@ class _DetalheDoacaoOngPageState extends State<DetalheDoacaoOngPage> {
     );
   }
 
+  /// "Vou retirar": confirma com o aviso das regras e, se der certo, abre
+  /// a retirada em andamento (T23) no lugar deste detalhe.
+  Future<void> _aceitar() async {
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (contexto) => AlertDialog(
+        title: const Text('Vou retirar'),
+        content: Text(_viewModel.avisoDoAceite),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(contexto, false),
+            child: const Text('Voltar'),
+          ),
+          FilledButton(
+            key: const Key('confirmar_aceite'),
+            onPressed: () => Navigator.pop(contexto, true),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmou != true || !mounted) return;
+    final reserva = await _viewModel.aceitar();
+    if (!mounted) return;
+    if (reserva != null) {
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.retirada,
+        arguments: reserva.id,
+      );
+    } else if (_viewModel.outraOngAceitou) {
+      await _avisarQueOutraAceitou();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_viewModel.erro ?? 'Não deu certo.')),
+      );
+    }
+  }
+
+  /// RN20: a segunda ONG recebe o aviso e volta para a lista.
+  Future<void> _avisarQueOutraAceitou() async {
+    await showDialog<void>(
+      context: context,
+      builder: (contexto) => AlertDialog(
+        title: const Text('Que pena!'),
+        content: const Text('Outra ONG aceitou esta doação primeiro.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(contexto),
+            child: const Text('Voltar para a lista'),
+          ),
+        ],
+      ),
+    );
+    if (mounted) Navigator.pop(context);
+  }
+
   /// O botão principal fica fixo embaixo. Desativado, com o motivo.
   Widget _rodape() {
-    final motivo = _viewModel.suspensa
-        ? 'Você está suspensa por desistências e não pode aceitar agora.'
-        : 'O aceite da retirada ("Vou retirar") entra na etapa 4.';
+    final minha = _viewModel.minhaRetirada;
+    if (minha != null) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: PrimaryButton(
+          texto: 'Ver retirada em andamento',
+          onPressed: () => Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.retirada,
+            arguments: minha.id,
+          ),
+        ),
+      );
+    }
+    final motivo = _viewModel.motivoParaNaoAceitar;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            motivo,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.cinza),
+          if (motivo != null) ...[
+            Text(
+              motivo,
+              key: const Key('motivo_sem_aceite'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.cinza),
+            ),
+            const SizedBox(height: 8),
+          ],
+          PrimaryButton(
+            key: const Key('vou_retirar'),
+            texto: 'Vou retirar',
+            carregando: _viewModel.ocupado,
+            onPressed: motivo == null ? _aceitar : null,
           ),
-          const SizedBox(height: 8),
-          const PrimaryButton(texto: 'Vou retirar', onPressed: null),
         ],
       ),
     );

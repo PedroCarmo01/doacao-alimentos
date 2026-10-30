@@ -33,6 +33,7 @@ class Reserva {
     this.encerradaEm,
     this.codigoRetirada,
     this.motivo,
+    this.contouDesistencia = false,
     this.tituloDoacao,
     this.nomeOng,
   });
@@ -49,6 +50,7 @@ class Reserva {
       encerradaEm: j.instanteOpcional('encerradaEm'),
       codigoRetirada: j.textoOpcional('codigoRetirada'),
       motivo: j.textoOpcional('motivo'),
+      contouDesistencia: json['contouDesistencia'] == true,
       tituloDoacao: j.textoOpcional('tituloDoacao'),
       nomeOng: j.textoOpcional('nomeOng'),
     );
@@ -65,6 +67,10 @@ class Reserva {
   final DateTime? encerradaEm;
   final String? codigoRetirada;
   final String? motivo;
+
+  /// RN22–RN24: esta retirada contou como desistência da ONG (expirou ou
+  /// ela desistiu depois da tolerância)?
+  final bool contouDesistencia;
   final String? tituloDoacao;
   final String? nomeOng;
 
@@ -80,6 +86,47 @@ class Reserva {
   /// (o job de expiração ainda não rodou).
   bool estaVencida(DateTime agora) => estaAtiva && !expiraEm.isAfter(agora);
 
+  /// RN23: desistir agora ainda está dentro da [tolerancia] (toque errado)?
+  bool dentroDaTolerancia(DateTime agora, Duration tolerancia) =>
+      !agora.isAfter(reservadoEm.add(tolerancia));
+
+  /// Cópia com outro status (e os dados de quando ela foi encerrada).
+  Reserva copyWith({
+    StatusReserva? status,
+    DateTime? encerradaEm,
+    String? motivo,
+    bool? contouDesistencia,
+  }) => Reserva(
+    id: id,
+    doacaoId: doacaoId,
+    ongId: ongId,
+    status: status ?? this.status,
+    reservadoEm: reservadoEm,
+    expiraEm: expiraEm,
+    encerradaEm: encerradaEm ?? this.encerradaEm,
+    codigoRetirada: codigoRetirada,
+    motivo: motivo ?? this.motivo,
+    contouDesistencia: contouDesistencia ?? this.contouDesistencia,
+    tituloDoacao: tituloDoacao,
+    nomeOng: nomeOng,
+  );
+
+  /// RN26: o código é só da ONG. Antes de mandar a reserva para o doador,
+  /// o servidor usa esta cópia sem o código.
+  Reserva semCodigo() => Reserva(
+    id: id,
+    doacaoId: doacaoId,
+    ongId: ongId,
+    status: status,
+    reservadoEm: reservadoEm,
+    expiraEm: expiraEm,
+    encerradaEm: encerradaEm,
+    motivo: motivo,
+    contouDesistencia: contouDesistencia,
+    tituloDoacao: tituloDoacao,
+    nomeOng: nomeOng,
+  );
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'doacaoId': doacaoId,
@@ -90,6 +137,7 @@ class Reserva {
     'encerradaEm': encerradaEm == null ? null : formatarInstante(encerradaEm!),
     if (codigoRetirada != null) 'codigoRetirada': codigoRetirada,
     if (motivo != null) 'motivo': motivo,
+    'contouDesistencia': contouDesistencia,
     if (tituloDoacao != null) 'tituloDoacao': tituloDoacao,
     if (nomeOng != null) 'nomeOng': nomeOng,
   };

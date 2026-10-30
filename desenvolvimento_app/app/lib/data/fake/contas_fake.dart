@@ -126,6 +126,17 @@ class ContasFake {
     return nova;
   }
 
+  /// RN24: suspende a ONG até [ate] (as retiradas chamam).
+  void suspender(int usuarioId, DateTime ate) {
+    final registro = _registros[usuarioId]!;
+    final json = registro.conta.perfil.toJson()
+      ..['suspensaAte'] = ate.toUtc().toIso8601String();
+    _registros[usuarioId] = _ContaComSenha(
+      Conta(usuario: registro.conta.usuario, perfil: Perfil.fromJson(json)),
+      registro.senha,
+    );
+  }
+
   bool _existe(bool Function(Conta conta) teste) =>
       _registros.values.any((registro) => teste(registro.conta));
 

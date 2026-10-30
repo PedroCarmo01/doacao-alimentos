@@ -4,6 +4,7 @@ import 'package:shared_models/shared_models.dart';
 import '../../core/routing/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/doacoes/doacao_repository.dart';
+import '../../data/reservas/reserva_repository.dart';
 import '../../shared/widgets/estados.dart';
 import '../../shared/widgets/etiqueta_status.dart';
 import '../../shared/widgets/primary_button.dart';
@@ -12,18 +13,20 @@ import '../../shared/widgets/detalhe_da_doacao.dart';
 import 'partes_do_detalhe.dart';
 
 /// T12 — Detalhe da doação (doador): fotos, dados, linha do tempo, a ONG
-/// que vem buscar e as ações (editar, cancelar). A confirmação da retirada
-/// com o código entra na etapa 4 e o chat na etapa 6.
+/// que vem buscar e as ações (editar, cancelar, confirmar a retirada com o
+/// código e "A ONG não compareceu"). O chat entra na etapa 6.
 class DetalheDoacaoDoadorPage extends StatefulWidget {
   const DetalheDoacaoDoadorPage({
     super.key,
     required this.doacaoId,
     required this.doacoes,
+    required this.reservas,
     required this.relogio,
   });
 
   final int doacaoId;
   final DoacaoRepository doacoes;
+  final ReservaRepository reservas;
   final Relogio relogio;
 
   @override
@@ -39,6 +42,7 @@ class _DetalheDoacaoDoadorPageState extends State<DetalheDoacaoDoadorPage> {
     super.initState();
     _viewModel = DetalheDoacaoDoadorViewModel(
       doacoes: widget.doacoes,
+      reservas: widget.reservas,
       relogio: widget.relogio,
       doacaoId: widget.doacaoId,
     );
@@ -58,6 +62,53 @@ class _DetalheDoacaoDoadorPageState extends State<DetalheDoacaoDoadorPage> {
       arguments: widget.doacaoId,
     );
     if (salvou == true && mounted) _viewModel.carregar();
+  }
+
+  /// T13: o doador digita o código da ONG.
+  Future<void> _confirmarRetirada(Reserva reserva) async {
+    final confirmou = await Navigator.pushNamed(
+      context,
+      AppRoutes.confirmarRetirada,
+      arguments: reserva.id,
+    );
+    if (confirmou == true && mounted) _viewModel.carregar();
+  }
+
+  /// RN28: depois do prazo, a doação volta para outras ONGs.
+  Future<void> _naoCompareceu() async {
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (contexto) => AlertDialog(
+        title: const Text('A ONG não compareceu?'),
+        content: const Text(
+          'A doação volta a ficar disponível para outras ONGs e isso conta '
+          'como desistência para esta ONG.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(contexto, false),
+            child: const Text('Voltar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(contexto, true),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmou != true) return;
+    final deu = await _viewModel.marcarNaoCompareceu();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          deu
+              ? 'A doação está disponível de novo.'
+              : (_viewModel.erro ?? 'Não deu certo.'),
+        ),
+      ),
+    );
+    if (!deu) _viewModel.carregar(); // o servidor pode ter expirado antes
   }
 
   /// Ação perigosa: sempre confirma. Se reservada, pede o motivo (RN12).
@@ -90,14 +141,29 @@ class _DetalheDoacaoDoadorPageState extends State<DetalheDoacaoDoadorPage> {
       builder: (context, _) {
         final detalhe = _viewModel.detalhe;
         return Scaffold(
-          appBar: AppBar(title: Text(detalhe?.doacao.titulo ?? 'Doação')),
+          appBar: AppBar(
+            title: Text(detalhe?.doacao.titulo ?? 'Doação'),
+            actions: [
+              // Menu com "A ONG não compareceu", só depois do prazo (RN28).
+              if (_viewModel.podeMarcarNaoCompareceu)
+                PopupMenuButton<void>(
+                  key: const Key('menu_detalhe'),
+                  itemBuilder: (_) => [
+                    PopupMenuItem<void>(
+                      onTap: _naoCompareceu,
+                      child: const Text('A ONG não compareceu'),
+                    ),
+                  ],
+                ),
+            ],
+          ),
           body: detalhe == null
               ? _semDados()
               : SafeArea(
                   child: Column(
                     children: [
                       Expanded(child: _conteudo(detalhe)),
-                      _acoes(detalhe.doacao),
+                      _acoes(detalhe),
                     ],
                   ),
                 ),
@@ -155,7 +221,9 @@ class _DetalheDoacaoDoadorPageState extends State<DetalheDoacaoDoadorPage> {
   }
 
   /// Botões fixos embaixo, conforme o status (T12).
-  Widget _acoes(Doacao doacao) {
+  Widget _acoes(DetalheDoacao detalhe) {
+    final doacao = detalhe.doacao;
+    final reserva = detalhe.reserva;
     if (!doacao.podeSerCancelada) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -169,12 +237,11 @@ class _DetalheDoacaoDoadorPageState extends State<DetalheDoacaoDoadorPage> {
               carregando: _viewModel.ocupado,
               onPressed: _editar,
             )
-          else
-            const Text(
-              'A ONG está a caminho. A confirmação com o código de retirada '
-              'entra na etapa 4.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.cinza),
+          else if (reserva != null)
+            PrimaryButton(
+              key: const Key('botao_confirmar_retirada'),
+              texto: 'Confirmar retirada',
+              onPressed: () => _confirmarRetirada(reserva),
             ),
           // Ação perigosa: pequena, vermelha e longe da principal.
           TextButton(

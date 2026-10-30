@@ -101,7 +101,18 @@ class _HomeOngPageState extends State<HomeOngPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Doações perto de você')),
+      appBar: AppBar(
+        title: const Text('Doações perto de você'),
+        actions: [
+          IconButton(
+            key: const Key('minhas_retiradas'),
+            tooltip: 'Minhas retiradas',
+            icon: const Icon(Icons.inventory_2_outlined),
+            onPressed: () =>
+                Navigator.pushNamed(context, AppRoutes.minhasReservas),
+          ),
+        ],
+      ),
       body: ListenableBuilder(
         listenable: _viewModel,
         builder: (context, _) => Column(

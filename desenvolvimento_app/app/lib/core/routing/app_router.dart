@@ -5,11 +5,13 @@ import '../../features/abertura/boas_vindas_page.dart';
 import '../../features/auth/cadastro/cadastro_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/auth/termos_page.dart';
+import '../../features/doador/confirmar_retirada_page.dart';
 import '../../features/doador/detalhe_doacao_doador_page.dart';
 import '../../features/doador/nova_doacao_page.dart';
 import '../../features/navegacao/casca_page.dart';
 import '../../features/ong/detalhe_doacao_ong_page.dart';
 import '../../features/ong/minhas_reservas_page.dart';
+import '../../features/ong/retirada_page.dart';
 import '../dependencias.dart';
 import 'app_routes.dart';
 
@@ -85,17 +87,29 @@ class AppRouter {
       AppRoutes.detalheDoacaoDoador => DetalheDoacaoDoadorPage(
         doacaoId: _id(argumento),
         doacoes: d.doacoes,
+        reservas: d.reservas,
         relogio: d.relogio,
       ),
       AppRoutes.detalheDoacaoOng => DetalheDoacaoOngPage(
         doacaoId: _id(argumento),
         doacoes: d.doacoes,
+        reservas: d.reservas,
         sessao: d.sessao,
         relogio: d.relogio,
       ),
       AppRoutes.minhasReservas => MinhasReservasPage(
         reservas: d.reservas,
         relogio: d.relogio,
+      ),
+      AppRoutes.retirada => RetiradaPage(
+        reservaId: _id(argumento),
+        reservas: d.reservas,
+        doacoes: d.doacoes,
+        relogio: d.relogio,
+      ),
+      AppRoutes.confirmarRetirada => ConfirmarRetiradaPage(
+        reservaId: _id(argumento),
+        reservas: d.reservas,
       ),
       _ => const _PaginaNaoEncontrada(),
     };

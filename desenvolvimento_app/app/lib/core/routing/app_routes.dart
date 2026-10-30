@@ -30,5 +30,12 @@ abstract final class AppRoutes {
   /// Argumento: `int` (id da doação).
   static const detalheDoacaoOng = '/ong/doacao';
 
+  /// Minhas retiradas (ONG): em andamento e histórico.
   static const minhasReservas = '/ong/reservas';
+
+  /// T23 — retirada em andamento (ONG). Argumento: `int` (id da retirada).
+  static const retirada = '/ong/retirada';
+
+  /// T13 — o doador digita o código. Argumento: `int` (id da retirada).
+  static const confirmarRetirada = '/doador/confirmar-retirada';
 }

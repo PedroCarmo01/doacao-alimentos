@@ -115,7 +115,9 @@ class DoacaoService {
       if (doacao.doadorId != usuario.id) throw _naoEncontrada;
       return DetalheDoacao(
         doacao: doacao,
-        reserva: reserva,
+        // RN26: o código de retirada é só da ONG. O doador recebe a
+        // reserva sem ele e PEDE o código à ONG na hora da retirada.
+        reserva: reserva?.semCodigo(),
         ong: reserva == null ? null : await _doacoes.resumo(reserva.ongId),
       );
     }

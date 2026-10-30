@@ -55,15 +55,13 @@ A coluna **Etapa** diz em qual etapa do desenvolvimento a rota ficou pronta.
 | DELETE | `/doacoes/{id}` | doador dono | 2 ✅ |
 | GET | `/arquivos/{nome}` | público | 2 ✅ |
 | GET | `/proximas?raioKm=` | ONG | 3 ✅ |
-
-Rotas da versão anterior, que serão refeitas na etapa 4:
-
-| Método | Rota | Quem | Dono | Trilha |
-|---|---|---|---|---|
-| POST | `/reservas` | ONG | P3 | 15 |
-| GET | `/reservas` | ONG | P3 | 15 |
-| DELETE | `/reservas/{id}` | ONG dona | P3 | 15 |
-| POST | `/reservas/{id}/retirada` | ONG dona / doador dono | P3 | 15 |
+| POST | `/reservas` | ONG | 4 ✅ |
+| GET | `/reservas?situacao=` | ONG | 4 ✅ |
+| GET | `/reservas/situacao-da-ong` | ONG | 4 ✅ |
+| GET | `/reservas/{id}` | ONG dona | 4 ✅ |
+| DELETE | `/reservas/{id}` | ONG dona | 4 ✅ |
+| POST | `/reservas/{id}/confirmar` | doador dono | 4 ✅ |
+| POST | `/reservas/{id}/nao-compareceu` | doador dono | 4 ✅ |
 
 ---
 
@@ -252,7 +250,7 @@ As do doador logado, da mais nova para a mais antiga. **Ativas** = `disponivel` 
 {"doacao": {...}, "reserva": {...}, "ong": {...}, "doador": null}
 ```
 
-`reserva` é a retirada **ativa** (ou `null`). O **doador** só vê as próprias e recebe `ong` (nome, selo, responsável, telefone, transporte). A **ONG** vê as que ainda pode aceitar (disponível, janela aberta, sem bloqueio RN22) **ou** a que ela mesma está retirando, e recebe `doador`. Fora disso: 404.
+`reserva` é a retirada **ativa** (ou `null`). Para a ONG dona ela vem com `codigoRetirada`; para o doador, **sem** o código (RN26). O **doador** só vê as próprias e recebe `ong` (nome, selo, responsável, telefone, transporte). A **ONG** vê as que ainda pode aceitar (disponível, janela aberta, sem bloqueio RN22) **ou** a que ela mesma está retirando, e recebe `doador`. Fora disso: 404.
 
 ### `PUT /doacoes/{id}` — `DadosNovaDoacao` → `200 Doacao`
 
@@ -278,7 +276,7 @@ RN12: `disponivel` cancela sem motivo. `reservada` **exige** motivo (400 sem ele
 
 ---
 
-## Reservas
+## Retiradas (reservas) — etapa 4
 
 ### Objeto `Reserva`
 
@@ -289,40 +287,81 @@ RN12: `disponivel` cancela sem motivo. `reservada` **exige** motivo (400 sem ele
   "ongId": 3,
   "status": "ativa",
   "reservadoEm": "2026-09-15T14:30:00.000Z",
-  "expiraEm": "2026-09-15T16:30:00.000Z",
-  "retiradoEm": null,
+  "expiraEm": "2026-09-15T15:30:00.000Z",
+  "encerradaEm": null,
+  "codigoRetirada": "4821",
+  "contouDesistencia": false,
   "tituloDoacao": "Cestas de mercearia",
   "nomeOng": "ONG Mãos Amigas"
 }
 ```
 
-`status`: `ativa`, `concluida`, `expirada`, `cancelada`.
+- `status`: `ativa`, `concluida`, `expirada`, `canceladaOng`, `canceladaDoador`.
+- `codigoRetirada` (RN26) só vai para a **ONG dona**. O doador nunca recebe o código.
+- `contouDesistencia`: a retirada contou para a suspensão (RN22–RN24).
 
-### `POST /reservas` — `DadosReserva` → `201 Reserva`
+### `POST /reservas` — `{"doacaoId": 1}` → `201 Reserva` ("Vou retirar")
+
+As conferências, em ordem:
+
+1. Expira as retiradas vencidas (RN29), sem esperar o job.
+2. ONG suspensa: **409 `ONG_SUSPENSA`** (RN24).
+3. Doação inexistente: 404.
+4. ONG bloqueada para esta doação: **409 `ONG_BLOQUEADA_NESTA_DOACAO`** (RN22).
+5. Doação não disponível ou com a janela encerrada: **409 `DOACAO_INDISPONIVEL`**.
+6. Já tem `RESERVAS_SIMULTANEAS` retiradas em andamento: **409 `LIMITE_DE_RETIRADAS`** (RN25).
+7. Transação com `SELECT ... FOR UPDATE` na doação + índice único `uk_reservas_uma_ativa_por_doacao`: se outra ONG ganhou a corrida, **409 `DOACAO_INDISPONIVEL`** ("Que pena! Outra ONG aceitou esta doação primeiro.") (RN20).
+
+`expiraEm = mínimo(agora + RESERVA_MINUTOS, janelaFim)` (RN21). O código de 4 dígitos é sorteado com `Random.secure()` (RN26). Doador: 403.
+
+### `GET /reservas?situacao=ativas|historico` → `200 {"reservas": [Reserva]}`
+
+As da ONG logada, mais recentes primeiro. Padrão: `ativas`.
+
+### `GET /reservas/situacao-da-ong` → `200 SituacaoDaOng`
 
 ```json
-{"doacaoId": 1}
+{
+  "desistenciasRecentes": 2,
+  "suspensaAte": null,
+  "ativas": [Reserva],
+  "regras": {"prazoMinutos": 60, "toleranciaMinutos": 5, "desistenciasParaSuspender": 3,
+             "janelaDesistenciasDias": 30, "suspensaoHoras": 48, "retiradasSimultaneas": 2}
+}
 ```
 
-- `expiraEm = mínimo(agora + RESERVA_MINUTOS, janelaFim)`.
-- A doação passa para `reservada` na mesma transação.
-- Doação inexistente: 404. Já reservada, cancelada, concluída ou janela encerrada: **409 `DOACAO_INDISPONIVEL`**. Doador: 403.
+Usada pelo app para a faixa de retirada em andamento, o aviso "mais uma desistência e sua conta será suspensa" e os textos com os números do `.env`.
 
-### `GET /reservas` → `200 {"reservas": [Reserva]}`
+### `GET /reservas/{id}` → `200 Reserva`
 
-As da ONG logada (ativas e histórico), mais recentes primeiro. Reservas vencidas já aparecem como `expirada`.
+Só a ONG dona (outra: 404). Tela T23.
 
-### `DELETE /reservas/{id}` → `204`
+### `DELETE /reservas/{id}` → `200 RespostaDesistencia`
 
-A ONG dona desiste; a doação volta a `disponivel`. Não ativa: 409 `RESERVA_NAO_ATIVA`. De outra ONG: 404.
+```json
+{"contouDesistencia": true, "desistenciasRecentes": 3, "suspensaAte": "2026-09-17T15:00:00.000Z"}
+```
 
-### `POST /reservas/{id}/retirada` → `200 Reserva`
+A ONG dona desiste e a doação volta a `disponivel`. Até `TOLERANCIA_MINUTOS` depois do aceite **não conta** nem bloqueia (RN23). Depois: conta, bloqueia a ONG para esta doação (RN22) e, na 3ª em 30 dias, suspende por 48 h (RN24; `suspensaAte` preenchido). Não ativa: 409 `RESERVA_NAO_ATIVA`.
 
-ONG dona **ou** doador dono da doação. Reserva → `concluida` com `retiradoEm`; doação → `concluida`. Não ativa ou prazo vencido: 409 `RESERVA_NAO_ATIVA`. Outros usuários: 404.
+### `POST /reservas/{id}/confirmar` — `{"codigo": "4821"}` → `200 Reserva`
 
-### Expiração automática
+Só o **doador dono** da doação (ONG: 403; outro doador: 404). Código certo: retirada e doação → `concluida` (RN27).
 
-Não é rota: o `ExpiracaoJob` (iniciado em `main.dart`) roda a cada 30 s. Reservas `ativa` com `expira_em <= agora` → `expirada`; a doação volta a `disponivel`.
+| Erro | Quando |
+|---|---|
+| 400 `VALIDACAO` | não são 4 números |
+| 400 `CODIGO_INCORRETO` | código errado ("Restam N tentativas") |
+| 429 `TENTATIVAS_ESGOTADAS` | 5 erros seguidos: bloqueia por 10 min |
+| 409 `RESERVA_NAO_ATIVA` | já encerrada ou prazo vencido |
+
+### `POST /reservas/{id}/nao-compareceu` → `204`
+
+RN28: doador dono, **depois** do prazo (antes: 409 `PRAZO_NAO_ACABOU`). Mesmo efeito da expiração: a doação volta, conta desistência e bloqueia.
+
+### Expiração automática (RN29)
+
+Não é rota: o `ExpiracaoJob` (iniciado em `main.dart`) roda a cada 30 s. Retiradas `ativa` com `expira_em <= agora` → `expirada` com `conta_desistencia = TRUE`, a doação volta a `disponivel`, a ONG fica bloqueada para ela e a suspensão é conferida. Depois, as doações disponíveis com a janela encerrada → `expirada` (RN13). O aceite e as consultas de `/reservas` também expiram antes, para nunca deixar uma doação presa.
 
 ---
 

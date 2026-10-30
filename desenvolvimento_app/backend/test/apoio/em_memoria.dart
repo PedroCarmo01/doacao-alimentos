@@ -118,6 +118,21 @@ class ContasEmMemoria implements UsuarioRepository, PerfilRepository {
         ),
   ].take(limite).toList();
 
+  /// RN24: usado pelo `ReservasEmMemoria.suspender`.
+  void suspender(int usuarioId, DateTime ate) {
+    final indice = registros.indexWhere((r) => r.conta.usuario.id == usuarioId);
+    final antigo = registros[indice];
+    final json = antigo.conta.perfil.toJson()
+      ..['suspensaAte'] = ate.toUtc().toIso8601String();
+    registros[indice] = UsuarioComSenha(
+      senhaHash: antigo.senhaHash,
+      conta: Conta(
+        usuario: antigo.conta.usuario,
+        perfil: Perfil.fromJson(json),
+      ),
+    );
+  }
+
   /// Ids marcados como verificados pelo job (os testes conferem).
   final List<int> verificados = [];
 

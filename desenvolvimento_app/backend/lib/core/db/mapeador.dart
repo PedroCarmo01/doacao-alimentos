@@ -88,7 +88,11 @@ abstract final class Mapeador {
     reservadoEm: Datas.deSql(_texto(linha, 'reservado_em')),
     expiraEm: Datas.deSql(_texto(linha, 'expira_em')),
     encerradaEm: _instanteOpcional(linha, 'encerrada_em'),
+    // O código vem sempre do banco; o Service tira antes de mandar para o
+    // doador (RN26, `Reserva.semCodigo`).
+    codigoRetirada: linha['codigo_retirada'],
     motivo: linha['motivo'],
+    contouDesistencia: linha['conta_desistencia'] == '1',
     tituloDoacao: linha['titulo_doacao'],
     nomeOng: linha['nome_ong'],
   );

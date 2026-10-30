@@ -21,6 +21,10 @@ void main() {
   void entrarComo(String email) =>
       banco.tokenPara(banco.autenticar(email, BancoFake.senhaPadrao));
 
+  /// "Vou retirar" com a conta logada.
+  Reserva aceitar(int doacaoId) =>
+      banco.retiradas.aceitar(banco.ongLogada(), doacaoId);
+
   test('senha errada é recusada com CREDENCIAIS_INVALIDAS', () {
     expect(
       () => banco.autenticar('mercado@exemplo.com', 'errada'),
@@ -55,14 +59,14 @@ void main() {
     expect(banco.doacoesProximas(), isEmpty);
   });
 
-  test('duas ONGs não reservam a mesma doação', () {
+  test('RN20: duas ONGs não aceitam a mesma doação', () {
     entrarComo('maosamigas@exemplo.com');
     final doacao = banco.doacoesProximas().first;
-    banco.reservar(doacao.id);
+    aceitar(doacao.id);
 
     entrarComo('pratocheio@exemplo.com');
     expect(
-      () => banco.reservar(doacao.id),
+      () => aceitar(doacao.id),
       throwsA(
         isA<ApiException>().having(
           (e) => e.codigo,
@@ -73,28 +77,58 @@ void main() {
     );
   });
 
-  test('reserva vencida expira e a doação volta a ficar disponível', () async {
-    entrarComo('maosamigas@exemplo.com');
-    final doacao = banco.doacoesProximas().first;
-    final reserva = banco.reservar(doacao.id);
+  test(
+    'RN29: retirada vencida expira e a doação volta a ficar disponível',
+    () async {
+      entrarComo('maosamigas@exemplo.com');
+      final doacao = banco.doacoesProximas().first;
+      final reserva = aceitar(doacao.id);
 
-    relogio.avancar(banco.prazoReserva + const Duration(seconds: 1));
-    await banco.simularRede(); // aplica a expiração, como o job do backend
+      relogio.avancar(banco.prazoReserva + const Duration(seconds: 1));
+      await banco.simularRede(); // aplica a expiração, como o job do backend
 
-    final atualizada = banco.reservas.firstWhere((r) => r.id == reserva.id);
-    expect(atualizada.status, StatusReserva.expirada);
-    expect(
-      banco.doacoes.firstWhere((d) => d.id == doacao.id).status,
-      StatusDoacao.disponivel,
-    );
-  });
+      final atualizada = banco.reservas.firstWhere((r) => r.id == reserva.id);
+      expect(atualizada.status, StatusReserva.expirada);
+      expect(
+        banco.doacoes.firstWhere((d) => d.id == doacao.id).status,
+        StatusDoacao.disponivel,
+      );
+    },
+  );
 
   test('doador não pode reservar (403 SEM_PERMISSAO)', () {
     entrarComo('mercado@exemplo.com');
 
     expect(
-      () => banco.reservar(1),
+      () => aceitar(1), // a conta logada não é ONG
       throwsA(isA<ApiException>().having((e) => e.status, 'status', 403)),
     );
+  });
+
+  test('RN28: "A ONG não compareceu" só depois do prazo', () {
+    entrarComo('maosamigas@exemplo.com');
+    final frutas = banco.doacoesProximas().firstWhere(
+      (d) => d.titulo.startsWith('Frutas'), // do mercado
+    );
+    final reserva = aceitar(frutas.id);
+    entrarComo('mercado@exemplo.com');
+    Conta doador() => banco.doadorLogado();
+
+    expect(
+      () => banco.retiradas.naoCompareceu(doador(), reserva.id),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.codigo,
+          'codigo',
+          'PRAZO_NAO_ACABOU',
+        ),
+      ),
+    );
+    relogio.avancar(banco.prazoReserva + const Duration(seconds: 1));
+    banco.retiradas.naoCompareceu(doador(), reserva.id);
+
+    final atualizada = banco.reservas.firstWhere((r) => r.id == reserva.id);
+    expect(atualizada.status, StatusReserva.expirada);
+    expect(atualizada.contouDesistencia, isTrue);
   });
 }

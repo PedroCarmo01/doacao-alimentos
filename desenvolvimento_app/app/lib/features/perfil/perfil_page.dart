@@ -65,7 +65,9 @@ class _PerfilPageState extends State<PerfilPage> {
       body: conta == null
           ? const SizedBox.shrink()
           : ListView(
-              padding: const EdgeInsets.all(24),
+              // Embaixo, espaço para a barra inferior (o corpo da casca
+              // passa por trás dela) não cobrir o botão Sair.
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
               children: [
                 _Cabecalho(conta: conta),
                 const SizedBox(height: 24),
