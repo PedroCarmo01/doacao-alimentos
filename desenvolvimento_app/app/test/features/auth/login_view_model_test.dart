@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:summit_app/core/notificacoes/mostrador_de_notificacoes.dart';
 import 'package:summit_app/core/dependencias.dart';
 import 'package:summit_app/data/fake/banco_fake.dart';
 import 'package:summit_app/features/auth/login_view_model.dart';
@@ -10,6 +11,7 @@ void main() {
 
   setUp(() {
     deps = Dependencias.fake(
+      mostrador: MostradorEmMemoria(),
       banco: BancoFake(atrasoDeRede: Duration.zero, simularNovasDoacoes: false),
     );
     vm = LoginViewModel(auth: deps.auth, sessao: deps.sessao);

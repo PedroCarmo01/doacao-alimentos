@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/preferencias/preferencias.dart';
 import '../../core/routing/app_routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/notificacoes/mostrador_de_notificacoes.dart';
 import '../../data/localizacao/localizacao_service.dart';
 import '../../shared/widgets/primary_button.dart';
 import 'boas_vindas_view_model.dart';
@@ -13,10 +14,12 @@ class BoasVindasPage extends StatefulWidget {
     super.key,
     required this.preferencias,
     required this.localizacao,
+    required this.notificacoes,
   });
 
   final Preferencias preferencias;
   final LocalizacaoService localizacao;
+  final MostradorDeNotificacoes notificacoes;
 
   @override
   State<BoasVindasPage> createState() => _BoasVindasPageState();
@@ -64,6 +67,7 @@ class _BoasVindasPageState extends State<BoasVindasPage> {
     _viewModel = BoasVindasViewModel(
       preferencias: widget.preferencias,
       localizacao: widget.localizacao,
+      notificacoes: widget.notificacoes,
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:shared_models/shared_models.dart';
 import '../auth/usuario_repository.dart';
 import '../core/erros/app_exception.dart';
 import '../core/seguranca/usuario_autenticado.dart';
+import '../notificacoes/central_de_notificacoes.dart';
 import 'doacao_repository.dart';
 
 /// Regras das doações do lado do doador (RN10, RN12, RN13; telas T10–T12).
@@ -13,15 +14,18 @@ class DoacaoService {
   DoacaoService({
     required DoacaoRepository doacoes,
     required UsuarioRepository usuarios,
+    required CentralDeNotificacoes avisos,
     required Relogio relogio,
     required int fusoHorarioUtc,
   }) : _doacoes = doacoes,
        _usuarios = usuarios,
+       _avisos = avisos,
        _relogio = relogio,
        _fuso = fusoHorarioUtc;
 
   final DoacaoRepository _doacoes;
   final UsuarioRepository _usuarios;
+  final CentralDeNotificacoes _avisos;
   final Relogio _relogio;
   final int _fuso;
 
@@ -43,9 +47,9 @@ class DoacaoService {
       doadorId: usuario.id,
       criadoEm: _relogio.agora(),
     );
-    // RN11: na etapa 5, a CentralDeNotificacoes avisa as ONGs próximas e
-    // devolve quantas foram avisadas. Até lá, ninguém é avisado.
-    return RespostaPublicacao(doacao: doacao, ongsAvisadas: 0);
+    // RN11: avisa as ONGs próximas e conta quantas foram avisadas.
+    final avisadas = await _avisos.avisarOngsProximas(doacao);
+    return RespostaPublicacao(doacao: doacao, ongsAvisadas: avisadas);
   }
 
   /// `PUT /doacoes/{id}` — RN12: só enquanto ninguém aceitou.
@@ -67,7 +71,7 @@ class DoacaoService {
   }
 
   /// `DELETE /doacoes/{id}` — RN12. Doação reservada exige motivo; a ONG
-  /// é avisada (etapa 5) e NÃO conta desistência.
+  /// é avisada e NÃO conta desistência.
   Future<void> cancelar(
     UsuarioAutenticado usuario,
     int doacaoId, {
@@ -85,11 +89,18 @@ class DoacaoService {
       final erro = ValidadorDoacao.motivoCancelamento(motivoLimpo);
       if (erro != null) throw ValidacaoException(erro);
     }
+    final reserva = await _doacoes.reservaAtiva(doacaoId);
+    final motivoFinal = (motivoLimpo == null || motivoLimpo.isEmpty)
+        ? null
+        : motivoLimpo;
     await _doacoes.cancelar(
       doacaoId,
-      motivo: (motivoLimpo == null || motivoLimpo.isEmpty) ? null : motivoLimpo,
+      motivo: motivoFinal,
       agora: _relogio.agora(),
     );
+    if (reserva != null) {
+      await _avisos.doacaoCancelada(doacao, reserva, motivoFinal);
+    }
   }
 
   /// `GET /doacoes?situacao=` — T10, abas Ativas e Histórico.

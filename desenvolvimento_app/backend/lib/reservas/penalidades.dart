@@ -1,6 +1,8 @@
 import 'package:shared_models/shared_models.dart';
 
 import '../auth/usuario_repository.dart';
+import '../doacoes/doacao_repository.dart';
+import '../notificacoes/central_de_notificacoes.dart';
 import 'reserva_repository.dart';
 
 /// O que acontece quando uma retirada termina SEM a ONG buscar a comida
@@ -13,13 +15,19 @@ class Penalidades {
   Penalidades({
     required ReservaRepository reservas,
     required UsuarioRepository usuarios,
+    required DoacaoRepository doacoes,
+    required CentralDeNotificacoes avisos,
     required RegrasDaRetirada regras,
   }) : _reservas = reservas,
        _usuarios = usuarios,
+       _doacoes = doacoes,
+       _avisos = avisos,
        _regras = regras;
 
   final ReservaRepository _reservas;
   final UsuarioRepository _usuarios;
+  final DoacaoRepository _doacoes;
+  final CentralDeNotificacoes _avisos;
   final RegrasDaRetirada _regras;
 
   /// Encerra a [reserva] e devolve a doação. `null` se ela já não estava
@@ -38,12 +46,28 @@ class Penalidades {
     );
     if (!encerrou) return null;
     final total = await desistenciasRecentes(reserva.ongId, agora);
+    final suspensaAte = contaDesistencia
+        ? await _suspenderSePreciso(reserva.ongId, total, agora)
+        : null;
+
+    // Avisos: a ONG, o doador e as outras ONGs (a doação voltou).
+    final doacao = await _doacoes.buscar(reserva.doacaoId);
+    if (doacao != null) {
+      await _avisos.retiradaSemRetirar(
+        doacao,
+        reserva,
+        expirou: status == StatusReserva.expirada,
+        contouDesistencia: contaDesistencia,
+      );
+    }
+    if (suspensaAte != null) {
+      await _avisos.suspensao(reserva.ongId, suspensaAte);
+    }
+
     return RespostaDesistencia(
       contouDesistencia: contaDesistencia,
       desistenciasRecentes: total,
-      suspensaAte: contaDesistencia
-          ? await _suspenderSePreciso(reserva.ongId, total, agora)
-          : null,
+      suspensaAte: suspensaAte,
     );
   }
 

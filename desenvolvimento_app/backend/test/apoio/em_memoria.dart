@@ -119,11 +119,14 @@ class ContasEmMemoria implements UsuarioRepository, PerfilRepository {
   ].take(limite).toList();
 
   /// RN24: usado pelo `ReservasEmMemoria.suspender`.
-  void suspender(int usuarioId, DateTime ate) {
+  void suspender(int usuarioId, DateTime ate) =>
+      alterarPerfil(usuarioId, {'suspensaAte': ate.toUtc().toIso8601String()});
+
+  /// Troca campos do perfil (pelos nomes do JSON), para montar cenários.
+  void alterarPerfil(int usuarioId, Map<String, dynamic> campos) {
     final indice = registros.indexWhere((r) => r.conta.usuario.id == usuarioId);
     final antigo = registros[indice];
-    final json = antigo.conta.perfil.toJson()
-      ..['suspensaAte'] = ate.toUtc().toIso8601String();
+    final json = {...antigo.conta.perfil.toJson(), ...campos};
     registros[indice] = UsuarioComSenha(
       senhaHash: antigo.senhaHash,
       conta: Conta(

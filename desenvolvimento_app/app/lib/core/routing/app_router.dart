@@ -61,6 +61,7 @@ class AppRouter {
       AppRoutes.boasVindas => BoasVindasPage(
         preferencias: d.preferencias,
         localizacao: d.localizacao,
+        notificacoes: d.mostrador,
       ),
       AppRoutes.login => LoginPage(
         auth: d.auth,

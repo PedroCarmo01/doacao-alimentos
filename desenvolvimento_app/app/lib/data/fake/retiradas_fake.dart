@@ -5,15 +5,23 @@ import 'package:shared_models/shared_models.dart';
 import '../../core/api/api_exception.dart';
 import 'contas_fake.dart';
 import 'doacoes_fake.dart';
+import 'notificacoes_fake.dart';
 
 /// As retiradas do modo Fake, com as MESMAS regras e códigos de erro do
 /// `ReservaService` e do `ConfirmacaoService` do backend (RN20–RN29).
 class RetiradasFake {
-  RetiradasFake(this._relogio, this._contas, this._doacoes, this.regras);
+  RetiradasFake(
+    this._relogio,
+    this._contas,
+    this._doacoes,
+    this._avisos,
+    this.regras,
+  );
 
   final Relogio _relogio;
   final ContasFake _contas;
   final DoacoesFake _doacoes;
+  final NotificacoesFake _avisos;
   final RegrasDaRetirada regras;
   final _sorteio = Random();
 
@@ -82,6 +90,14 @@ class RetiradasFake {
     );
     _doacoes.reservas.add(reserva);
     _doacoes.salvar(doacao.copyWith(status: StatusDoacao.reservada));
+    _avisos.avisar(
+      doacao.doadorId,
+      TipoNotificacao.doacaoAceita,
+      titulo: 'Doação aceita',
+      corpo: '${ong.perfil.nomeOrganizacao} vai retirar "${doacao.titulo}".',
+      doacaoId: doacao.id,
+      reservaId: reserva.id,
+    );
     return reserva;
   }
 
@@ -164,6 +180,16 @@ class RetiradasFake {
     );
     final doacao = _doacoes.porId(reserva.doacaoId);
     _doacoes.salvar(doacao.copyWith(status: StatusDoacao.concluida));
+    for (final id in [doacao.doadorId, reserva.ongId]) {
+      _avisos.avisar(
+        id,
+        TipoNotificacao.retiradaConfirmada,
+        titulo: 'Retirada confirmada!',
+        corpo: '"${doacao.titulo}" foi retirada. Obrigado!',
+        doacaoId: doacao.id,
+        reservaId: reservaId,
+      );
+    }
     return _porId(reservaId).semCodigo();
   }
 
@@ -215,11 +241,38 @@ class RetiradasFake {
         _contas.suspender(reserva.ongId, suspensaAte);
       }
     }
+    _avisarSemRetirar(reserva, status == StatusReserva.expirada);
     return RespostaDesistencia(
       contouDesistencia: contaDesistencia,
       desistenciasRecentes: total,
       suspensaAte: suspensaAte,
     );
+  }
+
+  /// Os avisos de quando a comida não saiu (como no backend).
+  void _avisarSemRetirar(Reserva reserva, bool expirou) {
+    final doacao = _doacoes.porId(reserva.doacaoId);
+    if (expirou) {
+      _avisos.avisar(
+        reserva.ongId,
+        TipoNotificacao.prazoAcabouOng,
+        titulo: 'O prazo acabou',
+        corpo: 'A doação "${doacao.titulo}" voltou para outras ONGs.',
+        doacaoId: doacao.id,
+        reservaId: reserva.id,
+      );
+    }
+    _avisos.avisar(
+      doacao.doadorId,
+      TipoNotificacao.prazoAcabouDoador,
+      titulo: expirou ? 'A ONG não retirou a tempo' : 'A ONG desistiu',
+      corpo: 'Sua doação "${doacao.titulo}" está disponível de novo.',
+      doacaoId: doacao.id,
+      reservaId: reserva.id,
+    );
+    if (doacao.podeSerReservada(_agora)) {
+      _avisos.avisarOngsProximas(doacao, deNovo: true);
+    }
   }
 
   int _desistenciasRecentes(int ongId) {

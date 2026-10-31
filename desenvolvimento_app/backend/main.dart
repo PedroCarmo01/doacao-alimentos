@@ -15,6 +15,9 @@ import 'package:summit_backend/documentos/consulta_cnpj_brasil_api.dart';
 import 'package:summit_backend/documentos/consulta_cnpj_fake.dart';
 import 'package:summit_backend/documentos/documento_service.dart';
 import 'package:summit_backend/documentos/reverificacao_job.dart';
+import 'package:summit_backend/notificacoes/central_de_notificacoes.dart';
+import 'package:summit_backend/notificacoes/enviador_de_push.dart';
+import 'package:summit_backend/notificacoes/notificacao_repository_mysql.dart';
 import 'package:summit_backend/perfil/perfil_repository_mysql.dart';
 import 'package:summit_backend/reservas/confirmacao_service.dart';
 import 'package:summit_backend/reservas/expiracao_job.dart';
@@ -62,14 +65,33 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
     ),
   )..iniciar();
 
-  // Retiradas (etapa 4). Os serviços são criados aqui, uma vez, porque o
-  // job de expiração usa os mesmos que as rotas de /reservas.
+  // Notificações (etapa 5). POLIMORFISMO: para o push real (Firebase),
+  // troque EnviadorPushDesligado() por EnviadorFcm(...). Só esta linha.
+  const EnviadorDePush enviador = EnviadorPushDesligado();
+  final avisos = CentralDeNotificacoes(
+    notificacoes: NotificacaoRepositoryMysql(database),
+    enviador: enviador,
+    relogio: relogio,
+    fusoHorarioUtc: env.fusoHorarioUtc,
+  );
+
+  // Doações e retiradas. Os serviços são criados aqui, uma vez, porque o
+  // job de expiração usa os mesmos que as rotas.
   final reservas = ReservaRepositoryMysql(database);
   final doacoes = DoacaoRepositoryMysql(database);
   final usuarios = UsuarioRepositoryMysql(database);
+  final doacaoService = DoacaoService(
+    doacoes: doacoes,
+    usuarios: usuarios,
+    avisos: avisos,
+    relogio: relogio,
+    fusoHorarioUtc: env.fusoHorarioUtc,
+  );
   final penalidades = Penalidades(
     reservas: reservas,
     usuarios: usuarios,
+    doacoes: doacoes,
+    avisos: avisos,
     regras: env.regrasDaRetirada,
   );
   final reservaService = ReservaService(
@@ -77,6 +99,7 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
     doacoes: doacoes,
     usuarios: usuarios,
     penalidades: penalidades,
+    avisos: avisos,
     regras: env.regrasDaRetirada,
     codigos: GeradorDeCodigoAleatorio(),
     relogio: relogio,
@@ -85,26 +108,21 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
     reservas: reservas,
     doacoes: doacoes,
     penalidades: penalidades,
+    avisos: avisos,
     relogio: relogio,
   );
 
   // RN29: a cada 30 s, expira as retiradas vencidas e as doações cujo
-  // horário de retirada acabou (RN13).
-  _expiracao ??= ExpiracaoJob(
-    reservas: reservaService,
-    doacoes: DoacaoService(
-      doacoes: doacoes,
-      usuarios: usuarios,
-      relogio: relogio,
-      fusoHorarioUtc: env.fusoHorarioUtc,
-    ),
-  )..iniciar();
+  // horário de retirada acabou (RN13), e lembra "faltam 10 minutos".
+  _expiracao ??= ExpiracaoJob(reservas: reservaService, doacoes: doacaoService)
+    ..iniciar();
 
   // Onde as fotos das doações ficam: uma pasta do servidor (fora do Git).
   final ArmazenamentoDeFotos fotos = ArmazenamentoEmPasta(env.pastaArquivos);
 
   final aplicacao = handler
       .use(provider<ArmazenamentoDeFotos>((_) => fotos))
+      .use(provider<DoacaoService>((_) => doacaoService))
       .use(provider<ReservaService>((_) => reservaService))
       .use(provider<ConfirmacaoService>((_) => confirmacaoService))
       .use(provider<ConsultaCnpj>((_) => consultaCnpj))

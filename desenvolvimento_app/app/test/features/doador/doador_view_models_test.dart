@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_models/shared_models.dart';
+import 'package:summit_app/core/notificacoes/mostrador_de_notificacoes.dart';
 import 'package:summit_app/core/dependencias.dart';
 import 'package:summit_app/data/fake/banco_fake.dart';
 import 'package:summit_app/data/fotos/seletor_de_fotos.dart';
@@ -17,6 +18,7 @@ void main() {
   setUp(() async {
     relogio = RelogioFixo(DateTime.utc(2026, 9, 15, 15));
     deps = Dependencias.fake(
+      mostrador: MostradorEmMemoria(),
       banco: BancoFake(
         relogio: relogio,
         atrasoDeRede: Duration.zero,

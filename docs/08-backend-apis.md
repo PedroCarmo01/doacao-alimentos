@@ -62,6 +62,8 @@ A coluna **Etapa** diz em qual etapa do desenvolvimento a rota ficou pronta.
 | DELETE | `/reservas/{id}` | ONG dona | 4 ✅ |
 | POST | `/reservas/{id}/confirmar` | doador dono | 4 ✅ |
 | POST | `/reservas/{id}/nao-compareceu` | doador dono | 4 ✅ |
+| GET | `/notificacoes?depois=` | logado | 5 ✅ |
+| POST | `/notificacoes/lidas` | logado | 5 ✅ |
 
 ---
 
@@ -217,7 +219,7 @@ Guarda o identificador de push do celular (tabela `dispositivos`). Se o token j�
 - `fotos`: nomes dos arquivos, na ordem (até 3). A foto é baixada em `GET /arquivos/{nome}`.
 - **De leitura:** `nomeDoador`, `nomeOng` e `prazoRetirada` (quando reservada) e `distanciaKm` (só em `/proximas`).
 
-### `POST /doacoes` — `DadosNovaDoacao` → `201 {"doacao": Doacao, "ongsAvisadas": 0}`
+### `POST /doacoes` — `DadosNovaDoacao` → `201 {"doacao": Doacao, "ongsAvisadas": 7}`
 
 ```json
 {
@@ -230,7 +232,7 @@ Guarda o identificador de push do celular (tabela `dispositivos`). Se o token j�
 }
 ```
 
-Regras (`ValidadorDoacao`, RN10): só **doador** (ONG: 403); título 3–120; quantidade e peso > 0; descrição até 500; **validade ≥ hoje** no fuso `FUSO_HORARIO`; fim da retirada **depois do início e no futuro**; **declaração = true**. Refeições prontas: `preparadoEm` obrigatório, não no futuro, e `janelaFim` no máximo **4 h** depois dele. `latitude`, `longitude` e `endereco` são opcionais: sem eles, valem os do perfil. `ongsAvisadas` é 0 até a etapa 5 (RN11). As fotos vão depois, uma por vez.
+Regras (`ValidadorDoacao`, RN10): só **doador** (ONG: 403); título 3–120; quantidade e peso > 0; descrição até 500; **validade ≥ hoje** no fuso `FUSO_HORARIO`; fim da retirada **depois do início e no futuro**; **declaração = true**. Refeições prontas: `preparadoEm` obrigatório, não no futuro, e `janelaFim` no máximo **4 h** depois dele. `latitude`, `longitude` e `endereco` são opcionais: sem eles, valem os do perfil. `ongsAvisadas` = quantas ONGs receberam o aviso "Doação nova" (RN11, veja Notificações). As fotos vão depois, uma por vez.
 
 ### `POST /doacoes/{id}/fotos` — *multipart*, campo `foto` → `201 Doacao`
 
@@ -258,7 +260,7 @@ Mesmas regras do `POST`. Só enquanto `disponivel` (RN12); reservada: 409 `DOACA
 
 ### `DELETE /doacoes/{id}` — corpo opcional `{"motivo": "..."}` → `204`
 
-RN12: `disponivel` cancela sem motivo. `reservada` **exige** motivo (400 sem ele): a retirada vira `canceladaDoador`, **sem** contar desistência para a ONG, e a ONG é avisada na etapa 5. Concluída, cancelada ou expirada: 409 `DOACAO_NAO_CANCELAVEL`.
+RN12: `disponivel` cancela sem motivo. `reservada` **exige** motivo (400 sem ele): a retirada vira `canceladaDoador`, **sem** contar desistência para a ONG, e a ONG recebe o aviso `doacaoCancelada` com o motivo. Concluída, cancelada ou expirada: 409 `DOACAO_NAO_CANCELAVEL`.
 
 ---
 
@@ -362,6 +364,54 @@ RN28: doador dono, **depois** do prazo (antes: 409 `PRAZO_NAO_ACABOU`). Mesmo ef
 ### Expiração automática (RN29)
 
 Não é rota: o `ExpiracaoJob` (iniciado em `main.dart`) roda a cada 30 s. Retiradas `ativa` com `expira_em <= agora` → `expirada` com `conta_desistencia = TRUE`, a doação volta a `disponivel`, a ONG fica bloqueada para ela e a suspensão é conferida. Depois, as doações disponíveis com a janela encerrada → `expirada` (RN13). O aceite e as consultas de `/reservas` também expiram antes, para nunca deixar uma doação presa.
+
+---
+
+## Notificações — etapa 5
+
+Todo aviso é **gravado** na tabela `notificacoes` pela `CentralDeNotificacoes` e entregue ao `EnviadorDePush`. Hoje o enviador é o `EnviadorPushDesligado` (não faz nada): o app busca os avisos a cada 15 s. Para o push real (Firebase), cria-se um `EnviadorFcm` e troca-se **uma linha** no `main.dart`.
+
+### Objeto `Notificacao`
+
+```json
+{
+  "id": 12,
+  "tipo": "doacaoNova",
+  "titulo": "Doação nova perto de você",
+  "corpo": "Doação nova a 1,2 km: 30 unidades de Pães do dia — Padaria Pão Quente. Retirar até 18:00.",
+  "criadoEm": "2026-09-15T15:00:00.000Z",
+  "doacaoId": 4,
+  "reservaId": null,
+  "lida": false
+}
+```
+
+`doacaoId` e `reservaId` dizem ao app qual tela abrir no toque. Os horários do texto usam `FUSO_HORARIO`.
+
+### Quando cada aviso é criado
+
+| `tipo` | Quem recebe | Quando |
+|---|---|---|
+| `doacaoNova` | ONGs da RN11 | `POST /doacoes` |
+| `doacaoAceita` | doador | `POST /reservas` |
+| `prazoAcabando` | ONG | `ExpiracaoJob`, quando faltam 10 min (uma vez por retirada) |
+| `prazoAcabouOng` | ONG | a retirada expirou (job, aceite ou "não compareceu") |
+| `prazoAcabouDoador` | doador | a retirada terminou sem retirada (expirou ou a ONG desistiu) |
+| `doacaoDisponivelDeNovo` | ONGs da RN11 (menos a bloqueada) | junto com o anterior, se a janela ainda está aberta |
+| `retiradaConfirmada` | doador e ONG | `POST /reservas/{id}/confirmar` |
+| `doacaoCancelada` | ONG da retirada | `DELETE /doacoes/{id}` de uma reservada |
+| `suspensao` | ONG | a 3ª desistência (RN24) |
+| `mensagemNova` | a outra pessoa | etapa 6 (chat) |
+
+**RN11 — quais ONGs:** `busca_ativa = TRUE`, não suspensas, **sem bloqueio** para a doação (RN22) e com a doação **dentro do raio** salvo no perfil delas (Haversine).
+
+### `GET /notificacoes?depois={id}` → `200 {"notificacoes": [Notificacao]}`
+
+As do usuário logado com `id > depois`, da mais antiga para a mais nova, no máximo 50. `depois` padrão 0; não numérico: 400.
+
+### `POST /notificacoes/lidas` — `{"ate": 12}` → `204`
+
+Marca como lidas as do usuário logado até o id 12. Sem `ate` inteiro: 400.
 
 ---
 

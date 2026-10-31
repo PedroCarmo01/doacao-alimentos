@@ -21,6 +21,11 @@ class ContasFake {
 
   Conta? porId(int? id) => _registros[id]?.conta;
 
+  /// Todas as contas (para escolher quais ONGs avisar, RN11).
+  Iterable<Conta> get todas => [
+    for (final registro in _registros.values) registro.conta,
+  ];
+
   /// Usada pelo BancoFake para ligar as doações de exemplo aos doadores.
   Conta porEmail(String email) => _registros.values
       .firstWhere((registro) => registro.conta.usuario.email == email)

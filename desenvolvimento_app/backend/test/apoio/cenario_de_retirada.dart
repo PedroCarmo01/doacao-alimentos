@@ -8,6 +8,7 @@ import 'package:summit_backend/reservas/reserva_service.dart';
 
 import 'doacoes_em_memoria.dart';
 import 'em_memoria.dart';
+import 'notificacoes_em_memoria.dart';
 import 'reservas_em_memoria.dart';
 
 /// Monta tudo o que os testes da retirada precisam, sem MySQL: um doador,
@@ -19,9 +20,13 @@ class CenarioDeRetirada {
       contas = ContasEmMemoria() {
     doacoes = DoacoesEmMemoria(contas);
     reservas = ReservasEmMemoria(doacoes, contas);
+    notificacoes = NotificacoesEmMemoria(contas, doacoes);
+    final avisos = notificacoes.central(relogio);
     final penalidades = Penalidades(
       reservas: reservas,
       usuarios: contas,
+      doacoes: doacoes,
+      avisos: avisos,
       regras: regras,
     );
     service = ReservaService(
@@ -29,6 +34,7 @@ class CenarioDeRetirada {
       doacoes: doacoes,
       usuarios: contas,
       penalidades: penalidades,
+      avisos: avisos,
       regras: regras,
       codigos: const GeradorDeCodigoFixo(codigo),
       relogio: relogio,
@@ -37,11 +43,13 @@ class CenarioDeRetirada {
       reservas: reservas,
       doacoes: doacoes,
       penalidades: penalidades,
+      avisos: avisos,
       relogio: relogio,
     );
     doacaoService = DoacaoService(
       doacoes: doacoes,
       usuarios: contas,
+      avisos: avisos,
       relogio: relogio,
       fusoHorarioUtc: -3,
     );
@@ -55,6 +63,7 @@ class CenarioDeRetirada {
   final ContasEmMemoria contas;
   late final DoacoesEmMemoria doacoes;
   late final ReservasEmMemoria reservas;
+  late final NotificacoesEmMemoria notificacoes;
   late final ReservaService service;
   late final ConfirmacaoService confirmacao;
   late final DoacaoService doacaoService;

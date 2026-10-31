@@ -331,4 +331,19 @@ void main() {
       expect(info().nomeSugerido, 'ASSOCIACAO EXEMPLO');
     });
   });
+
+  test('Notificacao vai e volta em JSON', () {
+    final original = Notificacao(
+      id: 5,
+      tipo: TipoNotificacao.doacaoAceita,
+      titulo: 'Doação aceita',
+      corpo: 'ONG Mãos Amigas vai retirar sua doação.',
+      criadoEm: DateTime.utc(2026, 9, 15, 14),
+      doacaoId: 3,
+    );
+    final volta = Notificacao.fromJson(original.toJson());
+    expect(volta.tipo, TipoNotificacao.doacaoAceita);
+    expect(volta.doacaoId, 3);
+    expect(volta.reservaId, isNull);
+  });
 }

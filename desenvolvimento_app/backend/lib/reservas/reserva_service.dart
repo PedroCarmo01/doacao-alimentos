@@ -4,6 +4,7 @@ import '../auth/usuario_repository.dart';
 import '../core/erros/app_exception.dart';
 import '../core/seguranca/usuario_autenticado.dart';
 import '../doacoes/doacao_repository.dart';
+import '../notificacoes/central_de_notificacoes.dart';
 import 'gerador_de_codigo.dart';
 import 'penalidades.dart';
 import 'reserva_exceptions.dart';
@@ -18,6 +19,7 @@ class ReservaService {
     required DoacaoRepository doacoes,
     required UsuarioRepository usuarios,
     required Penalidades penalidades,
+    required CentralDeNotificacoes avisos,
     required RegrasDaRetirada regras,
     required GeradorDeCodigo codigos,
     required Relogio relogio,
@@ -25,6 +27,7 @@ class ReservaService {
        _doacoes = doacoes,
        _usuarios = usuarios,
        _penalidades = penalidades,
+       _avisos = avisos,
        _regras = regras,
        _codigos = codigos,
        _relogio = relogio;
@@ -33,6 +36,7 @@ class ReservaService {
   final DoacaoRepository _doacoes;
   final UsuarioRepository _usuarios;
   final Penalidades _penalidades;
+  final CentralDeNotificacoes _avisos;
   final RegrasDaRetirada _regras;
   final GeradorDeCodigo _codigos;
   final Relogio _relogio;
@@ -68,7 +72,9 @@ class ReservaService {
         expiraEm: _regras.prazoFinal(agora: agora, janelaFim: doacao.janelaFim),
       ),
     );
-    return reserva ?? (throw ErrosDaRetirada.indisponivel);
+    if (reserva == null) throw ErrosDaRetirada.indisponivel;
+    await _avisos.doacaoAceita(doacao, reserva); // avisa o doador
+    return reserva;
   }
 
   /// `GET /reservas?situacao=` — minhas retiradas (as ativas com o código).
@@ -140,6 +146,18 @@ class ReservaService {
     }
     return expiradas;
   }
+
+  /// "Faltam 10 minutos" para as retiradas perto do fim do prazo (uma vez
+  /// só por retirada). Chamado pelo `ExpiracaoJob`.
+  Future<void> avisarPrazosAcabando() async {
+    final limite = _relogio.agora().add(avisoAntesDoFim);
+    for (final reserva in await _reservas.vencidas(limite)) {
+      await _avisos.prazoAcabando(reserva);
+    }
+  }
+
+  /// Quanto tempo antes do fim do prazo a ONG é lembrada.
+  static const avisoAntesDoFim = Duration(minutes: 10);
 
   /// A retirada, se for da ONG logada. Senão, "não encontrada".
   Future<Reserva> _daOng(UsuarioAutenticado usuario, int reservaId) async {

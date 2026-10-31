@@ -5,8 +5,8 @@ import '../doacoes/doacao_service.dart';
 import 'reserva_service.dart';
 
 /// Tarefa automática da RN29 (e da RN13): a cada [intervalo], expira as
-/// retiradas com o prazo vencido (a doação volta para as outras ONGs) e as
-/// doações cujo horário de retirada acabou.
+/// retiradas com o prazo vencido (a doação volta para as outras ONGs), as
+/// doações cujo horário de retirada acabou e avisa "faltam 10 minutos".
 ///
 /// O MySQL não "avisa" quando um horário passa: alguém precisa perguntar de
 /// tempos em tempos. Ligada UMA vez em `main.dart`.
@@ -43,6 +43,8 @@ class ExpiracaoJob {
       final expiradas = await _reservas.expirarVencidas();
       // ...depois as doações cujo horário acabou (aí viram "expirada").
       final doacoes = await _doacoes.expirarJanelasEncerradas();
+      // ...e lembra as ONGs com o prazo perto do fim.
+      await _reservas.avisarPrazosAcabando();
       if (expiradas.isNotEmpty || doacoes > 0) {
         stdout.writeln(
           '[RN29] ${expiradas.length} retirada(s) e $doacoes doação(ões) '

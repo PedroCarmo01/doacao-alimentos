@@ -4,6 +4,7 @@ import '../../core/api/api_exception.dart';
 import 'contas_fake.dart';
 import 'doacoes_fake.dart';
 import 'exemplos_fake.dart';
+import 'notificacoes_fake.dart';
 import 'receita_fake.dart';
 import 'retiradas_fake.dart';
 
@@ -33,10 +34,13 @@ class BancoFake {
   }) : _relogio = relogio,
        _contas = ContasFake(relogio) {
     _doacoes = DoacoesFake(relogio, _contas, fusoHorarioUtc: fusoHorarioUtc);
+    notificacoes = NotificacoesFake(relogio, _contas)
+      ..bloqueios = _doacoes.bloqueios;
     retiradas = RetiradasFake(
       relogio,
       _contas,
       _doacoes,
+      notificacoes,
       RegrasDaRetirada(prazo: prazoReserva),
     );
     ExemplosFake(_doacoes, _contas, agora: relogio.agora()).criar();
@@ -56,6 +60,12 @@ class BancoFake {
 
   /// As regras de aceite e retirada (usadas pelo `ReservaRepositoryFake`).
   late final RetiradasFake retiradas;
+
+  /// Os avisos (usados pelo `NotificacaoRepositoryFake`).
+  late final NotificacoesFake notificacoes;
+
+  /// Quem está logado agora (o "token" do Fake).
+  int? get logadoId => _logadoId;
   int? _logadoId;
   DateTime? _ultimaSimulacao;
 
@@ -105,11 +115,13 @@ class BancoFake {
 
   // -------------------------------------------------------------- doações
 
-  RespostaPublicacao publicarDoacao(DadosNovaDoacao dados) =>
-      RespostaPublicacao(
-        doacao: _doacoes.criar(_exigirLogado(TipoUsuario.doador), dados),
-        ongsAvisadas: 0, // RN11: os avisos entram na etapa 5
-      );
+  RespostaPublicacao publicarDoacao(DadosNovaDoacao dados) {
+    final doacao = _doacoes.criar(_exigirLogado(TipoUsuario.doador), dados);
+    return RespostaPublicacao(
+      doacao: doacao,
+      ongsAvisadas: notificacoes.avisarOngsProximas(doacao), // RN11
+    );
+  }
 
   Doacao editarDoacao(int id, DadosNovaDoacao dados) =>
       _doacoes.editar(_exigirLogado(TipoUsuario.doador), id, dados);
@@ -189,7 +201,7 @@ class BancoFake {
     if (ultima == null || _agora.difference(ultima).inSeconds < 45) return;
     _ultimaSimulacao = _agora;
     final numero = _doacoes.doacoes.length + 1;
-    _doacoes.criar(
+    final surpresa = _doacoes.criar(
       _contas.primeiroDoador,
       DadosNovaDoacao(
         titulo: 'Doação surpresa nº $numero',
@@ -205,5 +217,6 @@ class BancoFake {
         declaracaoAlimentosProprios: true,
       ),
     );
+    notificacoes.avisarOngsProximas(surpresa); // RN11
   }
 }

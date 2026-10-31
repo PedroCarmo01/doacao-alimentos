@@ -21,6 +21,7 @@ dependencies:
   url_launcher: ^6.3.1           # "Como chegar": abre o app de mapas
   shared_models:
     path: ../shared_models       # modelos e validações compartilhados
+  flutter_local_notifications: ^22.3.3
 
 dev_dependencies:
   flutter_lints: ^5.0.0

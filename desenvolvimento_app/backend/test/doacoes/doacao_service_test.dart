@@ -6,6 +6,7 @@ import 'package:test/test.dart';
 
 import '../apoio/doacoes_em_memoria.dart';
 import '../apoio/em_memoria.dart';
+import '../apoio/notificacoes_em_memoria.dart';
 
 /// Regras das doações do doador: RN10, RN12, RN13 (e o acesso ao detalhe).
 void main() {
@@ -49,6 +50,7 @@ void main() {
     service = DoacaoService(
       doacoes: doacoes,
       usuarios: contas,
+      avisos: NotificacoesEmMemoria(contas, doacoes).central(relogio),
       relogio: relogio,
       fusoHorarioUtc: -3,
     );
@@ -100,7 +102,7 @@ void main() {
 
       expect(resposta.doacao.latitude, -23.52);
       expect(resposta.doacao.status, StatusDoacao.disponivel);
-      expect(resposta.ongsAvisadas, 0); // RN11 entra na etapa 5
+      expect(resposta.ongsAvisadas, 1); // a ONG do teste fica no mesmo lugar
     });
   });
 

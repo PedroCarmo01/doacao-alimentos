@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_models/shared_models.dart';
+import 'package:summit_app/core/notificacoes/mostrador_de_notificacoes.dart';
 import 'package:summit_app/core/dependencias.dart';
 import 'package:summit_app/data/fake/banco_fake.dart';
 import 'package:summit_app/data/fotos/seletor_de_fotos.dart';
@@ -13,6 +14,7 @@ void main() {
   ) async {
     final relogio = RelogioFixo(DateTime.utc(2026, 9, 15, 15));
     final deps = Dependencias.fake(
+      mostrador: MostradorEmMemoria(),
       banco: BancoFake(
         relogio: relogio,
         atrasoDeRede: Duration.zero,
@@ -58,9 +60,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('doacao_publicada')), findsOneWidget);
-    expect(
-      find.text('As ONGs próximas já podem vê-la na lista de doações.'),
-      findsOneWidget,
-    );
+    // RN11: as ONGs de exemplo perto da padaria são avisadas.
+    expect(find.textContaining('ONGs próximas foram avisadas'), findsOneWidget);
   });
 }

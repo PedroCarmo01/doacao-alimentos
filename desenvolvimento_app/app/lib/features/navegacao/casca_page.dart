@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_models/shared_models.dart';
 
 import '../../core/dependencias.dart';
+import '../../core/notificacoes/destino_da_notificacao.dart';
 import '../../core/routing/app_routes.dart';
 import '../../shared/widgets/barra_inferior.dart';
 import '../../shared/widgets/em_construcao.dart';
@@ -51,12 +53,24 @@ class _CascaPageState extends State<CascaPage> {
       sessao: d.sessao,
       relogio: d.relogio,
     )..iniciar();
+    // Etapa 5: avisos enquanto a pessoa está logada (a casca só existe
+    // depois do login e some ao sair).
+    d.receptor.iniciar(aoTocar: _abrirNotificacao);
   }
 
   @override
   void dispose() {
+    widget.dependencias.receptor.parar();
     _faixa.dispose();
     super.dispose();
+  }
+
+  /// Tocar numa notificação abre a tela certa (seção 9).
+  void _abrirNotificacao(Notificacao notificacao) {
+    final destino = DestinoDaNotificacao.para(notificacao, ehOng: _ehOng);
+    if (destino == null || !mounted) return;
+    Navigator.pushNamed(context, destino.rota, arguments: destino.argumento);
+    _faixa.atualizar();
   }
 
   /// Tocar na faixa: abre a retirada (ONG) ou a doação (doador).

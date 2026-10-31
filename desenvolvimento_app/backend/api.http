@@ -278,6 +278,23 @@ Authorization: Bearer {{loginDoador.response.body.$.token}}
 
 
 ### =====================================================================
+### NOTIFICAÇÕES — etapa 5 (rode antes "Publicar" com o doador)
+### =====================================================================
+
+### Avisos da ONG logada (o app consulta a cada 15 s)
+GET {{base}}/notificacoes?depois=0
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Marcar como lidas até o id 1 (troque pelo maior id recebido)
+POST {{base}}/notificacoes/lidas
+Authorization: Bearer {{loginOng.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "ate": 1
+}
+
+### =====================================================================
 ### RETIRADAS (reservas) — etapa 4
 ### =====================================================================
 

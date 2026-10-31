@@ -3,6 +3,7 @@ import 'package:shared_models/shared_models.dart';
 import '../core/erros/app_exception.dart';
 import '../core/seguranca/usuario_autenticado.dart';
 import '../doacoes/doacao_repository.dart';
+import '../notificacoes/central_de_notificacoes.dart';
 import 'penalidades.dart';
 import 'reserva_exceptions.dart';
 import 'reserva_repository.dart';
@@ -14,15 +15,18 @@ class ConfirmacaoService {
     required ReservaRepository reservas,
     required DoacaoRepository doacoes,
     required Penalidades penalidades,
+    required CentralDeNotificacoes avisos,
     required Relogio relogio,
   }) : _reservas = reservas,
        _doacoes = doacoes,
        _penalidades = penalidades,
+       _avisos = avisos,
        _relogio = relogio;
 
   final ReservaRepository _reservas;
   final DoacaoRepository _doacoes;
   final Penalidades _penalidades;
+  final CentralDeNotificacoes _avisos;
   final Relogio _relogio;
 
   /// `POST /reservas/{id}/confirmar` — RN27: o doador digita o código que a
@@ -53,6 +57,8 @@ class ConfirmacaoService {
     if (!await _reservas.concluir(reservaId, agora)) {
       throw ErrosDaRetirada.naoAtiva;
     }
+    final doacao = await _doacoes.buscar(reserva.doacaoId);
+    if (doacao != null) await _avisos.retiradaConfirmada(doacao, reserva);
     return (await _reservas.buscar(reservaId))!.semCodigo(); // RN26
   }
 

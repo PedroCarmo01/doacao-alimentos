@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_models/shared_models.dart';
+import 'package:summit_app/core/notificacoes/mostrador_de_notificacoes.dart';
 import 'package:summit_app/core/api/api_exception.dart';
 import 'package:summit_app/core/dependencias.dart';
 import 'package:summit_app/data/auth/auth_repository.dart';
@@ -13,6 +14,7 @@ void main() {
 
   setUp(() {
     deps = Dependencias.fake(
+      mostrador: MostradorEmMemoria(),
       banco: BancoFake(atrasoDeRede: Duration.zero, simularNovasDoacoes: false),
     );
   });
