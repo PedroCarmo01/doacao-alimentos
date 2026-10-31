@@ -28,6 +28,11 @@ class Contador extends StatelessWidget {
             Text(
               Formatador.contador(restante),
               key: const Key('contador'),
+              // O leitor de tela fala por extenso, não "quarenta e dois
+              // dois-pontos dez".
+              semanticsLabel:
+                  'Faltam ${restante.inMinutes} minutos e '
+                  '${restante.inSeconds % 60} segundos',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 56,

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No APK de release, o Android apaga as imagens que nenhum XML usa.
+     O ícone das notificações só é citado no código Dart, então pedimos
+     para mantê-lo. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_notificacao" />

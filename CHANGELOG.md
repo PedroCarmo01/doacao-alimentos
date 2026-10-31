@@ -5,6 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não lançado]
 
 ### Adicionado
+- Etapa 8: ícone, tela de abertura e ícone das notificações; roteiro de ponta a ponta (`backend/tool/roteiro_ponta_a_ponta.dart`) e `docs/relatorio-de-testes.md`; README com prints e os APKs da apresentação.
 - Etapa 7: Comunidade (painel de impacto, feed, publicar com fotos e doação ligada, apoiar, denunciar), Perfil completo (estatísticas, editar, busca/raio, avisos por tipo).
 
 ### Banco

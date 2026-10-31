@@ -83,8 +83,7 @@ class DoacaoCard extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '${doacao.quantidadeTexto} • '
-          '${Formatador.peso(doacao.pesoKg)}'
+          '${Formatador.quantidadeEPeso(doacao)}'
           '${distancia == null ? '' : ' • ${Formatador.distancia(distancia)}'}',
           style: cinza,
         ),

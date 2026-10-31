@@ -1,3 +1,5 @@
+import 'package:shared_models/shared_models.dart';
+
 /// Formatação de datas, durações e distâncias para exibir na tela.
 ///
 /// As datas chegam da API em UTC; aqui são convertidas para o horário do
@@ -57,6 +59,11 @@ abstract final class Formatador {
     if (duracao.inHours == 0) return '${duracao.inMinutes} min';
     return '${duracao.inHours} h ${_dois(minutos)} min';
   }
+
+  /// `30 unidades • 6 kg`. Se a unidade já é kg, só `4 kg` (sem repetir).
+  static String quantidadeEPeso(Doacao doacao) => doacao.unidade == Unidade.kg
+      ? doacao.quantidadeTexto
+      : '${doacao.quantidadeTexto} • ${peso(doacao.pesoKg)}';
 
   /// `6 kg` ou `4,8 kg`
   static String peso(double kg) {

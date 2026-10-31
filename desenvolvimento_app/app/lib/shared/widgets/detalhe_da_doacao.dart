@@ -50,7 +50,7 @@ class DadosDaDoacao extends StatelessWidget {
         _Dado(
           Icons.inventory_2_outlined,
           'Quantidade',
-          '${doacao.quantidadeTexto} • ${Formatador.peso(doacao.pesoKg)}',
+          Formatador.quantidadeEPeso(doacao),
         ),
         _Dado(Icons.ac_unit, 'Conservação', doacao.conservacao.rotulo),
         _Dado(Icons.event, 'Validade', Formatador.data(doacao.validade)),

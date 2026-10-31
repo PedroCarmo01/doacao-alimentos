@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_models/shared_models.dart';
 
+import '../theme/app_theme.dart';
+
 /// Mostra um aviso na barra de notificações do celular.
 ///
 /// É uma interface para os testes usarem o [MostradorEmMemoria] (que só
@@ -33,6 +35,10 @@ class MostradorAndroid implements MostradorDeNotificacoes {
       channelDescription: 'Doações novas, retiradas e prazos.',
       importance: Importance.high,
       priority: Priority.high,
+      // O Android pinta o ícone pequeno de uma cor só: por isso ele é a
+      // folha e o coração em branco (res/drawable-*/ic_notificacao.png).
+      icon: 'ic_notificacao',
+      color: AppColors.verde,
     ),
   );
 
@@ -46,7 +52,7 @@ class MostradorAndroid implements MostradorDeNotificacoes {
     try {
       await _plugin.initialize(
         settings: const InitializationSettings(
-          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          android: AndroidInitializationSettings('ic_notificacao'),
         ),
         onDidReceiveNotificationResponse: (resposta) {
           final payload = resposta.payload;
