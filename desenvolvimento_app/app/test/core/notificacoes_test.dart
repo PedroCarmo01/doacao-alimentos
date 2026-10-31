@@ -183,6 +183,15 @@ void main() {
       );
     });
 
+    test('mensagem nova abre a conversa da retirada', () {
+      final destino = DestinoDaNotificacao.para(
+        aviso(TipoNotificacao.mensagemNova),
+        ehOng: false,
+      )!;
+      expect(destino.rota, AppRoutes.chat);
+      expect(destino.argumento, 9);
+    });
+
     test('doação aceita abre o detalhe do doador', () {
       expect(
         DestinoDaNotificacao.para(

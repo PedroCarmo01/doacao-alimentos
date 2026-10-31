@@ -10,7 +10,7 @@ class DestinoDaNotificacao {
   final String rota;
   final Object? argumento;
 
-  /// `null` = só abre o app (ex.: mensagem nova, que chega na etapa 6).
+  /// `null` = só abre o app (faltou o id da doação ou da retirada).
   static DestinoDaNotificacao? para(
     Notificacao notificacao, {
     required bool ehOng,
@@ -39,7 +39,9 @@ class DestinoDaNotificacao {
         doacao == null
             ? null
             : DestinoDaNotificacao(AppRoutes.detalheDoacaoDoador, doacao),
-      TipoNotificacao.mensagemNova => null,
+      // Os dois: a conversa da retirada (T30).
+      TipoNotificacao.mensagemNova =>
+        reserva == null ? null : DestinoDaNotificacao(AppRoutes.chat, reserva),
     };
   }
 

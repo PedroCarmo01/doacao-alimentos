@@ -12,6 +12,7 @@ export 'src/contratos/reservas.dart';
 export 'src/detalhe_doacao.dart';
 export 'src/doacao.dart';
 export 'src/geo/geo.dart';
+export 'src/mensagem.dart';
 export 'src/notificacao.dart';
 export 'src/perfil.dart';
 export 'src/regras_da_retirada.dart';

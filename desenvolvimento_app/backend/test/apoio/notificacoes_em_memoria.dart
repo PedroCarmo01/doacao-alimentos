@@ -3,6 +3,7 @@ import 'package:summit_backend/notificacoes/central_de_notificacoes.dart';
 import 'package:summit_backend/notificacoes/enviador_de_push.dart';
 import 'package:summit_backend/notificacoes/notificacao_repository.dart';
 
+import 'chat_em_memoria.dart';
 import 'doacoes_em_memoria.dart';
 import 'em_memoria.dart';
 
@@ -14,6 +15,9 @@ class NotificacoesEmMemoria implements NotificacaoRepository {
   final ContasEmMemoria _contas;
   final DoacoesEmMemoria _doacoes;
   final List<Notificacao> _lista = [];
+
+  /// O chat em memória (a central grava nele as mensagens do sistema).
+  late final ChatEmMemoria chat = ChatEmMemoria(_contas, _doacoes);
   final Map<int, int> _dono = {};
 
   /// As notificações de um usuário (para os testes conferirem).
@@ -82,6 +86,7 @@ class NotificacoesEmMemoria implements NotificacaoRepository {
   CentralDeNotificacoes central(Relogio relogio) => CentralDeNotificacoes(
     notificacoes: this,
     enviador: const EnviadorPushDesligado(),
+    chat: chat,
     relogio: relogio,
     fusoHorarioUtc: -3,
   );

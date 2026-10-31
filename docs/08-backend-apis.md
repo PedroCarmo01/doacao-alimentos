@@ -64,6 +64,10 @@ A coluna **Etapa** diz em qual etapa do desenvolvimento a rota ficou pronta.
 | POST | `/reservas/{id}/nao-compareceu` | doador dono | 4 ✅ |
 | GET | `/notificacoes?depois=` | logado | 5 ✅ |
 | POST | `/notificacoes/lidas` | logado | 5 ✅ |
+| GET | `/conversas` | logado | 6 ✅ |
+| GET | `/conversas/{reservaId}/mensagens?depois=` | participante | 6 ✅ |
+| POST | `/conversas/{reservaId}/mensagens` | participante | 6 ✅ |
+| POST | `/conversas/{reservaId}/lidas` | participante | 6 ✅ |
 
 ---
 
@@ -401,7 +405,7 @@ Todo aviso é **gravado** na tabela `notificacoes` pela `CentralDeNotificacoes` 
 | `retiradaConfirmada` | doador e ONG | `POST /reservas/{id}/confirmar` |
 | `doacaoCancelada` | ONG da retirada | `DELETE /doacoes/{id}` de uma reservada |
 | `suspensao` | ONG | a 3ª desistência (RN24) |
-| `mensagemNova` | a outra pessoa | etapa 6 (chat) |
+| `mensagemNova` | a outra pessoa da conversa | `POST /conversas/{id}/mensagens` |
 
 **RN11 — quais ONGs:** `busca_ativa = TRUE`, não suspensas, **sem bloqueio** para a doação (RN22) e com a doação **dentro do raio** salvo no perfil delas (Haversine).
 
@@ -412,6 +416,49 @@ As do usuário logado com `id > depois`, da mais antiga para a mais nova, no má
 ### `POST /notificacoes/lidas` — `{"ate": 12}` → `204`
 
 Marca como lidas as do usuário logado até o id 12. Sem `ate` inteiro: 400.
+
+---
+
+## Chat da retirada — etapa 6
+
+Uma conversa por retirada (o id da conversa é o **id da reserva**). Participantes: o **doador** da doação e a **ONG** da retirada (RN30); para os outros, 404. Depois que a retirada termina (concluída, expirada ou cancelada), a conversa fica **só de leitura por 7 dias** e depois some (RN31).
+
+Os eventos da retirada também entram na conversa como **mensagens do sistema** (`autorId: null`), gravadas pela `CentralDeNotificacoes`: "ONG Mãos Amigas aceitou a doação.", "Retirada confirmada. Obrigado!", "O prazo da retirada acabou.", "A ONG desistiu da retirada.", "O doador cancelou a doação. Motivo: …". O texto não leva a hora: o app mostra a hora da mensagem no fuso do celular.
+
+### Objeto `Mensagem`
+
+```json
+{"id": 7, "reservaId": 3, "autorId": 4, "texto": "Estou a caminho",
+ "criadoEm": "2026-09-15T14:12:00.000Z", "lidaEm": null}
+```
+
+### `GET /conversas` → `200 {"conversas": [ResumoConversa]}`
+
+```json
+{"reservaId": 3, "doacaoId": 4, "tituloDoacao": "Cestas de mercearia",
+ "nomeOutro": "Mercado Bom Preço", "naoLidas": 1, "somenteLeitura": false,
+ "fotoDoacao": null, "categoria": "mercearia",
+ "ultimaMensagem": "Pode entrar pelo portão lateral",
+ "ultimaEm": "2026-09-15T14:13:00.000Z"}
+```
+
+A com a novidade mais recente primeiro. `naoLidas` conta as mensagens da outra pessoa ainda não lidas (as do sistema não contam).
+
+### `GET /conversas/{reservaId}/mensagens?depois={id}` → `200 RespostaMensagens`
+
+```json
+{"mensagens": [Mensagem], "somenteLeitura": false, "lidasAte": 7}
+```
+
+Só as com id maior que `depois` (o app consulta a cada 4 s com a conversa aberta). `lidasAte` = maior id das **minhas** mensagens que a outra pessoa já leu: o app marca "✓ lida" em todas até ele.
+
+### `POST /conversas/{reservaId}/mensagens` — `{"texto": "..."}` → `201 Mensagem`
+
+Texto de 1 a 1000 caracteres (400 fora disso). Retirada encerrada: **409 `CHAT_SOMENTE_LEITURA`**. Cria o aviso `mensagemNova` para a outra pessoa.
+
+### `POST /conversas/{reservaId}/lidas` → `204`
+
+Marca como lidas as mensagens da outra pessoa.
 
 ---
 

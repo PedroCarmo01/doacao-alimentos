@@ -5,6 +5,7 @@ import '../../features/abertura/boas_vindas_page.dart';
 import '../../features/auth/cadastro/cadastro_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/auth/termos_page.dart';
+import '../../features/chat/chat_page.dart';
 import '../../features/doador/confirmar_retirada_page.dart';
 import '../../features/doador/detalhe_doacao_doador_page.dart';
 import '../../features/doador/nova_doacao_page.dart';
@@ -107,6 +108,12 @@ class AppRouter {
         reservas: d.reservas,
         doacoes: d.doacoes,
         relogio: d.relogio,
+      ),
+      AppRoutes.chat => ChatPage(
+        reservaId: _id(argumento),
+        chat: d.chat,
+        sessao: d.sessao,
+        receptor: d.receptor,
       ),
       AppRoutes.confirmarRetirada => ConfirmarRetiradaPage(
         reservaId: _id(argumento),

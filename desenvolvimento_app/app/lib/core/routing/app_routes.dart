@@ -36,6 +36,9 @@ abstract final class AppRoutes {
   /// T23 — retirada em andamento (ONG). Argumento: `int` (id da retirada).
   static const retirada = '/ong/retirada';
 
+  /// T30 — chat da retirada. Argumento: `int` (id da retirada).
+  static const chat = '/chat';
+
   /// T13 — o doador digita o código. Argumento: `int` (id da retirada).
   static const confirmarRetirada = '/doador/confirmar-retirada';
 }

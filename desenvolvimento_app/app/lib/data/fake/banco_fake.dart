@@ -1,6 +1,7 @@
 import 'package:shared_models/shared_models.dart';
 
 import '../../core/api/api_exception.dart';
+import 'chat_fake.dart';
 import 'contas_fake.dart';
 import 'doacoes_fake.dart';
 import 'exemplos_fake.dart';
@@ -36,14 +37,16 @@ class BancoFake {
     _doacoes = DoacoesFake(relogio, _contas, fusoHorarioUtc: fusoHorarioUtc);
     notificacoes = NotificacoesFake(relogio, _contas)
       ..bloqueios = _doacoes.bloqueios;
+    chat = ChatFake(relogio, _contas, _doacoes, notificacoes);
     retiradas = RetiradasFake(
       relogio,
       _contas,
       _doacoes,
       notificacoes,
+      chat,
       RegrasDaRetirada(prazo: prazoReserva),
     );
-    ExemplosFake(_doacoes, _contas, agora: relogio.agora()).criar();
+    ExemplosFake(_doacoes, _contas, chat, agora: relogio.agora()).criar();
   }
 
   static const senhaPadrao = ContasFake.senhaPadrao;
@@ -63,6 +66,9 @@ class BancoFake {
 
   /// Os avisos (usados pelo `NotificacaoRepositoryFake`).
   late final NotificacoesFake notificacoes;
+
+  /// O chat das retiradas (usado pelo `ChatRepositoryFake`).
+  late final ChatFake chat;
 
   /// Quem está logado agora (o "token" do Fake).
   int? get logadoId => _logadoId;
@@ -158,6 +164,9 @@ class BancoFake {
   }
 
   // ------------------------------------------------------------ retiradas
+
+  /// A conta logada (qualquer tipo).
+  Conta contaLogada() => _exigirQualquerLogado();
 
   /// A conta logada, se for ONG (senão, 403 como no backend).
   Conta ongLogada() => _exigirLogado(TipoUsuario.ong);

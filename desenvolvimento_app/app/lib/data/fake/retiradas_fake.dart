@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:shared_models/shared_models.dart';
 
 import '../../core/api/api_exception.dart';
+import 'chat_fake.dart';
 import 'contas_fake.dart';
 import 'doacoes_fake.dart';
 import 'notificacoes_fake.dart';
@@ -15,6 +16,7 @@ class RetiradasFake {
     this._contas,
     this._doacoes,
     this._avisos,
+    this._chat,
     this.regras,
   );
 
@@ -22,6 +24,7 @@ class RetiradasFake {
   final ContasFake _contas;
   final DoacoesFake _doacoes;
   final NotificacoesFake _avisos;
+  final ChatFake _chat;
   final RegrasDaRetirada regras;
   final _sorteio = Random();
 
@@ -90,6 +93,10 @@ class RetiradasFake {
     );
     _doacoes.reservas.add(reserva);
     _doacoes.salvar(doacao.copyWith(status: StatusDoacao.reservada));
+    _chat.doSistema(
+      reserva.id,
+      '${ong.perfil.nomeOrganizacao} aceitou a doação.',
+    );
     _avisos.avisar(
       doacao.doadorId,
       TipoNotificacao.doacaoAceita,
@@ -180,6 +187,7 @@ class RetiradasFake {
     );
     final doacao = _doacoes.porId(reserva.doacaoId);
     _doacoes.salvar(doacao.copyWith(status: StatusDoacao.concluida));
+    _chat.doSistema(reservaId, 'Retirada confirmada. Obrigado!');
     for (final id in [doacao.doadorId, reserva.ongId]) {
       _avisos.avisar(
         id,
@@ -252,6 +260,10 @@ class RetiradasFake {
   /// Os avisos de quando a comida não saiu (como no backend).
   void _avisarSemRetirar(Reserva reserva, bool expirou) {
     final doacao = _doacoes.porId(reserva.doacaoId);
+    _chat.doSistema(
+      reserva.id,
+      expirou ? 'O prazo da retirada acabou.' : 'A ONG desistiu da retirada.',
+    );
     if (expirou) {
       _avisos.avisar(
         reserva.ongId,

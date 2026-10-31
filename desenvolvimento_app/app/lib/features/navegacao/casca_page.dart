@@ -7,6 +7,8 @@ import '../../core/routing/app_routes.dart';
 import '../../shared/widgets/barra_inferior.dart';
 import '../../shared/widgets/em_construcao.dart';
 import '../../shared/widgets/faixa_de_retirada.dart';
+import '../chat/conversas_page.dart';
+import '../chat/conversas_view_model.dart';
 import '../doador/home_doador_page.dart';
 import '../mapa/mapa_page.dart';
 import '../ong/home_ong_page.dart';
@@ -43,6 +45,9 @@ class _CascaPageState extends State<CascaPage> {
 
   late final FaixaDeRetiradaViewModel _faixa;
 
+  /// A aba Mensagens e o número vermelho de não lidas usam o mesmo.
+  late final ConversasViewModel _conversas;
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +58,8 @@ class _CascaPageState extends State<CascaPage> {
       sessao: d.sessao,
       relogio: d.relogio,
     )..iniciar();
+    _conversas = ConversasViewModel(chat: d.chat, relogio: d.relogio)
+      ..iniciar();
     // Etapa 5: avisos enquanto a pessoa está logada (a casca só existe
     // depois do login e some ao sair).
     d.receptor.iniciar(aoTocar: _abrirNotificacao);
@@ -61,6 +68,7 @@ class _CascaPageState extends State<CascaPage> {
   @override
   void dispose() {
     widget.dependencias.receptor.parar();
+    _conversas.dispose();
     _faixa.dispose();
     super.dispose();
   }
@@ -97,11 +105,6 @@ class _CascaPageState extends State<CascaPage> {
   /// pessoa não perde o que estava vendo.
   List<Widget> _criarAbas() {
     final d = widget.dependencias;
-    const mensagens = EmConstrucao(
-      titulo: 'Mensagens',
-      etapa: 6,
-      descricao: 'Conversas com o doador ou a ONG de cada retirada.',
-    );
     const comunidade = EmConstrucao(
       titulo: 'Comunidade',
       etapa: 7,
@@ -122,7 +125,7 @@ class _CascaPageState extends State<CascaPage> {
           sessao: d.sessao,
           relogio: d.relogio,
         ),
-      mensagens,
+      ConversasPage(viewModel: _conversas),
       // Doador: o botão do meio abre outra tela; esta posição fica vazia.
       if (_ehOng)
         MapaPage(doacoes: d.doacoes, sessao: d.sessao)
@@ -135,8 +138,11 @@ class _CascaPageState extends State<CascaPage> {
 
   List<ItemDaBarra> get _itens => [
     const ItemDaBarra(icone: Icons.home_outlined, rotulo: 'Início'),
-    // O contador de não lidas entra na etapa 6 (chat).
-    const ItemDaBarra(icone: Icons.chat_bubble_outline, rotulo: 'Mensagens'),
+    ItemDaBarra(
+      icone: Icons.chat_bubble_outline,
+      rotulo: 'Mensagens',
+      contador: _conversas.totalNaoLidas,
+    ),
     _ehOng
         ? const ItemDaBarra(icone: Icons.place, rotulo: 'Mapa')
         : const ItemDaBarra(icone: Icons.add, rotulo: 'Doar'),
@@ -156,7 +162,9 @@ class _CascaPageState extends State<CascaPage> {
       return;
     }
     setState(() => _abaAtual = indice);
-    _faixa.atualizar(); // ao trocar de aba, confere se algo mudou
+    // Ao trocar de aba, confere se algo mudou.
+    _faixa.atualizar();
+    _conversas.atualizar();
   }
 
   @override
@@ -187,10 +195,14 @@ class _CascaPageState extends State<CascaPage> {
         // faixa, não as telas.
         child: IndexedStack(index: _abaAtual, children: _criarAbas()),
       ),
-      bottomNavigationBar: BarraInferior(
-        itens: _itens,
-        indiceAtual: _abaAtual,
-        aoTocar: _aoTocar,
+      // A barra se redesenha quando muda o número de não lidas.
+      bottomNavigationBar: ListenableBuilder(
+        listenable: _conversas,
+        builder: (context, _) => BarraInferior(
+          itens: _itens,
+          indiceAtual: _abaAtual,
+          aoTocar: _aoTocar,
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:shared_models/shared_models.dart';
 
+import 'chat_fake.dart';
 import 'contas_fake.dart';
 import 'doacoes_fake.dart';
 
@@ -7,10 +8,11 @@ import 'doacoes_fake.dart';
 /// (`backend/tool/seed/doacoes_de_exemplo.dart`), com as fotos de exemplo
 /// guardadas em `assets/exemplos/`.
 class ExemplosFake {
-  ExemplosFake(this._doacoes, this._contas, {required this.agora});
+  ExemplosFake(this._doacoes, this._contas, this._chat, {required this.agora});
 
   final DoacoesFake _doacoes;
   final ContasFake _contas;
+  final ChatFake _chat;
   final DateTime agora;
 
   late final _mercado = _contas.porEmail('mercado@exemplo.com');
@@ -147,6 +149,25 @@ class ExemplosFake {
       ),
     );
     _doacoes.salvar(cestas);
+    // A conversa de exemplo, como no seed.
+    final reserva = _doacoes.reservas.last;
+    _chat.doSistema(
+      reserva.id,
+      'ONG Mãos Amigas aceitou a doação.',
+      em: aceitaEm,
+    );
+    _chat.deExemplo(
+      reserva.id,
+      _maosAmigas.usuario.id,
+      'Estou a caminho',
+      aceitaEm.add(const Duration(minutes: 2)),
+    );
+    _chat.deExemplo(
+      reserva.id,
+      _mercado.usuario.id,
+      'Pode entrar pelo portão lateral',
+      aceitaEm.add(const Duration(minutes: 3)),
+    );
   }
 
   /// 2 concluídas e 3 expiradas (desistências do Prato Cheio e da Casa

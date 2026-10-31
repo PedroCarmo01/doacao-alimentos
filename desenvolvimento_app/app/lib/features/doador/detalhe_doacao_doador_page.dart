@@ -237,12 +237,27 @@ class _DetalheDoacaoDoadorPageState extends State<DetalheDoacaoDoadorPage> {
               carregando: _viewModel.ocupado,
               onPressed: _editar,
             )
-          else if (reserva != null)
+          else if (reserva != null) ...[
             PrimaryButton(
               key: const Key('botao_confirmar_retirada'),
               texto: 'Confirmar retirada',
               onPressed: () => _confirmarRetirada(reserva),
             ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('conversar'),
+              onPressed: () => Navigator.pushNamed(
+                context,
+                AppRoutes.chat,
+                arguments: reserva.id,
+              ),
+              icon: const Icon(Icons.chat_bubble_outline),
+              label: const Text('Conversar com a ONG'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+          ],
           // Ação perigosa: pequena, vermelha e longe da principal.
           TextButton(
             key: const Key('botao_cancelar'),

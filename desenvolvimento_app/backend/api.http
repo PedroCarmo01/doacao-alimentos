@@ -278,6 +278,31 @@ Authorization: Bearer {{loginDoador.response.body.$.token}}
 
 
 ### =====================================================================
+### CHAT — etapa 6 (o id da conversa é o id da retirada)
+### =====================================================================
+
+### Minhas conversas (com as não lidas)
+GET {{base}}/conversas
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Mensagens de uma conversa (troque o 1 pelo reservaId de /conversas)
+GET {{base}}/conversas/1/mensagens?depois=0
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Enviar mensagem
+POST {{base}}/conversas/1/mensagens
+Authorization: Bearer {{loginOng.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "texto": "Estou a caminho"
+}
+
+### O doador lê ("✓ lida" para a ONG)
+POST {{base}}/conversas/1/lidas
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+
+### =====================================================================
 ### NOTIFICAÇÕES — etapa 5 (rode antes "Publicar" com o doador)
 ### =====================================================================
 

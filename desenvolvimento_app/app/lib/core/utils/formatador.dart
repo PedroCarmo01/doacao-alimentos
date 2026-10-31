@@ -19,6 +19,19 @@ abstract final class Formatador {
     return '${_dois(local.hour)}:${_dois(local.minute)}';
   }
 
+  /// Lista de conversas: `14:30` se for de hoje; senão, `16/09`.
+  static String horaOuDia(DateTime instante, {required DateTime agora}) {
+    final local = instante.toLocal();
+    final hoje = agora.toLocal();
+    final mesmoDia =
+        local.year == hoje.year &&
+        local.month == hoje.month &&
+        local.day == hoje.day;
+    return mesmoDia
+        ? hora(instante)
+        : '${_dois(local.day)}/${_dois(local.month)}';
+  }
+
   /// `16/09 14:30` no horário do aparelho.
   static String diaHora(DateTime instante) {
     final local = instante.toLocal();

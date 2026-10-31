@@ -1,4 +1,5 @@
 import 'package:shared_models/shared_models.dart';
+import 'package:summit_backend/chat/chat_service.dart';
 import 'package:summit_backend/core/seguranca/usuario_autenticado.dart';
 import 'package:summit_backend/doacoes/doacao_service.dart';
 import 'package:summit_backend/reservas/confirmacao_service.dart';
@@ -46,6 +47,11 @@ class CenarioDeRetirada {
       avisos: avisos,
       relogio: relogio,
     );
+    chat = ChatService(
+      chat: notificacoes.chat,
+      avisos: avisos,
+      relogio: relogio,
+    );
     doacaoService = DoacaoService(
       doacoes: doacoes,
       usuarios: contas,
@@ -67,6 +73,7 @@ class CenarioDeRetirada {
   late final ReservaService service;
   late final ConfirmacaoService confirmacao;
   late final DoacaoService doacaoService;
+  late final ChatService chat;
 
   late UsuarioAutenticado doador;
   late UsuarioAutenticado ongA;

@@ -1,5 +1,6 @@
 import 'package:shared_models/shared_models.dart';
 
+import '../chat/chat_repository.dart';
 import 'enviador_de_push.dart';
 import 'notificacao_repository.dart';
 
@@ -9,19 +10,27 @@ import 'notificacao_repository.dart';
 /// ao [EnviadorDePush]. Os Services nunca falam com o enviador: falam com a
 /// central, pelo nome do evento (`doacaoAceita`, `retiradaConfirmada`...).
 /// Os textos ficam todos aqui.
+///
+/// Os eventos da retirada também viram MENSAGENS DO SISTEMA no chat
+/// ("ONG Mãos Amigas aceitou a doação"), para a conversa contar a história
+/// da retirada (T30). O texto não leva a hora: o app mostra a hora da
+/// mensagem no fuso do celular, igual às outras mensagens.
 class CentralDeNotificacoes {
   CentralDeNotificacoes({
     required NotificacaoRepository notificacoes,
     required EnviadorDePush enviador,
+    required ChatRepository chat,
     required Relogio relogio,
     required int fusoHorarioUtc,
   }) : _notificacoes = notificacoes,
        _enviador = enviador,
+       _chat = chat,
        _relogio = relogio,
        _fuso = fusoHorarioUtc;
 
   final NotificacaoRepository _notificacoes;
   final EnviadorDePush _enviador;
+  final ChatRepository _chat;
   final Relogio _relogio;
   final int _fuso;
 
@@ -81,16 +90,36 @@ class CentralDeNotificacoes {
     return avisadas;
   }
 
-  /// Uma ONG aceitou: avisa o doador.
-  Future<void> doacaoAceita(Doacao doacao, Reserva reserva) => avisar(
-    doacao.doadorId,
-    TipoNotificacao.doacaoAceita,
-    titulo: 'Doação aceita',
-    corpo:
-        '${reserva.nomeOng ?? 'Uma ONG'} vai retirar "${doacao.titulo}". '
-        'Prazo: ${_hora(reserva.expiraEm)}.',
-    doacaoId: doacao.id,
-    reservaId: reserva.id,
+  /// Uma ONG aceitou: avisa o doador e abre o chat com a mensagem do
+  /// sistema.
+  Future<void> doacaoAceita(Doacao doacao, Reserva reserva) async {
+    final ong = reserva.nomeOng ?? 'Uma ONG';
+    await _noChat(reserva.id, '$ong aceitou a doação.');
+    await avisar(
+      doacao.doadorId,
+      TipoNotificacao.doacaoAceita,
+      titulo: 'Doação aceita',
+      corpo:
+          '$ong vai retirar "${doacao.titulo}". '
+          'Prazo: ${_hora(reserva.expiraEm)}.',
+      doacaoId: doacao.id,
+      reservaId: reserva.id,
+    );
+  }
+
+  /// Mensagem nova no chat: avisa a outra pessoa (T30).
+  Future<void> mensagemNova(
+    int destinatarioId, {
+    required String de,
+    required Mensagem mensagem,
+    required int doacaoId,
+  }) => avisar(
+    destinatarioId,
+    TipoNotificacao.mensagemNova,
+    titulo: de,
+    corpo: mensagem.texto,
+    doacaoId: doacaoId,
+    reservaId: mensagem.reservaId,
   );
 
   /// Faltam poucos minutos: avisa a ONG (uma vez só por retirada).
@@ -121,6 +150,12 @@ class CentralDeNotificacoes {
     required bool expirou,
     required bool contouDesistencia,
   }) async {
+    await _noChat(
+      reserva.id,
+      expirou
+          ? 'O prazo da retirada acabou.'
+          : '${reserva.nomeOng ?? 'A ONG'} desistiu da retirada.',
+    );
     if (expirou) {
       await avisar(
         reserva.ongId,
@@ -150,6 +185,7 @@ class CentralDeNotificacoes {
 
   /// RN27: o doador digitou o código certo. Avisa os dois.
   Future<void> retiradaConfirmada(Doacao doacao, Reserva reserva) async {
+    await _noChat(reserva.id, 'Retirada confirmada. Obrigado!');
     for (final usuarioId in [doacao.doadorId, reserva.ongId]) {
       await avisar(
         usuarioId,
@@ -168,15 +204,29 @@ class CentralDeNotificacoes {
     Doacao doacao,
     Reserva reserva,
     String? motivo,
-  ) => avisar(
-    reserva.ongId,
-    TipoNotificacao.doacaoCancelada,
-    titulo: 'Doação cancelada',
-    corpo:
-        'O doador cancelou a doação "${doacao.titulo}".'
-        '${motivo == null ? '' : ' Motivo: $motivo'}',
-    doacaoId: doacao.id,
-    reservaId: reserva.id,
+  ) async {
+    await _noChat(
+      reserva.id,
+      'O doador cancelou a doação.${motivo == null ? '' : ' Motivo: $motivo'}',
+    );
+    await avisar(
+      reserva.ongId,
+      TipoNotificacao.doacaoCancelada,
+      titulo: 'Doação cancelada',
+      corpo:
+          'O doador cancelou a doação "${doacao.titulo}".'
+          '${motivo == null ? '' : ' Motivo: $motivo'}',
+      doacaoId: doacao.id,
+      reservaId: reserva.id,
+    );
+  }
+
+  /// Uma mensagem do SISTEMA (sem autor) na conversa da retirada.
+  Future<void> _noChat(int reservaId, String texto) => _chat.inserir(
+    reservaId,
+    autorId: null,
+    texto: texto,
+    agora: _relogio.agora(),
   );
 
   /// RN24: a ONG foi suspensa.

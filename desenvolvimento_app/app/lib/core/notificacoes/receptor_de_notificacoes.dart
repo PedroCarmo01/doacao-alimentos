@@ -17,6 +17,10 @@ abstract interface class ReceptorDeNotificacoes {
 
   /// Para de receber (ao sair da conta).
   void parar();
+
+  /// A conversa que está aberta na tela (ou `null`). Mensagens dela não
+  /// viram notificação: a pessoa já está vendo.
+  void conversaAberta(int? reservaId);
 }
 
 /// Pergunta ao servidor a cada [intervalo] se há avisos novos e mostra
@@ -45,6 +49,7 @@ class ReceptorPorConsulta implements ReceptorDeNotificacoes {
 
   Timer? _timer;
   int _ultimoId = 0;
+  int? _conversaAberta;
   bool _consultando = false;
 
   @override
@@ -67,6 +72,14 @@ class ReceptorPorConsulta implements ReceptorDeNotificacoes {
     _ultimoId = 0;
   }
 
+  @override
+  void conversaAberta(int? reservaId) => _conversaAberta = reservaId;
+
+  bool _jaNaTela(Notificacao n) =>
+      n.tipo == TipoNotificacao.mensagemNova &&
+      n.reservaId != null &&
+      n.reservaId == _conversaAberta;
+
   /// Uma consulta. Pública para os testes chamarem sem esperar o Timer.
   Future<void> consultar() async {
     if (_consultando) return;
@@ -76,7 +89,7 @@ class ReceptorPorConsulta implements ReceptorDeNotificacoes {
       if (novas.isEmpty) return;
       final limite = _relogio.agora().subtract(idadeMaxima);
       for (final n in novas) {
-        if (!n.lida && n.criadoEm.isAfter(limite)) {
+        if (!n.lida && n.criadoEm.isAfter(limite) && !_jaNaTela(n)) {
           await _mostrador.mostrar(n, payload: jsonEncode(n.toJson()));
         }
       }

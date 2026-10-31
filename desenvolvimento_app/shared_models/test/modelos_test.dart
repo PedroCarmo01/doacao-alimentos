@@ -346,4 +346,44 @@ void main() {
     expect(volta.doacaoId, 3);
     expect(volta.reservaId, isNull);
   });
+
+  group('Mensagem', () {
+    test('RN30: texto vazio ou com mais de 1000 caracteres é recusado', () {
+      expect(Mensagem.validar('  '), isNotNull);
+      expect(Mensagem.validar('a' * 1001), isNotNull);
+      expect(Mensagem.validar('Estou a caminho'), isNull);
+    });
+
+    test('sem autor é mensagem do sistema', () {
+      final m = Mensagem(
+        id: 1,
+        reservaId: 2,
+        texto: 'ONG Mãos Amigas aceitou a doação.',
+        criadoEm: DateTime.utc(2026),
+      );
+      expect(m.ehDoSistema, isTrue);
+      expect(Mensagem.fromJson(m.toJson()).autorId, isNull);
+    });
+
+    test('RespostaMensagens vai e volta em JSON', () {
+      final volta = RespostaMensagens.fromJson(
+        RespostaMensagens(
+          mensagens: [
+            Mensagem(
+              id: 3,
+              reservaId: 2,
+              autorId: 5,
+              texto: 'Cheguei',
+              criadoEm: DateTime.utc(2026),
+            ),
+          ],
+          somenteLeitura: true,
+          lidasAte: 3,
+        ).toJson(),
+      );
+      expect(volta.mensagens.single.texto, 'Cheguei');
+      expect(volta.somenteLeitura, isTrue);
+      expect(volta.lidasAte, 3);
+    });
+  });
 }

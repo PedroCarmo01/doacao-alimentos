@@ -4,6 +4,8 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:shared_models/shared_models.dart';
 import 'package:summit_backend/arquivos/armazenamento_de_fotos.dart';
 import 'package:summit_backend/auth/usuario_repository_mysql.dart';
+import 'package:summit_backend/chat/chat_repository_mysql.dart';
+import 'package:summit_backend/chat/chat_service.dart';
 import 'package:summit_backend/core/config/env.dart';
 import 'package:summit_backend/core/db/database.dart';
 import 'package:summit_backend/core/seguranca/senha_service.dart';
@@ -68,9 +70,11 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
   // Notificações (etapa 5). POLIMORFISMO: para o push real (Firebase),
   // troque EnviadorPushDesligado() por EnviadorFcm(...). Só esta linha.
   const EnviadorDePush enviador = EnviadorPushDesligado();
+  final chat = ChatRepositoryMysql(database);
   final avisos = CentralDeNotificacoes(
     notificacoes: NotificacaoRepositoryMysql(database),
     enviador: enviador,
+    chat: chat,
     relogio: relogio,
     fusoHorarioUtc: env.fusoHorarioUtc,
   );
@@ -123,6 +127,11 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
   final aplicacao = handler
       .use(provider<ArmazenamentoDeFotos>((_) => fotos))
       .use(provider<DoacaoService>((_) => doacaoService))
+      .use(
+        provider<ChatService>(
+          (_) => ChatService(chat: chat, avisos: avisos, relogio: relogio),
+        ),
+      )
       .use(provider<ReservaService>((_) => reservaService))
       .use(provider<ConfirmacaoService>((_) => confirmacaoService))
       .use(provider<ConsultaCnpj>((_) => consultaCnpj))

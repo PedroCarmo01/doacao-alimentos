@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_models/shared_models.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/routing/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/rota_no_mapa.dart';
 import '../../data/doacoes/doacao_repository.dart';
@@ -154,9 +155,15 @@ class _RetiradaPageState extends State<RetiradaPage> {
             label: const Text('Ligar para o doador'),
           ),
           const SizedBox(height: 8),
-          const OutlinedButton(
-            onPressed: null,
-            child: Text('Conversar (chega na etapa 6)'),
+          OutlinedButton.icon(
+            key: const Key('conversar'),
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppRoutes.chat,
+              arguments: reserva.id,
+            ),
+            icon: const Icon(Icons.chat_bubble_outline),
+            label: const Text('Conversar com o doador'),
           ),
         ],
         // Ação perigosa: pequena, vermelha e longe das outras.
