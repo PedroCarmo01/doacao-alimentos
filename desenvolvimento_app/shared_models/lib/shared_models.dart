@@ -4,7 +4,9 @@
 /// Uso: `import 'package:shared_models/shared_models.dart';`
 library;
 
+export 'src/comunidade.dart';
 export 'src/contratos/autenticacao.dart';
+export 'src/contratos/avisos_e_estatisticas.dart';
 export 'src/contratos/doacoes.dart';
 export 'src/contratos/documentos.dart';
 export 'src/contratos/perfil.dart';

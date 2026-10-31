@@ -224,6 +224,21 @@ class _DetalheDoacaoDoadorPageState extends State<DetalheDoacaoDoadorPage> {
   Widget _acoes(DetalheDoacao detalhe) {
     final doacao = detalhe.doacao;
     final reserva = detalhe.reserva;
+    // Concluída: "Publicar na Comunidade" (T12, etapa 7).
+    if (doacao.status == StatusDoacao.concluida) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        child: PrimaryButton(
+          key: const Key('publicar_na_comunidade'),
+          texto: 'Publicar na Comunidade',
+          onPressed: () => Navigator.pushNamed(
+            context,
+            AppRoutes.novaPublicacao,
+            arguments: doacao.id,
+          ),
+        ),
+      );
+    }
     if (!doacao.podeSerCancelada) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),

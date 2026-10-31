@@ -1,15 +1,38 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../../shared/widgets/foto_da_doacao.dart';
-import 'nova_doacao_view_model.dart';
+import '../../data/fotos/seletor_de_fotos.dart';
+import 'foto_da_doacao.dart';
 
-/// T11 — até 3 fotos: as já enviadas, as novas (com "x" para tirar) e o
-/// botão de adicionar, que pergunta: câmera ou galeria?
+/// O que a [SecaoFotos] precisa de uma tela que tem fotos.
+///
+/// POLIMORFISMO: a nova doação (T11) e a nova publicação (T41) são
+/// ViewModels diferentes, mas os dois "sabem" guardar fotos. A seção de
+/// fotos conversa com esta interface e serve para os dois.
+abstract interface class EscolhaDeFotos {
+  /// As já enviadas ao servidor (nome do arquivo).
+  List<String> get fotosSalvas;
+
+  /// As escolhidas agora, que ainda vão ser enviadas.
+  List<FotoEscolhida> get fotosNovas;
+
+  bool get podeAdicionarFoto;
+
+  /// Pergunta ao [SeletorDeFotos] (câmera ou galeria).
+  Future<bool> adicionarFoto({required bool daCamera});
+
+  void removerFotoNova(FotoEscolhida foto);
+}
+
+/// Até 3 fotos: as já enviadas, as novas (com "x" para tirar) e o botão
+/// de adicionar, que pergunta: câmera ou galeria? (T11 e T41)
 class SecaoFotos extends StatelessWidget {
-  const SecaoFotos({super.key, required this.viewModel});
+  const SecaoFotos({super.key, required this.viewModel, this.dica});
 
-  final NovaDoacaoViewModel viewModel;
+  final EscolhaDeFotos viewModel;
+
+  /// O texto pequeno embaixo das fotos.
+  final String? dica;
 
   static const _lado = 96.0;
 
@@ -65,9 +88,9 @@ class SecaoFotos extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Fotos dos alimentos ajudam a ONG a decidir mais rápido.',
-          style: TextStyle(color: AppColors.cinza, fontSize: 12),
+        Text(
+          dica ?? 'Fotos dos alimentos ajudam a ONG a decidir mais rápido.',
+          style: const TextStyle(color: AppColors.cinza, fontSize: 12),
         ),
       ],
     );

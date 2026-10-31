@@ -13,6 +13,9 @@ enum TipoNotificacao {
   mensagemNova,
   doacaoCancelada,
   suspensao,
+
+  /// Etapa 7: alguém apoiou uma publicação minha na Comunidade.
+  apoioNovo,
 }
 
 /// Um aviso para um usuário. O servidor SEMPRE grava o aviso na tabela;

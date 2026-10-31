@@ -12,7 +12,7 @@ import 'campos_da_doacao.dart';
 import 'campos_de_horario.dart';
 import 'doacao_publicada.dart';
 import 'nova_doacao_view_model.dart';
-import 'secao_fotos.dart';
+import '../../shared/widgets/secao_fotos.dart';
 
 /// T11 — Nova doação (botão central "Doar") e edição de uma doação.
 ///

@@ -2,6 +2,7 @@ import 'package:shared_models/shared_models.dart';
 
 import '../../core/api/api_exception.dart';
 import 'chat_fake.dart';
+import 'comunidade_fake.dart';
 import 'contas_fake.dart';
 import 'doacoes_fake.dart';
 import 'exemplos_fake.dart';
@@ -47,6 +48,8 @@ class BancoFake {
       RegrasDaRetirada(prazo: prazoReserva),
     );
     ExemplosFake(_doacoes, _contas, chat, agora: relogio.agora()).criar();
+    comunidade = ComunidadeFake(relogio, _contas, _doacoes, notificacoes)
+      ..criarExemplos();
   }
 
   static const senhaPadrao = ContasFake.senhaPadrao;
@@ -69,6 +72,9 @@ class BancoFake {
 
   /// O chat das retiradas (usado pelo `ChatRepositoryFake`).
   late final ChatFake chat;
+
+  /// A Comunidade (usada pelo `ComunidadeRepositoryFake`).
+  late final ComunidadeFake comunidade;
 
   /// Quem está logado agora (o "token" do Fake).
   int? get logadoId => _logadoId;
@@ -105,6 +111,44 @@ class BancoFake {
   /// `PUT /perfil` (busca ativa, raio e dados da organização).
   Conta atualizarPerfil(DadosPerfil dados) =>
       _contas.atualizarPerfil(_exigirQualquerLogado().usuario.id, dados);
+
+  /// `PUT /perfil/avisos` (T50).
+  Conta atualizarAvisos(PreferenciasDeAviso avisos) =>
+      _contas.alterarAvisos(_exigirQualquerLogado().usuario.id, avisos);
+
+  /// `GET /perfil/estatisticas` (T50): as mesmas contas do backend.
+  EstatisticasDoPerfil estatisticas() {
+    final conta = _exigirQualquerLogado();
+    final eu = conta.usuario.id;
+    var concluidas = 0;
+    var kg = 0.0;
+    if (conta.usuario.ehDoador) {
+      for (final d in _doacoes.doacoes) {
+        if (d.doadorId == eu && d.status == StatusDoacao.concluida) {
+          concluidas++;
+          kg += d.pesoKg;
+        }
+      }
+      return EstatisticasDoPerfil(concluidas: concluidas, kg: kg);
+    }
+    var desistencias = 0;
+    final situacao = retiradas.situacao(conta);
+    for (final r in _doacoes.reservas) {
+      if (r.ongId != eu) continue;
+      if (r.status == StatusReserva.concluida) {
+        concluidas++;
+        kg += _doacoes.porId(r.doacaoId).pesoKg;
+      }
+      if (r.contouDesistencia) desistencias++;
+    }
+    final total = concluidas + desistencias;
+    return EstatisticasDoPerfil(
+      concluidas: concluidas,
+      kg: kg,
+      comparecimento: total == 0 ? null : concluidas / total,
+      desistenciasRecentes: situacao.desistenciasRecentes,
+    );
+  }
 
   /// Token falso no formato `fake-<id>`. Também marca quem está logado.
   String tokenPara(Conta conta) {

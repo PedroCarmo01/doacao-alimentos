@@ -5,6 +5,7 @@ import '../../core/erros/erro_amigavel.dart';
 import '../../core/mvvm/view_model_base.dart';
 import '../../data/doacoes/doacao_repository.dart';
 import '../../data/fotos/seletor_de_fotos.dart';
+import '../../shared/widgets/secao_fotos.dart';
 
 /// Os textos digitados no formulário da doação (classe Dart pura).
 class CamposDaDoacao {
@@ -27,7 +28,7 @@ class CamposDaDoacao {
 ///
 /// Guarda as ESCOLHAS (categoria, unidade, horários, fotos...). Os textos
 /// chegam em [salvar] como [CamposDaDoacao].
-class NovaDoacaoViewModel extends ViewModelBase {
+class NovaDoacaoViewModel extends ViewModelBase implements EscolhaDeFotos {
   NovaDoacaoViewModel({
     required DoacaoRepository doacoes,
     required SeletorDeFotos seletor,
@@ -81,8 +82,11 @@ class NovaDoacaoViewModel extends ViewModelBase {
   bool get ehRefeicaoPronta => _categoria == CategoriaAlimento.refeicoesProntas;
 
   /// Fotos já enviadas (edição) e as novas, para a prévia.
+  @override
   List<String> get fotosSalvas => List.unmodifiable(_fotosSalvas);
+  @override
   List<FotoEscolhida> get fotosNovas => List.unmodifiable(_fotosNovas);
+  @override
   bool get podeAdicionarFoto =>
       _fotosSalvas.length + _fotosNovas.length < Doacao.maximoDeFotos;
 
@@ -123,6 +127,7 @@ class NovaDoacaoViewModel extends ViewModelBase {
 
   void escolherFim(DateTime instante) => _mudar(() => _fim = instante);
 
+  @override
   void removerFotoNova(FotoEscolhida foto) =>
       _mudar(() => _fotosNovas.remove(foto));
 
@@ -132,6 +137,7 @@ class NovaDoacaoViewModel extends ViewModelBase {
   }
 
   /// Câmera ou galeria. A foto só é enviada ao salvar.
+  @override
   Future<bool> adicionarFoto({required bool daCamera}) => executar(() async {
     if (!podeAdicionarFoto) {
       throw const ErroDeRegra('Cada doação pode ter no máximo 3 fotos.');

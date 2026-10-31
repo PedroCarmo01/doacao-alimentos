@@ -4,7 +4,9 @@ import 'package:summit_backend/core/seguranca/usuario_autenticado.dart';
 import 'package:summit_backend/perfil/perfil_service.dart';
 import 'package:test/test.dart';
 
+import '../apoio/doacoes_em_memoria.dart';
 import '../apoio/em_memoria.dart';
+import '../apoio/estatisticas_em_memoria.dart';
 
 /// `PUT /perfil`: editar dados, busca ativa e raio.
 void main() {
@@ -13,7 +15,12 @@ void main() {
 
   setUp(() {
     contas = ContasEmMemoria();
-    service = PerfilService(perfis: contas, usuarios: contas);
+    service = PerfilService(
+      perfis: contas,
+      usuarios: contas,
+      estatisticas: EstatisticasEmMemoria(DoacoesEmMemoria(contas)),
+      relogio: RelogioFixo(DateTime.utc(2026, 9, 15)),
+    );
   });
 
   Future<UsuarioAutenticado> criarConta(TipoUsuario tipo) async {

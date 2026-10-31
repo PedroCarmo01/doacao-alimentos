@@ -103,9 +103,17 @@ class EnderecoDaRetirada extends StatelessWidget {
 
 /// A retirada terminou: confirmada (com festa) ou não (com o motivo).
 class RetiradaEncerrada extends StatelessWidget {
-  const RetiradaEncerrada({super.key, required this.reserva, this.desistencia});
+  const RetiradaEncerrada({
+    super.key,
+    required this.reserva,
+    this.desistencia,
+    this.aoContarNaComunidade,
+  });
 
   final Reserva reserva;
+
+  /// "Contar na Comunidade" (só para a retirada confirmada).
+  final VoidCallback? aoContarNaComunidade;
 
   /// Preenchida se a ONG desistiu nesta tela.
   final RespostaDesistencia? desistencia;
@@ -135,9 +143,11 @@ class RetiradaEncerrada extends StatelessWidget {
             Text(_explicacao(), textAlign: TextAlign.center),
             if (concluida) ...[
               const SizedBox(height: 24),
-              const OutlinedButton(
-                onPressed: null,
-                child: Text('Contar na Comunidade (chega na etapa 7)'),
+              OutlinedButton.icon(
+                key: const Key('contar_na_comunidade'),
+                onPressed: aoContarNaComunidade,
+                icon: const Icon(Icons.groups_outlined),
+                label: const Text('Contar na Comunidade'),
               ),
             ],
           ],

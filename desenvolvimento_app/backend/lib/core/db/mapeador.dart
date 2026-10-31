@@ -46,6 +46,12 @@ abstract final class Mapeador {
     raioKm: _decimal(linha, 'raio_km'),
     suspensaAte: _instanteOpcional(linha, 'suspensa_ate'),
     infoExtra: linha['info_extra'],
+    // Colunas da migração 002. Se a consulta não as trouxer, ficam ligadas.
+    avisos: PreferenciasDeAviso(
+      doacoes: linha['avisar_doacoes'] != '0',
+      mensagens: linha['avisar_mensagens'] != '0',
+      comunidade: linha['avisar_comunidade'] != '0',
+    ),
   );
 
   /// Linha de um `JOIN` entre `usuarios` e `perfis`.

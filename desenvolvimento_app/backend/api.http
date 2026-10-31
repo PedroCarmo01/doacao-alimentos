@@ -278,6 +278,61 @@ Authorization: Bearer {{loginDoador.response.body.$.token}}
 
 
 ### =====================================================================
+### COMUNIDADE E PERFIL — etapa 7
+### =====================================================================
+
+### Painel de impacto
+GET {{base}}/comunidade/impacto
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Feed (20 por vez; para a próxima página, antesDe = id da última)
+GET {{base}}/comunidade/publicacoes?antesDe=0
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Nova publicação (doacaoId opcional: uma doação concluída da ONG)
+POST {{base}}/comunidade/publicacoes
+Authorization: Bearer {{loginOng.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "texto": "Fizemos 40 marmitas com a doação. Obrigado!",
+  "familiasAjudadas": 12,
+  "refeicoes": 40
+}
+
+### Apoiar (troque o 1 pelo id da publicação)
+POST {{base}}/comunidade/publicacoes/1/apoio
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+
+### Desfazer o apoio
+DELETE {{base}}/comunidade/publicacoes/1/apoio
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+
+### Denunciar
+POST {{base}}/comunidade/publicacoes/1/denuncia
+Authorization: Bearer {{loginDoador.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "motivo": "improprio"
+}
+
+### Estatísticas do Perfil
+GET {{base}}/perfil/estatisticas
+Authorization: Bearer {{loginOng.response.body.$.token}}
+
+### Avisos (desligar as mensagens do chat)
+PUT {{base}}/perfil/avisos
+Authorization: Bearer {{loginOng.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "doacoes": true,
+  "mensagens": false,
+  "comunidade": true
+}
+
+### =====================================================================
 ### CHAT — etapa 6 (o id da conversa é o id da retirada)
 ### =====================================================================
 

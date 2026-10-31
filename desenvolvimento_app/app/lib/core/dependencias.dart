@@ -2,6 +2,7 @@ import 'package:shared_models/shared_models.dart';
 
 import '../data/auth/auth_repository.dart';
 import '../data/chat/chat_repository.dart';
+import '../data/comunidade/comunidade_repository.dart';
 import '../data/documentos/documento_repository.dart';
 import '../data/doacoes/doacao_repository.dart';
 import '../data/fake/banco_fake.dart';
@@ -35,6 +36,7 @@ class Dependencias {
     required this.doacoes,
     required this.reservas,
     required this.chat,
+    required this.comunidade,
     required this.sistema,
     required this.localizacao,
     required this.cep,
@@ -63,6 +65,7 @@ class Dependencias {
       doacoes: DoacaoRepositoryApi(api),
       reservas: ReservaRepositoryApi(api),
       chat: ChatRepositoryApi(api),
+      comunidade: ComunidadeRepositoryApi(api),
       sistema: SistemaRepositoryApi(api),
       localizacao: const LocalizacaoServiceGps(),
       cep: CepRepositoryBrasilApi(),
@@ -100,6 +103,7 @@ class Dependencias {
       doacoes: DoacaoRepositoryFake(dados),
       reservas: ReservaRepositoryFake(dados),
       chat: ChatRepositoryFake(dados),
+      comunidade: ComunidadeRepositoryFake(dados),
       sistema: const SistemaRepositoryFake(),
       localizacao: const LocalizacaoServiceFake(),
       cep: const CepRepositoryFake(),
@@ -123,6 +127,7 @@ class Dependencias {
   final DoacaoRepository doacoes;
   final ReservaRepository reservas;
   final ChatRepository chat;
+  final ComunidadeRepository comunidade;
   final SistemaRepository sistema;
   final LocalizacaoService localizacao;
   final CepRepository cep;

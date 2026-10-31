@@ -1,14 +1,18 @@
 import 'package:shared_models/shared_models.dart';
 import 'package:summit_backend/chat/chat_service.dart';
+import 'package:summit_backend/comunidade/comunidade_service.dart';
 import 'package:summit_backend/core/seguranca/usuario_autenticado.dart';
 import 'package:summit_backend/doacoes/doacao_service.dart';
+import 'package:summit_backend/perfil/perfil_service.dart';
 import 'package:summit_backend/reservas/confirmacao_service.dart';
 import 'package:summit_backend/reservas/gerador_de_codigo.dart';
 import 'package:summit_backend/reservas/penalidades.dart';
 import 'package:summit_backend/reservas/reserva_service.dart';
 
+import 'comunidade_em_memoria.dart';
 import 'doacoes_em_memoria.dart';
 import 'em_memoria.dart';
+import 'estatisticas_em_memoria.dart';
 import 'notificacoes_em_memoria.dart';
 import 'reservas_em_memoria.dart';
 
@@ -52,6 +56,18 @@ class CenarioDeRetirada {
       avisos: avisos,
       relogio: relogio,
     );
+    comunidade = ComunidadeService(
+      comunidade: ComunidadeEmMemoria(contas, doacoes),
+      armazenamento: FotosEmMemoria(),
+      avisos: avisos,
+      relogio: relogio,
+    );
+    perfil = PerfilService(
+      perfis: contas,
+      usuarios: contas,
+      estatisticas: EstatisticasEmMemoria(doacoes),
+      relogio: relogio,
+    );
     doacaoService = DoacaoService(
       doacoes: doacoes,
       usuarios: contas,
@@ -74,6 +90,8 @@ class CenarioDeRetirada {
   late final ConfirmacaoService confirmacao;
   late final DoacaoService doacaoService;
   late final ChatService chat;
+  late final PerfilService perfil;
+  late final ComunidadeService comunidade;
 
   late UsuarioAutenticado doador;
   late UsuarioAutenticado ongA;
@@ -113,6 +131,10 @@ class CenarioDeRetirada {
   }
 
   Future<Doacao> doacao(int id) async => (await doacoes.buscar(id))!;
+
+  /// Mais uma ONG (para os testes que precisam de várias contas).
+  Future<UsuarioAutenticado> outraOng(String email) =>
+      _conta(TipoUsuario.ong, email);
 
   Future<UsuarioAutenticado> _conta(TipoUsuario tipo, String email) async {
     final conta = await contas.criar(

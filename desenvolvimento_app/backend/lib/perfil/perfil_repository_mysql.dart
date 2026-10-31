@@ -48,6 +48,23 @@ class PerfilRepositoryMysql implements PerfilRepository {
   }
 
   @override
+  Future<void> atualizarAvisos(int usuarioId, PreferenciasDeAviso avisos) =>
+      _db.executar(
+        '''
+        UPDATE perfis
+           SET avisar_doacoes = :doacoes, avisar_mensagens = :mensagens,
+               avisar_comunidade = :comunidade
+         WHERE usuario_id = :id
+        ''',
+        {
+          'doacoes': avisos.doacoes ? 1 : 0,
+          'mensagens': avisos.mensagens ? 1 : 0,
+          'comunidade': avisos.comunidade ? 1 : 0,
+          'id': usuarioId,
+        },
+      );
+
+  @override
   Future<List<PerfilPendente>> pendentesDeVerificacao({
     required int limite,
   }) async {

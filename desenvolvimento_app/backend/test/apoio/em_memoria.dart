@@ -99,6 +99,7 @@ class ContasEmMemoria implements UsuarioRepository, PerfilRepository {
           transporte: dados.transporte,
           buscaAtiva: dados.buscaAtiva,
           raioKm: dados.raioKm,
+          avisos: perfil.avisos,
         ),
       ),
     );
@@ -117,6 +118,12 @@ class ContasEmMemoria implements UsuarioRepository, PerfilRepository {
           cnpj: r.conta.perfil.documento,
         ),
   ].take(limite).toList();
+
+  @override
+  Future<void> atualizarAvisos(
+    int usuarioId,
+    PreferenciasDeAviso avisos,
+  ) async => alterarPerfil(usuarioId, {'avisos': avisos.toJson()});
 
   /// RN24: usado pelo `ReservasEmMemoria.suspender`.
   void suspender(int usuarioId, DateTime ate) =>

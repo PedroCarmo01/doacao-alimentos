@@ -68,6 +68,14 @@ A coluna **Etapa** diz em qual etapa do desenvolvimento a rota ficou pronta.
 | GET | `/conversas/{reservaId}/mensagens?depois=` | participante | 6 ✅ |
 | POST | `/conversas/{reservaId}/mensagens` | participante | 6 ✅ |
 | POST | `/conversas/{reservaId}/lidas` | participante | 6 ✅ |
+| GET | `/comunidade/impacto` | logado | 7 ✅ |
+| GET | `/comunidade/publicacoes?antesDe=` | logado | 7 ✅ |
+| POST | `/comunidade/publicacoes` | logado | 7 ✅ |
+| POST | `/comunidade/publicacoes/{id}/fotos` | autor | 7 ✅ |
+| POST / DELETE | `/comunidade/publicacoes/{id}/apoio` | logado | 7 ✅ |
+| POST | `/comunidade/publicacoes/{id}/denuncia` | logado | 7 ✅ |
+| PUT | `/perfil/avisos` | logado | 7 ✅ |
+| GET | `/perfil/estatisticas` | logado | 7 ✅ |
 
 ---
 
@@ -406,6 +414,9 @@ Todo aviso é **gravado** na tabela `notificacoes` pela `CentralDeNotificacoes` 
 | `doacaoCancelada` | ONG da retirada | `DELETE /doacoes/{id}` de uma reservada |
 | `suspensao` | ONG | a 3ª desistência (RN24) |
 | `mensagemNova` | a outra pessoa da conversa | `POST /conversas/{id}/mensagens` |
+| `apoioNovo` | o autor da publicação | `POST /comunidade/publicacoes/{id}/apoio` (só o 1º apoio de cada conta) |
+
+**Preferências (T50):** `doacaoNova` e `doacaoDisponivelDeNovo` respeitam `avisar_doacoes`; `mensagemNova`, `avisar_mensagens`; `apoioNovo`, `avisar_comunidade`. Os avisos da retirada (aceite, prazo, confirmação, cancelamento, suspensão) chegam sempre.
 
 **RN11 — quais ONGs:** `busca_ativa = TRUE`, não suspensas, **sem bloqueio** para a doação (RN22) e com a doação **dentro do raio** salvo no perfil delas (Haversine).
 
@@ -459,6 +470,72 @@ Texto de 1 a 1000 caracteres (400 fora disso). Retirada encerrada: **409 `CHAT_S
 ### `POST /conversas/{reservaId}/lidas` → `204`
 
 Marca como lidas as mensagens da outra pessoa.
+
+---
+
+## Perfil: avisos e estatísticas — etapa 7
+
+### `PUT /perfil/avisos` — `{"doacoes": true, "mensagens": false, "comunidade": true}` → `200 Conta`
+
+Quais avisos a pessoa quer receber (T50). O objeto `Perfil` passa a ter `"avisos": {...}`.
+
+### `GET /perfil/estatisticas` → `200 EstatisticasDoPerfil`
+
+```json
+{"concluidas": 1, "kg": 30.0, "comparecimento": 0.5, "desistenciasRecentes": 1}
+```
+
+- **Doador:** `concluidas` = doações entregues; `kg` = soma do peso delas; os outros dois vêm `null`.
+- **ONG:** `concluidas` = retiradas feitas; `kg` = kg recebidos; `comparecimento` = feitas ÷ (feitas + desistências que contaram), ou `null` se ainda não houve nenhuma; `desistenciasRecentes` = desistências nos últimos `JANELA_DESISTENCIAS_DIAS` (RN24).
+
+---
+
+## Comunidade — etapa 7
+
+### Objeto `Publicacao`
+
+```json
+{
+  "id": 9, "autorId": 3, "nomeAutor": "ONG Mãos Amigas", "tipoAutor": "ong",
+  "verificacaoAutor": "verificada",
+  "texto": "O arroz e o feijão viraram 160 refeições. Obrigado!",
+  "criadoEm": "2026-09-15T14:00:00.000Z", "fotos": ["4f3c...e9.jpg"],
+  "doacaoId": 4, "resumoDoacao": "Arroz e feijão — Mercado Bom Preço → ONG Mãos Amigas",
+  "familiasAjudadas": 40, "refeicoes": 160, "apoios": 2, "apoiadaPorMim": false
+}
+```
+
+### `GET /comunidade/impacto` → `200 Impacto`
+
+```json
+{"kgSalvos": 60.0, "doacoesConcluidas": 2, "familiasAjudadas": 65, "refeicoes": 160}
+```
+
+`kgSalvos` e `doacoesConcluidas` vêm das doações **concluídas**; `familiasAjudadas` e `refeicoes` são somas das publicações **não ocultas**.
+
+### `GET /comunidade/publicacoes?antesDe={id}` → `200 {"publicacoes": [Publicacao]}`
+
+20 por vez, da mais nova para a mais antiga, sem as ocultas. `antesDe=0` (padrão) = as mais novas; para a próxima página, mande o id da última recebida.
+
+### `POST /comunidade/publicacoes` — `DadosPublicacao` → `201 Publicacao`
+
+```json
+{"texto": "...", "doacaoId": 4, "familiasAjudadas": 40, "refeicoes": 160}
+```
+
+RN40: qualquer conta publica. Texto de 1 a 1000 caracteres; números entre 0 e 100000 (400 fora disso). `doacaoId` opcional: precisa ser uma doação **concluída** da qual quem publica participou (o doador dela ou a ONG que retirou); senão 400. As fotos vão depois.
+
+### `POST /comunidade/publicacoes/{id}/fotos` — *multipart*, campo `foto` → `201 Publicacao`
+
+Só o autor (outro: 404). Até 3 (409 `LIMITE_DE_FOTOS`), 2 MB, JPEG ou PNG — as mesmas regras das fotos das doações (`ConferenciaDeFoto`).
+
+### `POST` / `DELETE /comunidade/publicacoes/{id}/apoio` → `200 Publicacao`
+
+RN41: apoiar de novo não soma (a chave `(publicacao_id, usuario_id)` impede). `DELETE` desfaz. Publicação oculta ou inexistente: 404. O primeiro apoio de cada conta avisa o autor (`apoioNovo`).
+
+### `POST /comunidade/publicacoes/{id}/denuncia` — `{"motivo": "improprio" | "falso" | "outro"}` → `204`
+
+RN42: uma por conta (repetir não soma). Com `DENUNCIAS_PARA_OCULTAR` (padrão 3) contas diferentes, a publicação fica **oculta** (`oculta = TRUE`): some do feed e do painel. O autor não denuncia a própria (400).
 
 ---
 

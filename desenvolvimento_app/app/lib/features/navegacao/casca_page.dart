@@ -5,10 +5,10 @@ import '../../core/dependencias.dart';
 import '../../core/notificacoes/destino_da_notificacao.dart';
 import '../../core/routing/app_routes.dart';
 import '../../shared/widgets/barra_inferior.dart';
-import '../../shared/widgets/em_construcao.dart';
 import '../../shared/widgets/faixa_de_retirada.dart';
 import '../chat/conversas_page.dart';
 import '../chat/conversas_view_model.dart';
+import '../comunidade/comunidade_page.dart';
 import '../doador/home_doador_page.dart';
 import '../mapa/mapa_page.dart';
 import '../ong/home_ong_page.dart';
@@ -105,11 +105,6 @@ class _CascaPageState extends State<CascaPage> {
   /// pessoa não perde o que estava vendo.
   List<Widget> _criarAbas() {
     final d = widget.dependencias;
-    const comunidade = EmConstrucao(
-      titulo: 'Comunidade',
-      etapa: 7,
-      descricao: 'O impacto das doações e as publicações de todos.',
-    );
     return [
       if (_ehOng)
         HomeOngPage(
@@ -131,8 +126,8 @@ class _CascaPageState extends State<CascaPage> {
         MapaPage(doacoes: d.doacoes, sessao: d.sessao)
       else
         const SizedBox.shrink(),
-      comunidade,
-      PerfilPage(sessao: d.sessao),
+      ComunidadePage(comunidade: d.comunidade, sessao: d.sessao),
+      PerfilPage(sessao: d.sessao, perfis: d.perfis),
     ];
   }
 

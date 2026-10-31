@@ -29,6 +29,7 @@ class Env {
     required this.escutarNaRede,
     required this.consultarBrasilApi,
     required this.pastaArquivos,
+    required this.denunciasParaOcultar,
   });
 
   /// Lê o [arquivo] `.env` da pasta onde o comando foi executado.
@@ -78,6 +79,7 @@ class Env {
       escutarNaRede: leitor.booleano('ESCUTAR_NA_REDE', padrao: false),
       consultarBrasilApi: leitor.booleano('CONSULTAR_BRASILAPI', padrao: true),
       pastaArquivos: leitor.texto('PASTA_ARQUIVOS', padrao: 'arquivos'),
+      denunciasParaOcultar: leitor.inteiro('DENUNCIAS_PARA_OCULTAR', padrao: 3),
     );
   }
 
@@ -105,6 +107,9 @@ class Env {
 
   /// Pasta onde as fotos das doações ficam (não vai para o Git).
   final String pastaArquivos;
+
+  /// RN42: com tantas denúncias de contas diferentes, a publicação some.
+  final int denunciasParaOcultar;
 }
 
 /// Lê e converte variáveis, com mensagens de erro claras.

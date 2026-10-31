@@ -6,6 +6,7 @@ import '../../features/auth/cadastro/cadastro_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/auth/termos_page.dart';
 import '../../features/chat/chat_page.dart';
+import '../../features/comunidade/nova_publicacao_page.dart';
 import '../../features/doador/confirmar_retirada_page.dart';
 import '../../features/doador/detalhe_doacao_doador_page.dart';
 import '../../features/doador/nova_doacao_page.dart';
@@ -13,6 +14,7 @@ import '../../features/navegacao/casca_page.dart';
 import '../../features/ong/detalhe_doacao_ong_page.dart';
 import '../../features/ong/minhas_reservas_page.dart';
 import '../../features/ong/retirada_page.dart';
+import '../../features/perfil/editar_perfil_page.dart';
 import '../dependencias.dart';
 import 'app_routes.dart';
 
@@ -108,6 +110,20 @@ class AppRouter {
         reservas: d.reservas,
         doacoes: d.doacoes,
         relogio: d.relogio,
+      ),
+      AppRoutes.novaPublicacao => NovaPublicacaoPage(
+        comunidade: d.comunidade,
+        doacoes: d.doacoes,
+        reservas: d.reservas,
+        seletor: d.seletorDeFotos,
+        sessao: d.sessao,
+        doacaoId: argumento is int ? argumento : null,
+      ),
+      AppRoutes.editarPerfil => EditarPerfilPage(
+        sessao: d.sessao,
+        perfis: d.perfis,
+        cep: d.cep,
+        localizacao: d.localizacao,
       ),
       AppRoutes.chat => ChatPage(
         reservaId: _id(argumento),

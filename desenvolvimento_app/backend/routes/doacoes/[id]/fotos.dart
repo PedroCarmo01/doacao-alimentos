@@ -12,22 +12,7 @@ Future<Response> onRequest(RequestContext context, String id) async {
   if (context.request.method != HttpMethod.post) {
     throw const MetodoNaoPermitidoException();
   }
-  final List<int> bytes;
-  try {
-    final formulario = await context.request.formData();
-    final arquivo = formulario.files['foto'];
-    if (arquivo == null) {
-      throw const ValidacaoException(
-        'Envie a foto no campo "foto" (multipart/form-data).',
-      );
-    }
-    bytes = await arquivo.readAsBytes();
-  } on StateError {
-    // O corpo não era multipart/form-data.
-    throw const ValidacaoException(
-      'Envie a foto como multipart/form-data, no campo "foto".',
-    );
-  }
+  final bytes = await context.lerFoto();
   final doacao = await context.read<FotoDoacaoService>().adicionar(
     context.read<UsuarioAutenticado>(),
     idDaRota(id),

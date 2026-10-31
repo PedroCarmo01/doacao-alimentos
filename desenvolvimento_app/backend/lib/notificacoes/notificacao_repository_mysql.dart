@@ -90,6 +90,22 @@ class NotificacaoRepositoryMysql implements NotificacaoRepository {
   }
 
   @override
+  Future<PreferenciasDeAviso> preferencias(int usuarioId) async {
+    final linhas = await _db.consultar(
+      'SELECT avisar_doacoes, avisar_mensagens, avisar_comunidade '
+      'FROM perfis WHERE usuario_id = :id',
+      {'id': usuarioId},
+    );
+    if (linhas.isEmpty) return const PreferenciasDeAviso();
+    final l = linhas.first;
+    return PreferenciasDeAviso(
+      doacoes: l['avisar_doacoes'] == '1',
+      mensagens: l['avisar_mensagens'] == '1',
+      comunidade: l['avisar_comunidade'] == '1',
+    );
+  }
+
+  @override
   Future<List<OngParaAviso>> ongsParaAvisar(
     int doacaoId,
     DateTime agora,
@@ -101,6 +117,7 @@ class NotificacaoRepositoryMysql implements NotificacaoRepository {
         JOIN usuarios u ON u.id = p.usuario_id
        WHERE u.tipo = 'ong'
          AND p.busca_ativa = TRUE
+         AND p.avisar_doacoes = TRUE
          AND (p.suspensa_ate IS NULL OR p.suspensa_ate <= :agora)
          -- RN22: quem desistiu desta doação não é avisado de novo.
          AND NOT EXISTS (SELECT 1 FROM bloqueios_doacao b

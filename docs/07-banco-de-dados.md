@@ -63,6 +63,9 @@ erDiagram
 | `raio_km` | `DECIMAL(5,2)` padrão `10` | só ONG; o app oferece 2, 5, 10 ou 20 |
 | `suspensa_ate` | `DATETIME` NULL | só ONG; RN24 (UTC) |
 | `info_extra` | `VARCHAR(255)` NULL | "nome e dias da feira", "qual tipo", horários da ONG |
+| `avisar_doacoes` | `BOOLEAN` padrão `TRUE` | T50: avisos de doação nova / disponível de novo (migração 002) |
+| `avisar_mensagens` | `BOOLEAN` padrão `TRUE` | T50: avisos de mensagem nova no chat (migração 002) |
+| `avisar_comunidade` | `BOOLEAN` padrão `TRUE` | T50: avisos de apoio numa publicação minha (migração 002) |
 
 > **Por que uma tabela só para doador e ONG?** A maior parte dos atributos é a mesma e o tipo já está em `usuarios`. Duas tabelas criariam dois ids para a mesma pessoa (problema A11 da [análise](23-analise-tecnica.md)). As colunas que são de um tipo só aceitam `NULL` ou têm valor padrão.
 
@@ -121,7 +124,7 @@ PK composta (`ong_id`, `doacao_id`) + `criado_em`. A ONG que deixou o prazo acab
 
 ## Notificações
 
-- **`notificacoes`:** `id`, `usuario_id`, `tipo` (`ENUM` com os 10 eventos da seção 9 da especificação: `doacaoNova`, `doacaoAceita`, `prazoAcabando`, `prazoAcabouOng`, `prazoAcabouDoador`, `doacaoDisponivelDeNovo`, `retiradaConfirmada`, `mensagemNova`, `doacaoCancelada`, `suspensao`), `titulo`, `corpo`, `doacao_id` NULL, `reserva_id` NULL, `lida`, `criado_em`. Índice `(usuario_id, id)` para `GET /notificacoes?depois=`.
+- **`notificacoes`:** `id`, `usuario_id`, `tipo` (`ENUM` com os 10 eventos da seção 9 da especificação: `doacaoNova`, `doacaoAceita`, `prazoAcabando`, `prazoAcabouOng`, `prazoAcabouDoador`, `doacaoDisponivelDeNovo`, `retiradaConfirmada`, `mensagemNova`, `doacaoCancelada`, `suspensao`; e `apoioNovo`, da Comunidade, na migração 002), `titulo`, `corpo`, `doacao_id` NULL, `reserva_id` NULL, `lida`, `criado_em`. Índice `(usuario_id, id)` para `GET /notificacoes?depois=`.
 - **`dispositivos`:** `id`, `usuario_id`, `token` (**único**), `plataforma` (`'android'`), `atualizado_em`. Para o push real (etapa 9); a rota `POST /dispositivos` já grava aqui.
 
 ## Chat
@@ -166,3 +169,7 @@ stateDiagram-v2
 ## Mudanças de estrutura
 
 Depois que todos criaram o banco, mudanças entram como **migração** numerada em `database/migracoes/` **e** no `schema.sql` (ver [`database/migracoes/README.md`](../database/migracoes/README.md)). A reescrita da etapa 1 não tem migração porque ninguém do grupo tinha criado o banco ainda.
+
+| Migração | Etapa | O que faz |
+|---|---|---|
+| [`002_preferencias_de_aviso.sql`](../database/migracoes/002_preferencias_de_aviso.sql) | 7 | `perfis` ganha `avisar_doacoes`, `avisar_mensagens` e `avisar_comunidade` (todas `TRUE`); `notificacoes.tipo` ganha `apoioNovo`. Só acrescenta: não apaga dados. |

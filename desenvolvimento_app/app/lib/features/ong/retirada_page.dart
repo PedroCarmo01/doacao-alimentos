@@ -114,6 +114,11 @@ class _RetiradaPageState extends State<RetiradaPage> {
             return RetiradaEncerrada(
               reserva: reserva,
               desistencia: _viewModel.desistencia,
+              aoContarNaComunidade: () => Navigator.pushNamed(
+                context,
+                AppRoutes.novaPublicacao,
+                arguments: reserva.doacaoId,
+              ),
             );
           }
           return SafeArea(child: _emAndamento(reserva));

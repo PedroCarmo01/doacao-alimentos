@@ -386,4 +386,64 @@ void main() {
       expect(volta.lidasAte, 3);
     });
   });
+
+  group('Comunidade', () {
+    test('RN40: texto obrigatório e até 1000 caracteres', () {
+      expect(const DadosPublicacao(texto: '  ').validar(), isNotEmpty);
+      expect(DadosPublicacao(texto: 'a' * 1001).validar(), isNotEmpty);
+      expect(
+        const DadosPublicacao(texto: 'Sopa para 40 famílias').validar(),
+        isEmpty,
+      );
+    });
+
+    test('RN40: famílias e refeições não podem ser negativas', () {
+      expect(
+        const DadosPublicacao(texto: 'Ok', familiasAjudadas: -1).validar(),
+        isNotEmpty,
+      );
+    });
+
+    test('RN41: apoiar soma 1; desfazer tira 1; repetir não muda', () {
+      final p = Publicacao(
+        id: 1,
+        autorId: 2,
+        nomeAutor: 'ONG',
+        tipoAutor: TipoUsuario.ong,
+        verificacaoAutor: Verificacao.verificada,
+        texto: 'Obrigado!',
+        criadoEm: DateTime.utc(2026),
+        apoios: 3,
+      );
+      final apoiada = p.comApoio(apoiada: true);
+      expect(apoiada.apoios, 4);
+      expect(apoiada.comApoio(apoiada: true).apoios, 4);
+      expect(apoiada.comApoio(apoiada: false).apoios, 3);
+      expect(Publicacao.fromJson(apoiada.toJson()).apoiadaPorMim, isTrue);
+    });
+
+    test('Impacto vai e volta em JSON', () {
+      const impacto = Impacto(
+        kgSalvos: 85.5,
+        doacoesConcluidas: 3,
+        familiasAjudadas: 40,
+        refeicoes: 120,
+      );
+      expect(Impacto.fromJson(impacto.toJson()).kgSalvos, 85.5);
+    });
+  });
+
+  test('Perfil antigo (sem avisos no JSON) recebe todos ligados', () {
+    final json = const Perfil(
+      usuarioId: 1,
+      nomeOrganizacao: 'ONG',
+      tipoDocumento: TipoDocumento.cnpj,
+      documento: '1',
+      latitude: 0,
+      longitude: 0,
+    ).toJson()..remove('avisos');
+    final perfil = Perfil.fromJson(json);
+    expect(perfil.avisos.doacoes, isTrue);
+    expect(perfil.avisos.comunidade, isTrue);
+  });
 }

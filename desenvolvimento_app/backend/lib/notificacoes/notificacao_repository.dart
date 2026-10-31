@@ -54,7 +54,10 @@ abstract interface class NotificacaoRepository {
   /// "faltam 10 minutos" a cada rodada do job)
   Future<bool> existe(TipoNotificacao tipo, int reservaId);
 
-  /// RN11: ONGs com a busca ativa, não suspensas em [agora] e não
-  /// bloqueadas para a doação [doacaoId].
+  /// T50: quais avisos o usuário quer receber.
+  Future<PreferenciasDeAviso> preferencias(int usuarioId);
+
+  /// RN11: ONGs com a busca ativa (e o aviso de doações ligado), não
+  /// suspensas em [agora] e não bloqueadas para a doação [doacaoId].
   Future<List<OngParaAviso>> ongsParaAvisar(int doacaoId, DateTime agora);
 }

@@ -1,6 +1,7 @@
 import 'package:shared_models/shared_models.dart';
 
 import '../arquivos/armazenamento_de_fotos.dart';
+import '../arquivos/conferencia_de_foto.dart';
 import '../core/erros/app_exception.dart';
 import '../core/seguranca/usuario_autenticado.dart';
 import 'doacao_repository.dart';
@@ -18,10 +19,6 @@ class FotoDoacaoService {
 
   final DoacaoRepository _doacoes;
   final ArmazenamentoDeFotos _armazenamento;
-
-  /// O app já envia a foto reduzida (1280 px, qualidade 75), que fica
-  /// bem abaixo disso. O limite protege o servidor de arquivos enormes.
-  static const tamanhoMaximoBytes = 2 * 1024 * 1024;
 
   Future<Doacao> adicionar(
     UsuarioAutenticado usuario,
@@ -45,25 +42,9 @@ class FotoDoacaoService {
         'Cada doação pode ter no máximo ${Doacao.maximoDeFotos} fotos.',
       );
     }
-    final formato = _conferir(bytes);
+    final formato = ConferenciaDeFoto.conferir(bytes);
     final arquivo = await _armazenamento.salvar(bytes, formato);
     await _doacoes.adicionarFoto(doacaoId, arquivo, doacao.fotos.length + 1);
     return (await _doacoes.buscar(doacaoId))!;
-  }
-
-  FormatoDeFoto _conferir(List<int> bytes) {
-    if (bytes.isEmpty) {
-      throw const ValidacaoException('Escolha uma foto para enviar.');
-    }
-    if (bytes.length > tamanhoMaximoBytes) {
-      throw const ValidacaoException(
-        'A foto passou de 2 MB. Tire outra ou escolha uma menor.',
-      );
-    }
-    final formato = FormatoDeFoto.dosBytes(bytes);
-    if (formato == null) {
-      throw const ValidacaoException('Envie uma foto em JPEG ou PNG.');
-    }
-    return formato;
   }
 }

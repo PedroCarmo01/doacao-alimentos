@@ -1,3 +1,4 @@
+import 'contratos/avisos_e_estatisticas.dart';
 import 'geo/geo.dart';
 import 'tipos_de_perfil.dart';
 import 'usuario.dart';
@@ -32,6 +33,7 @@ class Perfil {
     this.raioKm = raioPadraoKm,
     this.suspensaAte,
     this.infoExtra,
+    this.avisos = const PreferenciasDeAviso(),
   });
 
   factory Perfil.fromJson(Map<String, dynamic> json) {
@@ -58,11 +60,19 @@ class Perfil {
       raioKm: j.decimal('raioKm'),
       suspensaAte: j.instanteOpcional('suspensaAte'),
       infoExtra: j.textoOpcional('infoExtra'),
+      avisos: json['avisos'] is Map
+          ? PreferenciasDeAviso.fromJson(
+              Map<String, dynamic>.from(json['avisos'] as Map),
+            )
+          : const PreferenciasDeAviso(),
     );
   }
 
   /// Raio de busca da ONG quando ela ainda não escolheu outro.
   static const raioPadraoKm = 10.0;
+
+  /// Quais avisos a pessoa quer receber (T50).
+  final PreferenciasDeAviso avisos;
 
   final int usuarioId;
   final String nomeOrganizacao;
@@ -123,6 +133,7 @@ class Perfil {
     'raioKm': raioKm,
     'suspensaAte': suspensaAte == null ? null : formatarInstante(suspensaAte!),
     'infoExtra': infoExtra,
+    'avisos': avisos.toJson(),
   };
 }
 

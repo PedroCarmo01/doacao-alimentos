@@ -6,6 +6,8 @@ import 'package:summit_backend/arquivos/armazenamento_de_fotos.dart';
 import 'package:summit_backend/auth/usuario_repository_mysql.dart';
 import 'package:summit_backend/chat/chat_repository_mysql.dart';
 import 'package:summit_backend/chat/chat_service.dart';
+import 'package:summit_backend/comunidade/comunidade_repository_mysql.dart';
+import 'package:summit_backend/comunidade/comunidade_service.dart';
 import 'package:summit_backend/core/config/env.dart';
 import 'package:summit_backend/core/db/database.dart';
 import 'package:summit_backend/core/seguranca/senha_service.dart';
@@ -127,6 +129,17 @@ Future<HttpServer> run(Handler handler, InternetAddress ip, int port) async {
   final aplicacao = handler
       .use(provider<ArmazenamentoDeFotos>((_) => fotos))
       .use(provider<DoacaoService>((_) => doacaoService))
+      .use(
+        provider<ComunidadeService>(
+          (_) => ComunidadeService(
+            comunidade: ComunidadeRepositoryMysql(database),
+            armazenamento: fotos,
+            avisos: avisos,
+            relogio: relogio,
+            denunciasParaOcultar: env.denunciasParaOcultar,
+          ),
+        ),
+      )
       .use(
         provider<ChatService>(
           (_) => ChatService(chat: chat, avisos: avisos, relogio: relogio),

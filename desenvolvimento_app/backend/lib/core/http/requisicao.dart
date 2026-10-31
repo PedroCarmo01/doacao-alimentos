@@ -19,6 +19,26 @@ extension LeituraDaRequisicao on RequestContext {
     );
   }
 
+  /// Lê UMA foto enviada como *multipart/form-data*, no campo `foto`
+  /// (fotos das doações e das publicações).
+  Future<List<int>> lerFoto() async {
+    try {
+      final formulario = await request.formData();
+      final arquivo = formulario.files['foto'];
+      if (arquivo == null) {
+        throw const ValidacaoException(
+          'Envie a foto no campo "foto" (multipart/form-data).',
+        );
+      }
+      return await arquivo.readAsBytes();
+    } on StateError {
+      // O corpo não era multipart/form-data.
+      throw const ValidacaoException(
+        'Envie a foto como multipart/form-data, no campo "foto".',
+      );
+    }
+  }
+
   Future<Object?> _lerCorpo() async {
     try {
       return await request.json();

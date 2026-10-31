@@ -44,6 +44,7 @@ class NotificacoesFake {
     for (final conta in _contas.todas) {
       final perfil = conta.perfil;
       if (!conta.usuario.ehOng || !perfil.buscaAtiva) continue;
+      if (!perfil.avisos.doacoes) continue; // T50
       if (perfil.estaSuspensa(_relogio.agora())) continue;
       if (bloqueios.contains('${conta.usuario.id}-${doacao.id}')) continue;
       final km = Geo.distanciaKm(perfil.coordenadas, doacao.coordenadas);

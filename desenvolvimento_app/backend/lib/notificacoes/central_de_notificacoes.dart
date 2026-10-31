@@ -34,8 +34,10 @@ class CentralDeNotificacoes {
   final Relogio _relogio;
   final int _fuso;
 
-  /// Grava e entrega um aviso.
-  Future<Notificacao> avisar(
+  /// Grava e entrega um aviso. Devolve `null` se a pessoa desligou esse
+  /// tipo de aviso no Perfil (T50). Os avisos da retirada (aceite, prazo,
+  /// confirmação, suspensão) não podem ser desligados: chegam sempre.
+  Future<Notificacao?> avisar(
     int usuarioId,
     TipoNotificacao tipo, {
     required String titulo,
@@ -43,6 +45,7 @@ class CentralDeNotificacoes {
     int? doacaoId,
     int? reservaId,
   }) async {
+    if (!await _querReceber(usuarioId, tipo)) return null;
     final notificacao = await _notificacoes.criar(
       NovaNotificacao(
         usuarioId: usuarioId,
@@ -56,6 +59,23 @@ class CentralDeNotificacoes {
     );
     await _enviador.enviar(usuarioId, notificacao);
     return notificacao;
+  }
+
+  Future<bool> _querReceber(int usuarioId, TipoNotificacao tipo) async {
+    final preferencias = switch (tipo) {
+      TipoNotificacao.mensagemNova ||
+      TipoNotificacao.apoioNovo ||
+      TipoNotificacao.doacaoNova ||
+      TipoNotificacao.doacaoDisponivelDeNovo =>
+        await _notificacoes.preferencias(usuarioId),
+      _ => null, // os importantes: sempre
+    };
+    if (preferencias == null) return true;
+    return switch (tipo) {
+      TipoNotificacao.mensagemNova => preferencias.mensagens,
+      TipoNotificacao.apoioNovo => preferencias.comunidade,
+      _ => preferencias.doacoes,
+    };
   }
 
   /// RN11: avisa as ONGs com a busca ativa que têm a doação dentro do
@@ -220,6 +240,20 @@ class CentralDeNotificacoes {
       reservaId: reserva.id,
     );
   }
+
+  /// Alguém apoiou uma publicação: avisa o autor (se ele quiser, T50).
+  Future<void> apoioNovo(Publicacao publicacao) => avisar(
+    publicacao.autorId,
+    TipoNotificacao.apoioNovo,
+    titulo: 'Apoio na Comunidade',
+    corpo:
+        'Sua publicação recebeu um apoio: '
+        '"${_trecho(publicacao.texto)}"',
+  );
+
+  /// Os primeiros caracteres de um texto longo.
+  static String _trecho(String texto) =>
+      texto.length <= 60 ? texto : '${texto.substring(0, 57)}...';
 
   /// Uma mensagem do SISTEMA (sem autor) na conversa da retirada.
   Future<void> _noChat(int reservaId, String texto) => _chat.inserir(

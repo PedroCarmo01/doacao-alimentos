@@ -5,7 +5,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [Não lançado]
 
 ### Adicionado
-- (cada PR acrescenta aqui uma linha do que entregou)
+- Etapa 7: Comunidade (painel de impacto, feed, publicar com fotos e doação ligada, apoiar, denunciar), Perfil completo (estatísticas, editar, busca/raio, avisos por tipo).
+
+### Banco
+- Migração `002_preferencias_de_aviso.sql`: colunas `avisar_*` em `perfis` e o tipo `apoioNovo` em `notificacoes`. **Rodem a migração 002** (só acrescenta, não apaga dados).
 
 ## [0.1.0] — Sprint 0 (esqueleto funcional)
 

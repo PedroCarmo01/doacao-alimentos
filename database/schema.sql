@@ -92,6 +92,13 @@ CREATE TABLE perfis (
   raio_km               DECIMAL(5, 2) NOT NULL DEFAULT 10.00 COMMENT 'Só ONG',
   suspensa_ate          DATETIME      NULL COMMENT 'Só ONG; RN24 (UTC)',
   info_extra            VARCHAR(255)  NULL COMMENT 'Feira e dias, qual tipo, horários',
+  -- T50: quais avisos a pessoa quer receber (migração 002).
+  avisar_doacoes        BOOLEAN       NOT NULL DEFAULT TRUE
+                        COMMENT 'T50: doação nova / disponível de novo',
+  avisar_mensagens      BOOLEAN       NOT NULL DEFAULT TRUE
+                        COMMENT 'T50: mensagem nova no chat',
+  avisar_comunidade     BOOLEAN       NOT NULL DEFAULT TRUE
+                        COMMENT 'T50: apoio numa publicação minha',
   CONSTRAINT pk_perfis PRIMARY KEY (usuario_id),
   CONSTRAINT fk_perfis_usuario
     FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
@@ -232,7 +239,8 @@ CREATE TABLE notificacoes (
   tipo        ENUM('doacaoNova', 'doacaoAceita', 'prazoAcabando',
                    'prazoAcabouOng', 'prazoAcabouDoador',
                    'doacaoDisponivelDeNovo', 'retiradaConfirmada',
-                   'mensagemNova', 'doacaoCancelada', 'suspensao')
+                   'mensagemNova', 'doacaoCancelada', 'suspensao',
+                   'apoioNovo')
               NOT NULL,
   titulo      VARCHAR(120)  NOT NULL,
   corpo       VARCHAR(500)  NOT NULL,

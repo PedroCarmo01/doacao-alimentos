@@ -3,13 +3,20 @@ import 'package:shared_models/shared_models.dart';
 import '../../core/api/api_client.dart';
 import '../fake/banco_fake.dart';
 
-/// CONTRATO: editar o próprio perfil (`PUT /perfil`).
+/// CONTRATO: o próprio perfil (`/perfil`).
 ///
 /// Na etapa 3 a ONG usa para ligar/desligar a busca ativa e trocar o raio
-/// (T20); na etapa 7, a tela de perfil edita o resto.
+/// (T20); na etapa 7, a tela de Perfil (T50) edita o resto, os avisos e
+/// mostra as estatísticas.
 abstract interface class PerfilRepository {
-  /// Devolve a conta atualizada (para a `Sessao` guardar).
+  /// `PUT /perfil` — devolve a conta atualizada (para a `Sessao` guardar).
   Future<Conta> atualizar(DadosPerfil dados);
+
+  /// `PUT /perfil/avisos`
+  Future<Conta> atualizarAvisos(PreferenciasDeAviso avisos);
+
+  /// `GET /perfil/estatisticas`
+  Future<EstatisticasDoPerfil> estatisticas();
 }
 
 class PerfilRepositoryApi implements PerfilRepository {
@@ -22,6 +29,18 @@ class PerfilRepositoryApi implements PerfilRepository {
     final json = await _api.put('/perfil', corpo: dados.toJson());
     return Conta.fromJson(ApiClient.objeto(json));
   }
+
+  @override
+  Future<Conta> atualizarAvisos(PreferenciasDeAviso avisos) async {
+    final json = await _api.put('/perfil/avisos', corpo: avisos.toJson());
+    return Conta.fromJson(ApiClient.objeto(json));
+  }
+
+  @override
+  Future<EstatisticasDoPerfil> estatisticas() async =>
+      EstatisticasDoPerfil.fromJson(
+        ApiClient.objeto(await _api.get('/perfil/estatisticas')),
+      );
 }
 
 class PerfilRepositoryFake implements PerfilRepository {
@@ -33,6 +52,18 @@ class PerfilRepositoryFake implements PerfilRepository {
   Future<Conta> atualizar(DadosPerfil dados) async {
     await _banco.simularRede();
     return _banco.atualizarPerfil(dados);
+  }
+
+  @override
+  Future<Conta> atualizarAvisos(PreferenciasDeAviso avisos) async {
+    await _banco.simularRede();
+    return _banco.atualizarAvisos(avisos);
+  }
+
+  @override
+  Future<EstatisticasDoPerfil> estatisticas() async {
+    await _banco.simularRede();
+    return _banco.estatisticas();
   }
 }
 

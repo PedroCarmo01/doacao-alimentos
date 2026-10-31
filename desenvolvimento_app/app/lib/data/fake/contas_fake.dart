@@ -125,6 +125,7 @@ class ContasFake {
         raioKm: ehOng ? dados.raioKm : Perfil.raioPadraoKm,
         suspensaAte: perfil.suspensaAte,
         infoExtra: dados.infoExtra,
+        avisos: perfil.avisos,
       ),
     );
     _registros[usuarioId] = _ContaComSenha(nova, registro.senha);
@@ -132,10 +133,19 @@ class ContasFake {
   }
 
   /// RN24: suspende a ONG até [ate] (as retiradas chamam).
-  void suspender(int usuarioId, DateTime ate) {
+  void suspender(int usuarioId, DateTime ate) =>
+      _alterarPerfil(usuarioId, {'suspensaAte': ate.toUtc().toIso8601String()});
+
+  /// T50: quais avisos a pessoa quer receber.
+  Conta alterarAvisos(int usuarioId, PreferenciasDeAviso avisos) {
+    _alterarPerfil(usuarioId, {'avisos': avisos.toJson()});
+    return _registros[usuarioId]!.conta;
+  }
+
+  /// Troca campos do perfil (pelos nomes do JSON).
+  void _alterarPerfil(int usuarioId, Map<String, dynamic> campos) {
     final registro = _registros[usuarioId]!;
-    final json = registro.conta.perfil.toJson()
-      ..['suspensaAte'] = ate.toUtc().toIso8601String();
+    final json = {...registro.conta.perfil.toJson(), ...campos};
     _registros[usuarioId] = _ContaComSenha(
       Conta(usuario: registro.conta.usuario, perfil: Perfil.fromJson(json)),
       registro.senha,

@@ -39,6 +39,8 @@ class DestinoDaNotificacao {
         doacao == null
             ? null
             : DestinoDaNotificacao(AppRoutes.detalheDoacaoDoador, doacao),
+      // Apoio na Comunidade: só abre o app (a Comunidade é uma aba).
+      TipoNotificacao.apoioNovo => null,
       // Os dois: a conversa da retirada (T30).
       TipoNotificacao.mensagemNova =>
         reserva == null ? null : DestinoDaNotificacao(AppRoutes.chat, reserva),

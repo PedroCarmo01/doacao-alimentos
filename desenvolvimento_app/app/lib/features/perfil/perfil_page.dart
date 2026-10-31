@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:shared_models/shared_models.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/routing/app_routes.dart';
 import '../../core/sessao/sessao.dart';
 import '../../core/theme/app_theme.dart';
+import '../../data/perfil/perfil_repository.dart';
 import '../../shared/widgets/selo_verificacao.dart';
+import 'partes_do_perfil.dart';
 import 'perfil_view_model.dart';
 
-/// T50 — Perfil (versão da etapa 1): dados da conta, selo e **Sair**.
-/// Edição, estatísticas, raio e preferências entram na etapa 7.
+/// T50 — Perfil: a conta com o selo, as estatísticas, editar os dados, a
+/// busca ativa e o raio (ONG), os avisos, termos, sobre e **Sair**.
 class PerfilPage extends StatefulWidget {
-  const PerfilPage({super.key, required this.sessao});
+  const PerfilPage({super.key, required this.sessao, required this.perfis});
 
   final Sessao sessao;
+  final PerfilRepository perfis;
 
   @override
   State<PerfilPage> createState() => _PerfilPageState();
@@ -24,8 +28,23 @@ class _PerfilPageState extends State<PerfilPage> {
   @override
   void initState() {
     super.initState();
-    _viewModel = PerfilViewModel(sessao: widget.sessao);
+    _viewModel = PerfilViewModel(sessao: widget.sessao, perfis: widget.perfis)
+      ..carregarEstatisticas();
   }
+
+  Future<void> _editar() async {
+    await Navigator.pushNamed(context, AppRoutes.editarPerfil);
+    _viewModel.atualizar(); // a conta da sessão pode ter mudado
+  }
+
+  void _sobre() => showAboutDialog(
+    context: context,
+    applicationName: AppConfig.nomeApp,
+    applicationVersion: '0.1.0',
+    applicationLegalese:
+        'Trabalho do 4º semestre de Engenharia de Software, apresentado no '
+        'evento Summit. ODS 2 (fome zero) e ODS 12 (consumo responsável).',
+  );
 
   @override
   void dispose() {
@@ -59,37 +78,67 @@ class _PerfilPageState extends State<PerfilPage> {
 
   @override
   Widget build(BuildContext context) {
-    final conta = _viewModel.conta;
     return Scaffold(
       appBar: AppBar(title: const Text('Perfil')),
-      body: conta == null
-          ? const SizedBox.shrink()
-          : ListView(
-              // Embaixo, espaço para a barra inferior (o corpo da casca
-              // passa por trás dela) não cobrir o botão Sair.
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
-              children: [
-                _Cabecalho(conta: conta),
-                const SizedBox(height: 24),
-                ..._dados(conta),
-                const SizedBox(height: 16),
-                const Text(
-                  'Editar dados, estatísticas e preferências: na etapa 7.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.cinza),
-                ),
-                const SizedBox(height: 24),
-                OutlinedButton.icon(
-                  key: const Key('botao_sair'),
-                  onPressed: _sair,
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Sair'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                  ),
-                ),
-              ],
-            ),
+      body: ListenableBuilder(
+        listenable: _viewModel,
+        builder: (context, _) => _corpo(),
+      ),
+    );
+  }
+
+  Widget _corpo() {
+    final conta = _viewModel.conta;
+    if (conta == null) return const SizedBox.shrink();
+    final estatisticas = _viewModel.estatisticas;
+    return ListView(
+      // Embaixo, espaço para a barra inferior (o corpo da casca
+      // passa por trás dela) não cobrir o botão Sair.
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
+      children: [
+        _Cabecalho(conta: conta),
+        const SizedBox(height: 16),
+        if (estatisticas != null)
+          CartaoDeEstatisticas(
+            estatisticas: estatisticas,
+            ehOng: _viewModel.ehOng,
+          ),
+        const SizedBox(height: 8),
+        ..._dados(conta),
+        OutlinedButton.icon(
+          key: const Key('editar_perfil'),
+          onPressed: _editar,
+          icon: const Icon(Icons.edit_outlined),
+          label: const Text('Editar dados e localização'),
+        ),
+        if (_viewModel.ehOng) ...[
+          const _Titulo('Busca de doações'),
+          CartaoDaBusca(viewModel: _viewModel),
+        ],
+        const _Titulo('Avisos'),
+        CartaoDosAvisos(viewModel: _viewModel),
+        const SizedBox(height: 8),
+        ListTile(
+          leading: const Icon(Icons.description_outlined),
+          title: const Text('Termos de uso e privacidade'),
+          onTap: () => Navigator.pushNamed(context, AppRoutes.termos),
+        ),
+        ListTile(
+          leading: const Icon(Icons.info_outline),
+          title: const Text('Sobre o app'),
+          onTap: _sobre,
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          key: const Key('botao_sair'),
+          onPressed: _sair,
+          icon: const Icon(Icons.logout),
+          label: const Text('Sair'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+          ),
+        ),
+      ],
     );
   }
 
@@ -105,15 +154,20 @@ class _PerfilPageState extends State<PerfilPage> {
       _Linha(Icons.email_outlined, 'E-mail', conta.usuario.email),
       _Linha(Icons.phone_outlined, 'Telefone', perfil.telefone ?? '—'),
       _Linha(Icons.home_outlined, 'Endereço', perfil.endereco ?? '—'),
-      if (conta.usuario.ehOng)
-        _Linha(
-          Icons.radar,
-          'Busca ativa',
-          '${perfil.buscaAtiva ? 'Ligada' : 'Desligada'} • até '
-              '${perfil.raioKm.toStringAsFixed(0)} km',
-        ),
     ];
   }
+}
+
+class _Titulo extends StatelessWidget {
+  const _Titulo(this.texto);
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(0, 24, 0, 8),
+    child: Text(texto, style: Theme.of(context).textTheme.titleMedium),
+  );
 }
 
 class _Cabecalho extends StatelessWidget {

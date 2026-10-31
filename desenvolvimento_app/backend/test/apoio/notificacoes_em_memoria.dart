@@ -64,6 +64,10 @@ class NotificacoesEmMemoria implements NotificacaoRepository {
       _lista.any((n) => n.tipo == tipo && n.reservaId == reservaId);
 
   @override
+  Future<PreferenciasDeAviso> preferencias(int usuarioId) async =>
+      _contas.conta(usuarioId)?.perfil.avisos ?? const PreferenciasDeAviso();
+
+  @override
   Future<List<OngParaAviso>> ongsParaAvisar(
     int doacaoId,
     DateTime agora,
@@ -71,6 +75,7 @@ class NotificacoesEmMemoria implements NotificacaoRepository {
     for (final registro in _contas.registros)
       if (registro.conta.usuario.ehOng &&
           registro.conta.perfil.buscaAtiva &&
+          registro.conta.perfil.avisos.doacoes &&
           !registro.conta.perfil.estaSuspensa(agora) &&
           !_doacoes.bloqueios.contains(
             '${registro.conta.usuario.id}-$doacaoId',
