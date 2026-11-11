@@ -10,6 +10,33 @@ Para a avaliação, **não é preciso publicar nada na internet**: a entrega é 
 | **Notebook na mesma Wi-Fi** | backend com `ESCUTAR_NA_REDE=true`; app com `API_URL=http://<IP do notebook>:8080` (build **debug**, que aceita HTTP) | demonstração real com dois celulares |
 | **Emuladores no notebook** | dois emuladores + backend local | sem depender da rede da faculdade |
 
+## Versão web de demonstração (abre em qualquer celular)
+
+O modo Fake não precisa de servidor nem de banco, então o app pode virar um **site estático** e ser aberto pelo navegador de qualquer celular (Android ou iPhone), sem instalar nada.
+
+1. Criar a pasta `web/` do app (só na primeira vez):
+
+   ```powershell
+   cd desenvolvimento_app\app
+   flutter create --platforms=web .
+   ```
+
+2. Testar no computador:
+
+   ```powershell
+   flutter run -d chrome --dart-define=USAR_FAKE=true
+   ```
+
+3. Gerar o site (o resultado fica em `build\web`):
+
+   ```powershell
+   flutter build web --release --dart-define=USAR_FAKE=true
+   ```
+
+4. Publicar a pasta `build\web` em qualquer hospedagem de site estático com HTTPS (Netlify, Firebase Hosting, GitHub Pages). No GitHub Pages o site fica em `/<nome-do-repositorio>/`: gere com `--base-href /<nome-do-repositorio>/`.
+
+Limites desta versão: os dados ficam na memória do navegador (recarregar a página volta ao começo), não há notificações na barra do sistema e a câmera vira o seletor de arquivos do navegador. Os usuários de teste são os mesmos do modo Fake (senha `senha123`).
+
 ## Publicar a API (se quiserem)
 
 O que seria necessário:

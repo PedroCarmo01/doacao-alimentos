@@ -67,15 +67,20 @@ abstract final class Formatador {
 
   /// `6 kg` ou `4,8 kg`
   static String peso(double kg) {
-    final inteiro = kg == kg.truncateToDouble();
+    // Arredonda ANTES de decidir se é inteiro: 4,96 é "5 kg", não "5,0 kg".
+    final arredondado = (kg * 10).round() / 10;
+    final inteiro = arredondado == arredondado.truncateToDouble();
     final numero = inteiro
-        ? kg.toStringAsFixed(0)
-        : kg.toStringAsFixed(1).replaceAll('.', ',');
+        ? arredondado.toStringAsFixed(0)
+        : arredondado.toStringAsFixed(1).replaceAll('.', ',');
     return '$numero kg';
   }
 
   /// `850 m` ou `2,4 km`
-  static String distancia(double km) => km < 1
-      ? '${(km * 1000).round()} m'
-      : '${km.toStringAsFixed(1).replaceAll('.', ',')} km';
+  static String distancia(double km) {
+    // Decide pelos metros JÁ arredondados: 999,6 m aparecia como "1000 m".
+    final metros = (km * 1000).round();
+    if (metros < 1000) return '$metros m';
+    return '${km.toStringAsFixed(1).replaceAll('.', ',')} km';
+  }
 }
