@@ -8,7 +8,6 @@
 /// O app não guarda segredos: só o endereço da API (docs/adr/ADR-012).
 abstract final class AppConfig {
   /// Nome exibido no app.
-  /// TODO(grupo): trocar quando o nome do aplicativo for definido.
   /// ("Summit" é o nome do EVENTO de entrega, não do app.)
   static const nomeApp = 'Doação de Alimentos';
 

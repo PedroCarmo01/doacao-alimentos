@@ -98,7 +98,7 @@ lib/
 │   ├── auth/ doacoes/ reservas/ sistema/      interface + Api + Fake
 │   ├── localizacao/localizacao_service.dart   GPS + Fake
 │   └── fake/banco_fake.dart                   "backend de mentira"
-├── shared/widgets/                            F  PrimaryButton, AppTextField, DoacaoCard, ContadorRegressivo, EmConstrucao, estados
+├── shared/widgets/                            F  PrimaryButton, AppTextField, DoacaoCard, ContadorRegressivo, estados
 └── features/
     ├── auth/presentation/         P1  escolha_perfil (F, exemplo), login, cadastro
     ├── doador/presentation/       P2  home_doador, nova_doacao, detalhe_doacao_doador

@@ -95,7 +95,6 @@ Perfis prontos no `.vscode/launch.json`. Ver [13 — Variáveis](13-variaveis-am
 | `DoacaoCard(doacao, onTap, novidade)` | cartão das listas; `novidade: true` mostra a etiqueta NOVA |
 | `ContadorRegressivo(expiraEm, aoExpirar)` | HH:MM:SS atualizado a cada segundo |
 | `CarregandoWidget`, `ErroWidget(mensagem, onTentar)`, `VazioWidget(texto, icone)` | os estados de uma lista |
-| `EmConstrucao` | placeholder do Sprint 0 |
 
 Utilitários: `Formatador.data/hora/diaHora/duracao/distancia` (converte UTC para o horário do aparelho) e `AppColors` (`verde`, `verdeClaro`, `laranja`, `cinza`, `erro`, `fundo`).
 

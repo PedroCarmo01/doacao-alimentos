@@ -31,25 +31,49 @@ Todas as decisões: [docs/adr](docs/adr/README.md).
 
 ## Como rodar
 
-Pré-requisitos e instalação passo a passo: [trilha/03](trilha/03-ambiente-windows-vscode.md). Resumo para quem já tem tudo instalado:
+**Pré-requisitos:** [Flutter](https://docs.flutter.dev/get-started/install) 3.35 ou mais novo (Dart 3.9+) e um emulador Android ou celular com depuração USB. Para o modo completo, também **MySQL 8.x** e o pacote `dart_frog_cli` (`dart pub global activate dart_frog_cli`). Instalação detalhada no Windows com VS Code: [trilha/03](trilha/03-ambiente-windows-vscode.md).
 
-1. MySQL Workbench (como root): rodar `database/schema.sql` e `database/criar_usuario.sql`. **Já tinha o banco?** Rode também as migrações de `database/migracoes/` (hoje, a `002_preferencias_de_aviso.sql`).
-2. `cd desenvolvimento_app\backend` · `Copy-Item .env.example .env` · preencher `DB_SENHA` e `JWT_SEGREDO`.
-3. VS Code → *Tasks: Run Task* → **Tudo: baixar dependências (pub get)**.
-4. Tarefas **Backend: recriar dados de exemplo (seed)** e **Backend: iniciar (dart_frog dev)**.
-5. *Run and Debug* → **App — API local (emulador)** → `F5`. (Sem backend: **App — dados fictícios**.)
+### Opção A: só o app, sem banco e sem servidor (mais rápida)
 
-### Diferenças da máquina pessoal do Pedro (registradas na Etapa 0)
+O app traz um "backend de mentira" em memória com os mesmos dados de exemplo e as mesmas regras. Serve para conhecer todas as telas em poucos minutos.
 
-O projeto foi planejado para **MySQL 8.4 LTS** em `C:\dev\Summit`. Na máquina onde o app está sendo construído:
+```bash
+cd desenvolvimento_app/app
+flutter pub get
+flutter run --dart-define=USAR_FAKE=true
+```
 
-| Item | Planejado | Nesta máquina | Impacto |
-|---|---|---|---|
-| Banco | MySQL 8.4 LTS | **MySQL 8.0** (8.0.44, serviço `MySQL80`, porta 3306) | nenhum: o `schema.sql` usa só recursos que o 8.0 já tem (coluna gerada, `utf8mb4_0900_ai_ci`, TLS e o login `caching_sha2_password`) |
-| Pasta do projeto | `C:\dev\Summit` | `C:\Users\user\Documents\dev\Summit` | nenhum: o caminho não tem espaço nem acento |
-| NDK do Android | baixado sozinho pelo Gradle | instalado à mão: `android sdk install ndk/28.2.13676358` | só na primeira compilação (o novo *Android CLI* substituiu o `sdkmanager`) |
+Entre com qualquer usuário da tabela [Usuários de teste](#usuários-de-teste) (senha `senha123`).
 
-Quem usar MySQL 8.4 não precisa fazer nada diferente.
+### Opção B: completo (app + API + MySQL)
+
+1. **Banco.** No MySQL Workbench (como root), rode `database/schema.sql` e depois `database/criar_usuario.sql` (troque a senha dentro dele). Já tinha o banco de uma versão anterior? Rode também as migrações de `database/migracoes/`.
+2. **Configuração do servidor.** Em `desenvolvimento_app/backend`, copie `.env.example` para `.env` e preencha `DB_SENHA` (a mesma do passo 1) e `JWT_SEGREDO` (texto aleatório com 32+ caracteres).
+3. **Dependências e dados de exemplo.**
+
+   ```bash
+   cd desenvolvimento_app/shared_models && dart pub get
+   cd ../backend && dart pub get && dart run tool/seed.dart
+   cd ../app && flutter pub get
+   ```
+
+4. **Servidor** (deixe este terminal aberto; sobe em <http://localhost:8080>):
+
+   ```bash
+   cd desenvolvimento_app/backend
+   dart_frog dev
+   ```
+
+5. **App**, em outro terminal. No emulador Android, `10.0.2.2` é o computador onde o servidor roda:
+
+   ```bash
+   cd desenvolvimento_app/app
+   flutter run --dart-define=API_URL=http://10.0.2.2:8080
+   ```
+
+   Em celular físico, use o IP do computador na rede (`ipconfig`/`ifconfig`) no lugar de `10.0.2.2` e ponha `ESCUTAR_NA_REDE=true` no `.env`.
+
+No VS Code, os mesmos passos existem como tarefas (*Tasks: Run Task*) e perfis de execução (*Run and Debug*).
 
 ### Usuários de teste
 
@@ -69,7 +93,10 @@ Senha de todos: `senha123`. Os mesmos usuários existem no modo Fake.
 
 | O quê | Como |
 |---|---|
-| Testes automatizados (todas as regras RN) | tarefa **Tudo: verificar antes do PR** |
+| Análise estática do app | `cd desenvolvimento_app/app && flutter analyze` |
+| Testes automatizados do app | `cd desenvolvimento_app/app && flutter test` |
+| Testes do backend e dos modelos | `dart test` em `desenvolvimento_app/backend` e em `desenvolvimento_app/shared_models` (não precisam de MySQL) |
+| Tudo de uma vez (formatação + análise + testes) | tarefa **Tudo: verificar antes do PR** no VS Code |
 | Roteiro de ponta a ponta contra o servidor de verdade | `dart run tool/seed.dart` e, com o servidor rodando, `dart run tool/roteiro_ponta_a_ponta.dart` (pasta `backend`) |
 | Passo a passo manual e cobertura de cada RN | [docs/relatorio-de-testes.md](docs/relatorio-de-testes.md) |
 
@@ -110,18 +137,14 @@ Detalhes: [docs/06 — Estrutura do projeto](docs/06-estrutura-projeto.md).
 
 ## Equipe
 
-<!-- TODO(grupo): preencher com os nomes e usuários do GitHub. -->
-
 | Integrante | GitHub | Responsabilidade |
 |---|---|---|
-| Pessoa 1 | @ | Autenticação (backend + app) |
-| Pessoa 2 | @ | Doador (backend + app) |
-| Pessoa 3 | @ | Reservas e expiração (backend) |
-| Pessoa 4 | @ | Infraestrutura, proximidade e mapa |
-| Pessoa 5 | @ | Telas da ONG (app) |
+| Pedro Carmo | [@PedroCarmo01](https://github.com/PedroCarmo01) | _preencher_ |
+| _Nome do integrante 2_ | @_usuario_ | _preencher_ |
+| _Nome do integrante 3_ | @_usuario_ | _preencher_ |
+| _Nome do integrante 4_ | @_usuario_ | _preencher_ |
+| _Nome do integrante 5_ | @_usuario_ | _preencher_ |
 
 ## Uso de inteligência artificial
-
-<!-- TODO(grupo): conferir a política da disciplina e ajustar este texto (trilha/22, passo 3). -->
 
 Este projeto foi desenvolvido pelo grupo com apoio de ferramentas de IA generativa, usadas na estrutura inicial do repositório, na documentação e na escrita do código. Cada etapa foi revisada, testada no emulador e estudada pelo grupo, que é capaz de ler, explicar e defender todo o código apresentado.

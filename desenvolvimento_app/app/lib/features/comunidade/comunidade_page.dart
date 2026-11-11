@@ -115,6 +115,14 @@ class _ComunidadePageState extends State<ComunidadePage> {
               children: [
                 if (_viewModel.impacto != null)
                   _PainelDeImpacto(impacto: _viewModel.impacto!),
+                if (_viewModel.publicacoes.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 32),
+                    child: VazioWidget(
+                      texto: 'Ainda não há publicações por aqui.',
+                      icone: Icons.forum_outlined,
+                    ),
+                  ),
                 for (final publicacao in _viewModel.publicacoes)
                   CartaoDaPublicacao(
                     publicacao: publicacao,
