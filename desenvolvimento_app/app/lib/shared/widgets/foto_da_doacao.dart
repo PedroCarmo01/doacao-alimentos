@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_models/shared_models.dart';
 
@@ -9,7 +10,8 @@ import '../../core/theme/app_theme.dart';
 /// Mostra uma foto de doação, venha ela de onde vier:
 /// - `assets/...`: foto de exemplo do modo Fake (dentro do app);
 /// - caminho do celular (`/data/...`): foto escolhida, ainda não enviada
-///   (ou guardada pelo modo Fake);
+///   (ou guardada pelo modo Fake). No navegador, a foto escolhida chega
+///   como um endereço `blob:...`;
 /// - só o nome (`3f2a...e1.jpg`): foto do servidor, em
 ///   `GET /arquivos/{nome}`.
 ///
@@ -51,7 +53,14 @@ class FotoDaDoacao extends StatelessWidget {
     if (foto.startsWith('assets/')) {
       imagem = Image.asset(foto, fit: BoxFit.cover);
     } else if (foto.contains('/') || foto.contains(r'\')) {
-      imagem = Image.file(File(foto), fit: BoxFit.cover);
+      if (kIsWeb) {
+        // No navegador não existe arquivo local (o `Image.file` falha): o
+        // image_picker entrega um endereço `blob:`, que o `Image.network`
+        // sabe abrir.
+        imagem = Image.network(foto, fit: BoxFit.cover);
+      } else {
+        imagem = Image.file(File(foto), fit: BoxFit.cover);
+      }
     } else {
       imagem = Image.network(
         enderecoNoServidor(foto),

@@ -43,4 +43,16 @@ void main() {
       '1:00:05',
     );
   });
+
+  test('peso arredonda antes de escolher as casas: "5 kg"', () {
+    expect(Formatador.peso(6), '6 kg');
+    expect(Formatador.peso(4.8), '4,8 kg');
+    expect(Formatador.peso(4.96), '5 kg');
+  });
+
+  test('distância: 999,6 m aparece em km, não como "1000 m"', () {
+    expect(Formatador.distancia(0.85), '850 m');
+    expect(Formatador.distancia(0.9996), '1,0 km');
+    expect(Formatador.distancia(2.44), '2,4 km');
+  });
 }
