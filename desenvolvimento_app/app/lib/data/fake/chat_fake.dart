@@ -30,9 +30,15 @@ class ChatFake {
   void doSistema(int reservaId, String texto, {DateTime? em}) =>
       _inserir(reservaId, null, texto, em ?? _agora);
 
-  /// Usada pelos exemplos (mensagens já trocadas antes).
-  void deExemplo(int reservaId, int autorId, String texto, DateTime em) =>
-      _inserir(reservaId, autorId, texto, em);
+  /// Usada pelos exemplos (mensagens já trocadas antes). Como no seed,
+  /// a mensagem de exemplo já foi lida, a não ser que [lida] seja `false`.
+  void deExemplo(
+    int reservaId,
+    int autorId,
+    String texto,
+    DateTime em, {
+    bool lida = true,
+  }) => _inserir(reservaId, autorId, texto, em, lidaEm: lida ? em : null);
 
   List<ResumoConversa> conversasDe(Conta conta) {
     final eu = conta.usuario.id;
@@ -127,13 +133,20 @@ class ChatFake {
 
   // ----------------------------------------------------------- internos
 
-  Mensagem _inserir(int reservaId, int? autorId, String texto, DateTime em) {
+  Mensagem _inserir(
+    int reservaId,
+    int? autorId,
+    String texto,
+    DateTime em, {
+    DateTime? lidaEm,
+  }) {
     final m = Mensagem(
       id: _todas.length + 1,
       reservaId: reservaId,
       autorId: autorId,
       texto: texto,
       criadoEm: em,
+      lidaEm: lidaEm,
     );
     _todas.add(m);
     return m;

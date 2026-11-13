@@ -3,6 +3,8 @@ import 'package:shared_models/shared_models.dart';
 import 'package:summit_app/core/api/api_exception.dart';
 import 'package:summit_app/data/fake/banco_fake.dart';
 
+import '../apoio/doacao_extra.dart';
+
 /// O BancoFake precisa seguir as mesmas regras do backend. Estes testes
 /// usam um RelogioFixo para "avançar o tempo" sem esperar de verdade.
 void main() {
@@ -16,6 +18,9 @@ void main() {
       atrasoDeRede: Duration.zero,
       simularNovasDoacoes: false,
     );
+    // Uma doação disponível que nenhuma ONG de exemplo tem bloqueada
+    // (o Prato Cheio está bloqueado nas 2 dos exemplos, RN22).
+    publicarDoacaoExtra(banco, relogio, titulo: 'Frutas e verduras do dia');
   });
 
   void entrarComo(String email) =>
@@ -61,7 +66,9 @@ void main() {
 
   test('RN20: duas ONGs não aceitam a mesma doação', () {
     entrarComo('maosamigas@exemplo.com');
-    final doacao = banco.doacoesProximas().first;
+    final doacao = banco.doacoesProximas().firstWhere(
+      (d) => d.titulo.startsWith('Frutas'),
+    );
     aceitar(doacao.id);
 
     entrarComo('pratocheio@exemplo.com');

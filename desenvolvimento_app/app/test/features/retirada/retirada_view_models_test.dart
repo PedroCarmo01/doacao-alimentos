@@ -8,6 +8,8 @@ import 'package:summit_app/features/navegacao/faixa_de_retirada_view_model.dart'
 import 'package:summit_app/features/ong/detalhe_doacao_ong_view_model.dart';
 import 'package:summit_app/features/ong/retirada_view_model.dart';
 
+import '../../apoio/doacao_extra.dart';
+
 /// Etapa 4 — aceite, retirada em andamento, código e faixa, no modo Fake
 /// (prazo de 2 min, como o BancoFake usa para a demonstração).
 void main() {
@@ -16,14 +18,21 @@ void main() {
 
   setUp(() {
     relogio = RelogioFixo(DateTime.utc(2026, 9, 15, 15));
-    deps = Dependencias.fake(
-      mostrador: MostradorEmMemoria(),
-      banco: BancoFake(
-        relogio: relogio,
-        atrasoDeRede: Duration.zero,
-        simularNovasDoacoes: false,
-      ),
+    final banco = BancoFake(
+      relogio: relogio,
+      atrasoDeRede: Duration.zero,
+      simularNovasDoacoes: false,
     );
+    // Os exemplos têm só 2 doações; estes testes precisam de mais 2
+    // disponíveis (o Prato Cheio está bloqueado no pão francês, RN22).
+    publicarDoacaoExtra(banco, relogio, titulo: 'Frutas e verduras do dia');
+    publicarDoacaoExtra(
+      banco,
+      relogio,
+      titulo: 'Marmitas do almoço',
+      doador: 'padaria@exemplo.com',
+    );
+    deps = Dependencias.fake(mostrador: MostradorEmMemoria(), banco: banco);
   });
 
   Future<void> entrarComo(String email) async => deps.sessao.iniciar(
@@ -104,7 +113,7 @@ void main() {
     });
 
     test('RN25: com 2 retiradas em andamento não aceita a 3ª', () async {
-      await maosAmigasAceitaFrutas(); // já tinha as cestas: agora são 2
+      await maosAmigasAceitaFrutas(); // já tinha os mantimentos: agora são 2
       final vm = detalhe((await doacaoProxima('Marmitas')).id);
       await vm.carregar();
 
@@ -194,7 +203,7 @@ void main() {
     );
 
     test('ONG: "Retirada em andamento" com o tempo restante', () async {
-      await entrarComo('maosamigas@exemplo.com'); // tem as cestas (60 min)
+      await entrarComo('maosamigas@exemplo.com'); // tem os mantimentos (60 min)
       final vm = faixa();
 
       await vm.atualizar();

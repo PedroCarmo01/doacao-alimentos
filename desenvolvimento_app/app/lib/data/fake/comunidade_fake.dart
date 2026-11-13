@@ -6,7 +6,7 @@ import 'doacoes_fake.dart';
 import 'notificacoes_fake.dart';
 
 /// A Comunidade do modo Fake: as MESMAS regras do `ComunidadeService` do
-/// backend (RN40–RN42) e as mesmas 4 publicações de exemplo do seed.
+/// backend (RN40–RN42) e as mesmas 2 publicações de exemplo do seed.
 class ComunidadeFake {
   ComunidadeFake(this._relogio, this._contas, this._doacoes, this._avisos);
 
@@ -29,56 +29,36 @@ class ComunidadeFake {
 
   DateTime get _agora => _relogio.agora();
 
-  /// As publicações de exemplo, como no seed.
+  /// As 2 publicações de exemplo, como no seed (sem doação ligada).
   void criarExemplos() {
     Conta conta(String email) => _contas.porEmail(email);
-    int? concluida(String titulo) =>
-        _doacoes.doacoes.where((d) => d.titulo == titulo).firstOrNull?.id;
 
-    final arroz = _criar(
-      conta('maosamigas@exemplo.com'),
-      DadosPublicacao(
-        texto:
-            'O arroz e o feijão do Mercado Bom Preço viraram 160 refeições '
-            'na nossa cozinha comunitária. Obrigado!',
-        doacaoId: concluida('Arroz e feijão'),
-        familiasAjudadas: 40,
-        refeicoes: 160,
-      ),
-      _agora.subtract(const Duration(days: 5)),
-    );
-    final enlatados = _criar(
+    final cestas = _criar(
       conta('pratocheio@exemplo.com'),
-      DadosPublicacao(
-        texto: 'Os enlatados completaram as cestas básicas desta semana.',
-        doacaoId: concluida('Enlatados variados'),
-        familiasAjudadas: 25,
+      const DadosPublicacao(
+        texto:
+            'Com os mantimentos do Mercado Bom Preço montamos 40 cestas '
+            'básicas esta semana: arroz, feijão, macarrão, farinha de milho, '
+            'açúcar e óleo. Obrigado pela parceria!',
+        familiasAjudadas: 40,
       ),
       _agora.subtract(const Duration(days: 2)),
+      fotos: const ['assets/exemplos/mantimentos.jpg'],
     );
-    _criar(
-      conta('mercado@exemplo.com'),
+    final cafe = _criar(
+      conta('maosamigas@exemplo.com'),
       const DadosPublicacao(
         texto:
-            'Este mês já evitamos o desperdício de 100 kg de alimentos. '
-            'Obrigado às ONGs parceiras!',
+            'Os pães do dia da Padaria Pão Quente viraram o café da manhã '
+            'de 80 pessoas no nosso projeto. Nada foi para o lixo!',
+        refeicoes: 80,
       ),
       _agora.subtract(const Duration(days: 1)),
-    );
-    _criar(
-      conta('padaria@exemplo.com'),
-      const DadosPublicacao(
-        texto: 'Todo dia às 14h temos pães e marmitas para doar.',
-      ),
-      _agora.subtract(const Duration(hours: 6)),
+      fotos: const ['assets/exemplos/paes.jpg'],
     );
     final mercado = conta('mercado@exemplo.com').usuario.id;
     final padaria = conta('padaria@exemplo.com').usuario.id;
-    _apoios.addAll([
-      '${arroz.id}-$mercado',
-      '${arroz.id}-$padaria',
-      '${enlatados.id}-$mercado',
-    ]);
+    _apoios.addAll(['${cestas.id}-$mercado', '${cafe.id}-$padaria']);
   }
 
   Impacto impacto() {
@@ -192,7 +172,12 @@ class ComunidadeFake {
 
   // ----------------------------------------------------------- internos
 
-  Publicacao _criar(Conta autor, DadosPublicacao dados, DateTime em) {
+  Publicacao _criar(
+    Conta autor,
+    DadosPublicacao dados,
+    DateTime em, {
+    List<String> fotos = const [],
+  }) {
     final doacao = dados.doacaoId == null
         ? null
         : _doacoes.doacoes.where((d) => d.id == dados.doacaoId).firstOrNull;
@@ -204,6 +189,7 @@ class ComunidadeFake {
       verificacaoAutor: autor.perfil.verificacao,
       texto: dados.texto.trim(),
       criadoEm: em,
+      fotos: fotos,
       doacaoId: doacao?.id,
       resumoDoacao: doacao == null ? null : _resumo(doacao),
       familiasAjudadas: dados.familiasAjudadas,

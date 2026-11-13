@@ -4,9 +4,17 @@ import 'chat_fake.dart';
 import 'contas_fake.dart';
 import 'doacoes_fake.dart';
 
-/// As doações de exemplo do modo Fake: as MESMAS do seed do backend
+/// As doações de exemplo do modo Fake: as MESMAS 2 do seed do backend
 /// (`backend/tool/seed/doacoes_de_exemplo.dart`), com as fotos de exemplo
 /// guardadas em `assets/exemplos/`.
+///
+/// 1. "Mantimentos não perecíveis" (Mercado Bom Preço): RESERVADA pela ONG
+///    Mãos Amigas, retirada em andamento (código 4821) e com chat.
+/// 2. "Pão francês do dia" (Padaria Pão Quente): DISPONÍVEL.
+///
+/// O Instituto Prato Cheio aceitou as duas mais cedo e deixou o prazo
+/// acabar: são as 2 desistências dele (RN22–RN24). Por isso ele fica
+/// bloqueado nas duas e não vê o pão francês na lista.
 class ExemplosFake {
   ExemplosFake(this._doacoes, this._contas, this._chat, {required this.agora});
 
@@ -17,85 +25,57 @@ class ExemplosFake {
 
   late final _mercado = _contas.porEmail('mercado@exemplo.com');
   late final _padaria = _contas.porEmail('padaria@exemplo.com');
-  late final _feirante = _contas.porEmail('feirante@exemplo.com');
   late final _maosAmigas = _contas.porEmail('maosamigas@exemplo.com');
   late final _pratoCheio = _contas.porEmail('pratocheio@exemplo.com');
-  late final _suspensa = _contas.porEmail('suspensa@exemplo.com');
 
   void criar() {
-    _disponivel(
+    final mantimentos = _doacao(
       _mercado,
-      'Frutas e verduras do dia',
-      CategoriaAlimento.hortifruti,
-      5,
-      Unidade.caixas,
-      25,
-      6,
-      foto: 'frutas.jpg',
-      descricao: 'Retirar pela porta lateral, falar com o Carlos.',
-    );
-    _disponivel(
-      _mercado,
-      'Iogurtes perto do vencimento',
-      CategoriaAlimento.laticinios,
-      24,
-      Unidade.unidades,
-      4.8,
-      8,
-      conservacao: Conservacao.refrigerado,
-      foto: 'iogurtes.jpg',
-    );
-    _disponivel(
-      _mercado,
-      'Frios fatiados',
-      CategoriaAlimento.carnesFrios,
-      4,
+      'Mantimentos não perecíveis',
+      CategoriaAlimento.mercearia,
+      120,
       Unidade.kg,
-      4,
-      4,
-      conservacao: Conservacao.refrigerado,
-      foto: 'frios.jpg',
+      120,
+      descricao: 'Arroz, feijão, macarrão, farinha de milho, açúcar e óleo.',
+      foto: 'mantimentos.jpg',
+      inicio: agora.subtract(const Duration(hours: 3)),
+      fim: agora.add(const Duration(hours: 5)),
+      validade: agora.add(const Duration(days: 30)),
+      status: StatusDoacao.reservada,
     );
-    _disponivel(
+    final paes = _doacao(
       _padaria,
-      'Marmitas do almoço',
-      CategoriaAlimento.refeicoesProntas,
-      20,
-      Unidade.unidades,
-      8,
-      3,
-      foto: 'marmitas.jpg',
-      preparadoEm: agora.subtract(const Duration(minutes: 30)),
-    );
-    _disponivel(
-      _feirante,
-      'Verduras da feira',
-      CategoriaAlimento.hortifruti,
-      3,
+      'Pão francês do dia',
+      CategoriaAlimento.padaria,
+      4,
       Unidade.caixas,
-      15,
-      5,
+      12,
+      descricao: 'Pães assados hoje, separados em 4 caixas.',
+      foto: 'paes.jpg',
+      inicio: agora.subtract(const Duration(hours: 2)),
+      fim: agora.add(const Duration(hours: 4)),
+      validade: agora.add(const Duration(days: 1)),
     );
-    _retiradaEmAndamento();
-    _historico();
+    // As 2 desistências do Prato Cheio, antes de a Mãos Amigas aceitar.
+    _desistencia(mantimentos, agora.subtract(const Duration(minutes: 150)));
+    _desistencia(paes, agora.subtract(const Duration(minutes: 105)));
+    _retiradaEmAndamento(mantimentos);
   }
 
-  Doacao _disponivel(
+  Doacao _doacao(
     Conta doador,
     String titulo,
     CategoriaAlimento categoria,
     double quantidade,
     Unidade unidade,
-    double pesoKg,
-    int horas, {
-    Conservacao conservacao = Conservacao.ambiente,
-    String? foto,
-    String? descricao,
-    DateTime? preparadoEm,
-    DateTime? inicio,
+    double pesoKg, {
+    required String descricao,
+    required String foto,
+    required DateTime inicio,
+    required DateTime fim,
+    required DateTime validade,
     StatusDoacao status = StatusDoacao.disponivel,
   }) {
-    final comeco = inicio ?? agora.subtract(const Duration(minutes: 30));
     final doacao = Doacao(
       id: _doacoes.novoId(),
       doadorId: doador.usuario.id,
@@ -105,52 +85,73 @@ class ExemplosFake {
       quantidade: quantidade,
       unidade: unidade,
       pesoKg: pesoKg,
-      conservacao: conservacao,
-      validade: Calendario.somenteData(agora.add(const Duration(days: 1))),
-      preparadoEm: preparadoEm,
-      janelaInicio: comeco,
-      janelaFim: comeco.add(Duration(hours: horas)),
+      conservacao: Conservacao.ambiente,
+      validade: Calendario.somenteData(validade),
+      janelaInicio: inicio,
+      janelaFim: fim,
       endereco: doador.perfil.endereco,
       latitude: doador.perfil.latitude,
       longitude: doador.perfil.longitude,
       status: status,
-      criadoEm: comeco,
-      fotos: foto == null ? const [] : ['assets/exemplos/$foto'],
+      criadoEm: inicio,
+      fotos: ['assets/exemplos/$foto'],
     );
     _doacoes.salvar(doacao);
     return doacao;
   }
 
-  /// Mãos Amigas está retirando as cestas do mercado (código 4821).
-  void _retiradaEmAndamento() {
-    final cestas = _disponivel(
-      _mercado,
-      'Cestas de mercearia',
-      CategoriaAlimento.mercearia,
-      10,
-      Unidade.caixas,
-      40,
-      5,
-      status: StatusDoacao.reservada,
-    );
-    final aceitaEm = agora.subtract(const Duration(minutes: 10));
+  /// O Prato Cheio aceitou, deixou o prazo de 1 h acabar e ficou bloqueado
+  /// para esta doação (RN22). Conta como desistência (RN24).
+  void _desistencia(Doacao doacao, DateTime aceitaEm) {
+    final venceuEm = aceitaEm.add(const Duration(hours: 1));
     _doacoes.reservas.add(
       Reserva(
         id: _doacoes.novoId(),
-        doacaoId: cestas.id,
-        ongId: _maosAmigas.usuario.id,
-        status: StatusReserva.ativa,
+        doacaoId: doacao.id,
+        ongId: _pratoCheio.usuario.id,
+        status: StatusReserva.expirada,
         reservadoEm: aceitaEm,
-        // 60 min, como no seed (o prazo curto do Fake vale para as novas).
-        expiraEm: aceitaEm.add(const Duration(hours: 1)),
-        codigoRetirada: '4821',
-        tituloDoacao: cestas.titulo,
-        nomeOng: _maosAmigas.perfil.nomeOrganizacao,
+        expiraEm: venceuEm,
+        encerradaEm: venceuEm,
+        contouDesistencia: true,
+        tituloDoacao: doacao.titulo,
+        nomeOng: _pratoCheio.perfil.nomeOrganizacao,
       ),
     );
-    _doacoes.salvar(cestas);
-    // A conversa de exemplo, como no seed.
+    _doacoes.bloqueios.add('${_pratoCheio.usuario.id}-${doacao.id}');
+    // As mensagens automáticas que o app grava no aceite e no fim do prazo.
     final reserva = _doacoes.reservas.last;
+    _chat.doSistema(
+      reserva.id,
+      'Instituto Prato Cheio aceitou a doação.',
+      em: aceitaEm,
+    );
+    _chat.doSistema(reserva.id, 'O prazo da retirada acabou.', em: venceuEm);
+  }
+
+  /// Mãos Amigas está retirando os mantimentos (código 4821), com uma
+  /// conversa curta no chat combinando a retirada.
+  void _retiradaEmAndamento(Doacao mantimentos) {
+    final aceitaEm = agora.subtract(const Duration(minutes: 10));
+    final reserva = Reserva(
+      id: _doacoes.novoId(),
+      doacaoId: mantimentos.id,
+      ongId: _maosAmigas.usuario.id,
+      status: StatusReserva.ativa,
+      reservadoEm: aceitaEm,
+      // 60 min, como no seed (o prazo curto do Fake vale para as novas).
+      expiraEm: aceitaEm.add(const Duration(hours: 1)),
+      codigoRetirada: '4821',
+      tituloDoacao: mantimentos.titulo,
+      nomeOng: _maosAmigas.perfil.nomeOrganizacao,
+    );
+    _doacoes.reservas.add(reserva);
+    // Salva de novo para a doação mostrar a ONG e o prazo da reserva.
+    _doacoes.salvar(mantimentos);
+
+    // A conversa de exemplo, igual à do seed.
+    final mercado = _mercado.usuario.id;
+    final ong = _maosAmigas.usuario.id;
     _chat.doSistema(
       reserva.id,
       'ONG Mãos Amigas aceitou a doação.',
@@ -158,75 +159,22 @@ class ExemplosFake {
     );
     _chat.deExemplo(
       reserva.id,
-      _maosAmigas.usuario.id,
-      'Estou a caminho',
+      mercado,
+      'Olá! Separamos as caixas com os mantimentos no estoque.',
+      aceitaEm.add(const Duration(minutes: 1)),
+    );
+    _chat.deExemplo(
+      reserva.id,
+      ong,
+      'Obrigado! Estou a caminho de carro, chego em uns 20 minutos.',
       aceitaEm.add(const Duration(minutes: 2)),
     );
     _chat.deExemplo(
       reserva.id,
-      _mercado.usuario.id,
-      'Pode entrar pelo portão lateral',
+      mercado,
+      'Combinado. Pode entrar pelo portão lateral e procurar o Carlos.',
       aceitaEm.add(const Duration(minutes: 3)),
+      lida: false, // a ONG ainda não leu: aparece o número vermelho
     );
-  }
-
-  /// 2 concluídas e 3 expiradas (desistências do Prato Cheio e da Casa
-  /// Esperança, RN22–RN24).
-  void _historico() {
-    Doacao antiga(String titulo, int diasAtras, StatusDoacao status) =>
-        _disponivel(
-          _mercado,
-          titulo,
-          CategoriaAlimento.mercearia,
-          30,
-          Unidade.kg,
-          30,
-          6,
-          inicio: agora.subtract(Duration(days: diasAtras)),
-          status: status,
-        );
-
-    _encerrada(
-      antiga('Arroz e feijão', 6, StatusDoacao.concluida),
-      _maosAmigas,
-      StatusReserva.concluida,
-    );
-    _encerrada(
-      antiga('Enlatados variados', 3, StatusDoacao.concluida),
-      _pratoCheio,
-      StatusReserva.concluida,
-    );
-    final expiradas = [
-      antiga('Macarrão e molho', 12, StatusDoacao.expirada),
-      antiga('Biscoitos', 8, StatusDoacao.expirada),
-      antiga('Farinha e açúcar', 4, StatusDoacao.expirada),
-    ];
-    for (final doacao in expiradas) {
-      if (doacao != expiradas.last) {
-        _encerrada(doacao, _pratoCheio, StatusReserva.expirada);
-      }
-      _encerrada(doacao, _suspensa, StatusReserva.expirada);
-    }
-  }
-
-  void _encerrada(Doacao doacao, Conta ong, StatusReserva status) {
-    final aceitaEm = doacao.janelaInicio;
-    _doacoes.reservas.add(
-      Reserva(
-        id: _doacoes.novoId(),
-        doacaoId: doacao.id,
-        ongId: ong.usuario.id,
-        status: status,
-        reservadoEm: aceitaEm,
-        expiraEm: aceitaEm.add(const Duration(hours: 1)),
-        encerradaEm: aceitaEm.add(const Duration(minutes: 40)),
-        contouDesistencia: status == StatusReserva.expirada, // RN24
-        tituloDoacao: doacao.titulo,
-        nomeOng: ong.perfil.nomeOrganizacao,
-      ),
-    );
-    if (status == StatusReserva.expirada) {
-      _doacoes.bloqueios.add('${ong.usuario.id}-${doacao.id}'); // RN22
-    }
   }
 }

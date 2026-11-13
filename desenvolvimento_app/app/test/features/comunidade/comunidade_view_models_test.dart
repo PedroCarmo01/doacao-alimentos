@@ -45,6 +45,17 @@ void main() {
         doacaoInicial: doacao,
       );
 
+  /// O mercado confirma a retirada dos mantimentos com o código 4821: a
+  /// doação fica concluída e pode ser ligada a uma publicação (RN40).
+  Future<void> entregarMantimentos() async {
+    await entrarComo('maosamigas@exemplo.com');
+    final reserva = (await deps.reservas.listarMinhas(
+      SituacaoDaLista.ativas,
+    )).single;
+    await entrarComo('mercado@exemplo.com');
+    await deps.reservas.confirmar(reserva.id, '4821');
+  }
+
   group('Comunidade (T40)', () {
     test(
       'painel de impacto e o feed do mais novo para o mais antigo',
@@ -54,10 +65,16 @@ void main() {
 
         await vm.carregar();
 
-        expect(vm.impacto!.familiasAjudadas, 65); // 40 + 25 dos exemplos
-        expect(vm.impacto!.doacoesConcluidas, 2);
-        expect(vm.publicacoes.first.nomeAutor, 'Padaria Pão Quente');
-        expect(vm.publicacoes.last.resumoDoacao, contains('→ ONG Mãos Amigas'));
+        // As 2 publicações dos exemplos: 40 cestas e 80 cafés da manhã.
+        expect(vm.impacto!.familiasAjudadas, 40);
+        expect(vm.impacto!.refeicoes, 80);
+        expect(vm.impacto!.doacoesConcluidas, 0);
+        expect(
+          [for (final p in vm.publicacoes) p.nomeAutor],
+          ['ONG Mãos Amigas', 'Instituto Prato Cheio'],
+        );
+        expect(vm.publicacoes.first.fotos, ['assets/exemplos/paes.jpg']);
+        expect(vm.publicacoes.every((p) => p.resumoDoacao == null), isTrue);
       },
     );
 
@@ -65,24 +82,28 @@ void main() {
       await entrarComo('padaria@exemplo.com');
       final vm = comunidade();
       await vm.carregar();
-      final daMercado = vm.publicacoes.firstWhere(
-        (p) => p.nomeAutor == 'Mercado Bom Preço',
+      final doPratoCheio = vm.publicacoes.firstWhere(
+        (p) => p.nomeAutor == 'Instituto Prato Cheio',
       );
+      expect(doPratoCheio.apoios, 1); // o mercado já apoiou
 
-      await vm.alternarApoio(daMercado);
-      final apoiada = vm.publicacoes.firstWhere((p) => p.id == daMercado.id);
-      expect(apoiada.apoios, 1);
+      await vm.alternarApoio(doPratoCheio);
+      final apoiada = vm.publicacoes.firstWhere((p) => p.id == doPratoCheio.id);
+      expect(apoiada.apoios, 2);
       expect(apoiada.apoiadaPorMim, isTrue);
 
       await vm.alternarApoio(apoiada);
-      expect(vm.publicacoes.firstWhere((p) => p.id == daMercado.id).apoios, 0);
+      expect(
+        vm.publicacoes.firstWhere((p) => p.id == doPratoCheio.id).apoios,
+        1,
+      );
     });
 
     test('RN42: quem denuncia deixa de ver; o autor não tem a opção', () async {
-      await entrarComo('padaria@exemplo.com');
+      await entrarComo('maosamigas@exemplo.com');
       final vm = comunidade();
       await vm.carregar();
-      final minha = vm.publicacoes.first; // a da padaria
+      final minha = vm.publicacoes.first; // a da Mãos Amigas (a mais nova)
       final outra = vm.publicacoes[1];
 
       expect(vm.ehMinha(minha), isTrue);
@@ -105,12 +126,13 @@ void main() {
 
     test('RN40: a ONG liga a uma retirada concluída, com foto, e o painel '
         'muda', () async {
+      await entregarMantimentos();
       await entrarComo('maosamigas@exemplo.com');
       final antes = await deps.comunidade.impacto();
       final vm = novaPublicacao();
       await vm.carregarOpcoes();
-      final arroz = vm.opcoes.single; // a única retirada concluída dela
-      vm.escolherDoacao(arroz.doacaoId);
+      final mantimentos = vm.opcoes.single; // a única retirada concluída
+      vm.escolherDoacao(mantimentos.doacaoId);
       await vm.adicionarFoto(daCamera: true);
 
       final publicou = await vm.publicar(
@@ -125,18 +147,28 @@ void main() {
       expect(depois.familiasAjudadas - antes.familiasAjudadas, 20);
       final feed = await deps.comunidade.feed();
       expect(feed.first.fotos, [SeletorDeFotosFake.foto.caminho]);
-      expect(feed.first.resumoDoacao, startsWith('Arroz e feijão'));
+      expect(feed.first.resumoDoacao, startsWith('Mantimentos não perecíveis'));
     });
 
-    test('o doador vê só as doações dele que foram entregues', () async {
-      await entrarComo('mercado@exemplo.com');
+    test('sem retirada concluída, não há doação para ligar', () async {
+      await entrarComo('maosamigas@exemplo.com');
       final vm = novaPublicacao();
 
       await vm.carregarOpcoes();
 
-      expect([
-        for (final o in vm.opcoes) o.titulo,
-      ], unorderedEquals(['Arroz e feijão', 'Enlatados variados']));
+      expect(vm.opcoes, isEmpty);
+    });
+
+    test('o doador vê só as doações dele que foram entregues', () async {
+      await entregarMantimentos(); // já entra como o mercado
+      final vm = novaPublicacao();
+
+      await vm.carregarOpcoes();
+
+      expect(
+        [for (final o in vm.opcoes) o.titulo],
+        ['Mantimentos não perecíveis'],
+      );
     });
   });
 
@@ -145,24 +177,24 @@ void main() {
         PerfilViewModel(sessao: deps.sessao, perfis: deps.perfis);
 
     test('estatísticas da ONG: retiradas e comparecimento', () async {
-      await entrarComo('pratocheio@exemplo.com'); // 1 retirada, 2 desistências
+      await entrarComo('pratocheio@exemplo.com'); // 0 retiradas, 2 desistências
+      final vm = perfil();
+
+      await vm.carregarEstatisticas();
+
+      expect(vm.estatisticas!.concluidas, 0);
+      expect(vm.estatisticas!.comparecimento, 0);
+      expect(vm.estatisticas!.desistenciasRecentes, 2);
+    });
+
+    test('estatísticas do doador: doações e kg', () async {
+      await entregarMantimentos(); // já entra como o mercado
       final vm = perfil();
 
       await vm.carregarEstatisticas();
 
       expect(vm.estatisticas!.concluidas, 1);
-      expect(vm.estatisticas!.comparecimento, closeTo(1 / 3, 0.01));
-      expect(vm.estatisticas!.desistenciasRecentes, 2);
-    });
-
-    test('estatísticas do doador: doações e kg', () async {
-      await entrarComo('mercado@exemplo.com');
-      final vm = perfil();
-
-      await vm.carregarEstatisticas();
-
-      expect(vm.estatisticas!.concluidas, 2);
-      expect(vm.estatisticas!.kg, 60);
+      expect(vm.estatisticas!.kg, 120);
     });
 
     test('desligar um aviso fica salvo na conta', () async {

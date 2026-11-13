@@ -39,12 +39,7 @@ Future<void> main() async {
       prazoReserva: env.regrasDaRetirada.prazo,
     );
     await doacoes.criar();
-    await criarComunidadeDeExemplo(
-      exemplos,
-      contas,
-      agora: agora,
-      doacoesConcluidas: doacoes.concluidas,
-    );
+    await criarComunidadeDeExemplo(exemplos, contas, agora: agora);
     print(_resumo);
   } finally {
     await banco.fechar();
@@ -57,11 +52,12 @@ Dados de exemplo criados. Senha de todos os usuários: senha123
   doador  mercado@exemplo.com     Mercado Bom Preço (CNPJ, verificado)
   doador  padaria@exemplo.com     Padaria Pão Quente (CNPJ, verificado)
   doador  feirante@exemplo.com    Banca do Zé (CPF, verificação pendente)
-  ong     maosamigas@exemplo.com  ONG Mãos Amigas: retirada em andamento (código 4821)
-  ong     pratocheio@exemplo.com  Instituto Prato Cheio: 2 desistências
+  ong     maosamigas@exemplo.com  ONG Mãos Amigas: retirando os mantimentos (código 4821)
+  ong     pratocheio@exemplo.com  Instituto Prato Cheio: 2 desistências (uma em cada doação)
   ong     suspensa@exemplo.com    Casa Esperança: suspensa por 30 h
   ong     distante@exemplo.com    Associação Distante (~45 km, fora do raio)
 
-Doações: 5 disponíveis (4 com foto), 1 reservada, 2 concluídas e 3 expiradas.
-Comunidade: 4 publicações. Chat: 1 conversa (mercado e Mãos Amigas).
+Doações: 2, com foto ("Mantimentos não perecíveis" reservada e
+"Pão francês do dia" disponível).
+Comunidade: 2 publicações. Chat: 1 conversa (mercado e Mãos Amigas).
 ''';

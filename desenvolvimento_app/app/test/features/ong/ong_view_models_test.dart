@@ -8,22 +8,23 @@ import 'package:summit_app/features/mapa/mapa_view_model.dart';
 import 'package:summit_app/features/ong/detalhe_doacao_ong_view_model.dart';
 import 'package:summit_app/features/ong/home_ong_view_model.dart';
 
+import '../../apoio/doacao_extra.dart';
+
 /// Etapa 3 — a ONG encontra doações: lista, raio, busca ativa, NOVA, mapa e
 /// detalhe. Tudo no modo Fake, que usa os mesmos lugares do seed.
 void main() {
   late RelogioFixo relogio;
+  late BancoFake banco;
   late Dependencias deps;
 
   setUp(() {
     relogio = RelogioFixo(DateTime.utc(2026, 9, 15, 15));
-    deps = Dependencias.fake(
-      mostrador: MostradorEmMemoria(),
-      banco: BancoFake(
-        relogio: relogio,
-        atrasoDeRede: Duration.zero,
-        simularNovasDoacoes: false,
-      ),
+    banco = BancoFake(
+      relogio: relogio,
+      atrasoDeRede: Duration.zero,
+      simularNovasDoacoes: false,
     );
+    deps = Dependencias.fake(mostrador: MostradorEmMemoria(), banco: banco);
   });
 
   Future<void> entrarComo(String email) async => deps.sessao.iniciar(
@@ -41,12 +42,18 @@ void main() {
     test(
       'RN11: a ONG vê as do raio, da mais perto para a mais longe',
       () async {
+        // Além do pão francês (padaria), uma doação nova do mercado, que
+        // fica mais perto da Mãos Amigas. Os mantimentos estão reservados.
+        publicarDoacaoExtra(banco, relogio, titulo: 'Frutas e verduras');
         await entrarComo('maosamigas@exemplo.com');
         final vm = inicio();
 
         await vm.carregar();
 
-        expect(vm.doacoes, hasLength(5)); // as 5 disponíveis de Mogi
+        expect(
+          [for (final d in vm.doacoes) d.titulo],
+          ['Frutas e verduras', 'Pão francês do dia'],
+        );
         final distancias = [for (final d in vm.doacoes) d.distanciaKm!];
         expect(distancias, orderedEquals([...distancias]..sort()));
         expect(distancias.last, lessThan(10));
@@ -63,7 +70,10 @@ void main() {
     });
 
     test('raio menor mostra menos doações e fica salvo no perfil', () async {
-      await entrarComo('pratocheio@exemplo.com'); // ~3 km do centro
+      // O Prato Cheio (~3 km do mercado) está bloqueado nas 2 doações dos
+      // exemplos (RN22), então o mercado publica outra.
+      publicarDoacaoExtra(banco, relogio, titulo: 'Frutas e verduras');
+      await entrarComo('pratocheio@exemplo.com');
       final vm = inicio();
       await vm.carregar();
       final noRaioDe10 = vm.doacoes.length;
@@ -144,20 +154,20 @@ void main() {
   test('DetalheDoacaoOngViewModel: dados do doador e distância', () async {
     await entrarComo('maosamigas@exemplo.com');
     final lista = await deps.doacoes.listarProximas();
-    final frutas = lista.firstWhere((d) => d.titulo.startsWith('Frutas'));
+    final paes = lista.firstWhere((d) => d.titulo == 'Pão francês do dia');
     final vm = DetalheDoacaoOngViewModel(
       doacoes: deps.doacoes,
       reservas: deps.reservas,
       sessao: deps.sessao,
       relogio: relogio,
-      doacaoId: frutas.id,
+      doacaoId: paes.id,
     );
 
     await vm.carregar();
 
-    expect(vm.detalhe!.doador!.nomeOrganizacao, 'Mercado Bom Preço');
+    expect(vm.detalhe!.doador!.nomeOrganizacao, 'Padaria Pão Quente');
     expect(vm.detalhe!.doador!.verificacao, Verificacao.verificada);
-    expect(vm.distanciaKm, closeTo(frutas.distanciaKm!, 0.01));
+    expect(vm.distanciaKm, closeTo(paes.distanciaKm!, 0.01));
     expect(vm.suspensa, isFalse);
   });
 

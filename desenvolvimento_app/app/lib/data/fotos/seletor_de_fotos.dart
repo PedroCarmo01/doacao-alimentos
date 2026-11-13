@@ -67,7 +67,7 @@ class SeletorDeFotosFake implements SeletorDeFotos {
 
   static const foto = FotoEscolhida(
     bytes: [0xFF, 0xD8, 0xFF, 0xE0, 0, 1, 2, 3],
-    caminho: 'assets/exemplos/frutas.jpg',
+    caminho: 'assets/exemplos/paes.jpg',
     nome: 'foto.jpg',
   );
 

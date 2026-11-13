@@ -23,16 +23,19 @@ import 'retiradas_fake.dart';
 /// menores: [ContasFake] (cadastro e login), [DoacoesFake] (doações) e
 /// [RetiradasFake] (aceite, código, desistência e suspensão).
 ///
-/// Diferenças propositais: prazo de retirada de 2 minutos (para ver a
-/// expiração acontecer) e, a cada 45 segundos, uma "doação surpresa"
-/// aparece para testar o aviso de novidade da ONG.
+/// Diferença proposital: prazo de retirada de 2 minutos (para ver a
+/// expiração acontecer).
+///
+/// A "doação surpresa" (uma doação nova a cada 45 segundos, para testar o
+/// aviso de novidade da ONG) vem DESLIGADA: os dados de exemplo são só as
+/// 2 doações do seed. Para ligar, use `BancoFake(simularNovasDoacoes: true)`.
 class BancoFake {
   BancoFake({
     Relogio relogio = const RelogioSistema(),
     this.atrasoDeRede = const Duration(milliseconds: 350),
     this.prazoReserva = const Duration(minutes: 2),
     this.fusoHorarioUtc = -3,
-    this.simularNovasDoacoes = true,
+    this.simularNovasDoacoes = false,
   }) : _relogio = relogio,
        _contas = ContasFake(relogio) {
     _doacoes = DoacoesFake(relogio, _contas, fusoHorarioUtc: fusoHorarioUtc);
@@ -246,7 +249,8 @@ class BancoFake {
     return conta;
   }
 
-  /// Modo demonstração: a cada 45 s aparece uma doação nova do mercado.
+  /// Modo demonstração (desligado por padrão): a cada 45 s aparece uma
+  /// doação nova do mercado.
   void _talvezSimularNovaDoacao() {
     if (!simularNovasDoacoes) return;
     final ultima = _ultimaSimulacao;

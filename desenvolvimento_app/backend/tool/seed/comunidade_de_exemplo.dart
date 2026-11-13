@@ -1,44 +1,35 @@
 import 'contas_de_exemplo.dart';
 import 'gravador_de_exemplos.dart';
 
-/// 4 publicações e alguns apoios, para o painel de impacto (etapa 7).
+/// 2 publicações com foto, sem doação ligada, e um apoio em cada uma
+/// (as MESMAS do modo Fake, em `app/lib/data/fake/comunidade_fake.dart`).
 Future<void> criarComunidadeDeExemplo(
   GravadorDeExemplos ex,
   ContasDeExemplo contas, {
   required DateTime agora,
-  required List<int> doacoesConcluidas,
 }) async {
-  final arroz = await ex.publicacao(
-    autorId: contas.maosAmigas,
-    texto:
-        'O arroz e o feijão do Mercado Bom Preço viraram 160 refeições '
-        'na nossa cozinha comunitária. Obrigado!',
-    doacaoId: doacoesConcluidas[0],
-    familias: 40,
-    refeicoes: 160,
-    em: agora.subtract(const Duration(days: 5)),
-  );
-  final enlatados = await ex.publicacao(
+  final cestas = await ex.publicacao(
     autorId: contas.pratoCheio,
-    texto: 'Os enlatados completaram as cestas básicas desta semana.',
-    doacaoId: doacoesConcluidas[1],
-    familias: 25,
+    texto:
+        'Com os mantimentos do Mercado Bom Preço montamos 40 cestas '
+        'básicas esta semana: arroz, feijão, macarrão, farinha de milho, '
+        'açúcar e óleo. Obrigado pela parceria!',
+    familias: 40,
     em: agora.subtract(const Duration(days: 2)),
   );
-  await ex.publicacao(
-    autorId: contas.mercado,
+  await ex.fotoDaPublicacao(cestas, 'mantimentos.jpg');
+
+  final cafe = await ex.publicacao(
+    autorId: contas.maosAmigas,
     texto:
-        'Este mês já evitamos o desperdício de 100 kg de alimentos. '
-        'Obrigado às ONGs parceiras!',
+        'Os pães do dia da Padaria Pão Quente viraram o café da manhã '
+        'de 80 pessoas no nosso projeto. Nada foi para o lixo!',
+    refeicoes: 80,
     em: agora.subtract(const Duration(days: 1)),
   );
-  await ex.publicacao(
-    autorId: contas.padaria,
-    texto: 'Todo dia às 14h temos pães e marmitas para doar.',
-    em: agora.subtract(const Duration(hours: 6)),
-  );
+  await ex.fotoDaPublicacao(cafe, 'paes.jpg');
+
   final em = agora.subtract(const Duration(hours: 1));
-  await ex.apoio(publicacaoId: arroz, usuarioId: contas.mercado, em: em);
-  await ex.apoio(publicacaoId: arroz, usuarioId: contas.padaria, em: em);
-  await ex.apoio(publicacaoId: enlatados, usuarioId: contas.mercado, em: em);
+  await ex.apoio(publicacaoId: cestas, usuarioId: contas.mercado, em: em);
+  await ex.apoio(publicacaoId: cafe, usuarioId: contas.padaria, em: em);
 }
