@@ -9,7 +9,7 @@
 abstract final class AppConfig {
   /// Nome exibido no app.
   /// ("Summit" é o nome do EVENTO de entrega, não do app.)
-  static const nomeApp = 'Doação de Alimentos';
+  static const nomeApp = 'ConectaFood';
 
   /// Endereço da API.
   /// - Emulador Android: `http://10.0.2.2:8080` (aponta para o seu PC).
