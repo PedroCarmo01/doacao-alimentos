@@ -1,6 +1,8 @@
-# Doação de Alimentos — conectando excedentes a quem precisa
+# ConectaFood — conectando excedentes a quem precisa
 
-> Projeto acadêmico de Engenharia de Software apresentado no **Summit**. Um aplicativo que conecta estabelecimentos com **excedente de alimentos** (mercados, feiras, sacolões, padarias) a **ONGs próximas**, combatendo a fome e o desperdício. Alinhado aos **ODS 2 (Fome Zero)** e **ODS 12 (Consumo e Produção Responsáveis)**.
+> Projeto acadêmico de Engenharia de Software (UMC) apresentado no **Summit**. O **ConectaFood** é um aplicativo de doação de alimentos que conecta estabelecimentos com **excedente de alimentos** (restaurantes, padarias, mercados, feiras e sacolões) a **ONGs e cozinhas solidárias próximas**, combatendo a fome e o desperdício. Alinhado aos **ODS 2 (Fome Zero)** e **ODS 12 (Consumo e Produção Responsáveis)**.
+
+**Conectamos quem tem sobra a quem tem fome, com segurança e em poucos cliques.**
 
 **Primeira vez aqui? Comece por [`00_COMECE_AQUI`](00_COMECE_AQUI/README.md).**
 
@@ -10,7 +12,7 @@
 
 ## Como funciona
 
-1. O **doador** (mercado, feira, padaria, restaurante) anuncia o excedente, com fotos, validade e horário de retirada. Alimento vencido não é aceito, e o doador declara que está próprio para consumo.
+1. O **doador** (restaurante, padaria, mercado, feira) anuncia o excedente, com fotos, validade e horário de retirada. Alimento vencido não é aceito, e o doador declara que está próprio para consumo.
 2. As **ONGs próximas** (dentro do raio de cada uma) veem a doação na lista e no mapa e recebem uma **notificação**.
 3. A primeira ONG que tocar em **Vou retirar** fica com a doação e tem um **prazo** para buscar, com contador regressivo e um **código de 4 dígitos**. Duas ONGs nunca ficam com a mesma doação.
 4. Doador e ONG combinam pelo **chat** da retirada. Na hora, o doador digita o código da ONG e a retirada é **confirmada**. Se o prazo acabar, a doação volta para as outras ONGs, e desistências demais suspendem a ONG por 48 h.
@@ -135,15 +137,28 @@ Detalhes: [docs/06 — Estrutura do projeto](docs/06-estrutura-projeto.md).
 | consultar (API, banco, regras) | [docs](docs/00-indice.md) |
 | contribuir (Git, PR) | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
+## Visão de negócio (pitch)
+
+Resumo do pitch apresentado à banca. Preço, pedido e metas são **estimativas da equipe**; o plano Pro e o patrocínio são o plano de receita e **ainda não estão implementados** no app.
+
+| Tema | Resumo |
+|---|---|
+| Problema | O Brasil gera cerca de 20 milhões de toneladas de resíduos alimentares por ano (PNUMA, 2024), e 2,5 milhões de domicílios viveram insegurança alimentar grave em 2024 (IBGE, PNAD Contínua). Quem tem excedente e quem precisa ainda se encontram por telefone e WhatsApp. |
+| Público-alvo | Quem doa: restaurantes, padarias e mercados. Quem recebe: ONGs e cozinhas solidárias. |
+| Mercado | TAM: 2,03 milhões de estabelecimentos de alimentação fora do lar no Brasil. SAM: 559 mil no estado de São Paulo (Fhoresp, com dados do Mapa de Empresas, abr. 2026). SOM: 5,6 mil em 3 anos (1% do SAM), a partir de Mogi das Cruzes e do Alto Tietê. |
+| Modelo de negócio | Gratuito para ONGs e pequenos doadores. Plano Pro de R$ 49/mês por estabelecimento (relatório de impacto, comprovantes de doação, apoio ao Selo Doador da Lei nº 15.224/2025) e patrocínio de empresas e prefeituras. |
+| Concorrência | Diretos: Comida Invisível e Connecting Food. Indiretos: Food To Save, Sesc Mesa Brasil, WhatsApp e telefone. |
+| O pedido | R$ 150 mil por 10%, para 12 meses de piloto em Mogi das Cruzes: 50% produto e tecnologia, 30% aquisição e parcerias, 20% operação e conformidade. Meta: 260 assinantes Pro (ponto de equilíbrio). |
+
 ## Equipe
 
-| Integrante | GitHub | Responsabilidade |
-|---|---|---|
-| Pedro Carmo | [@PedroCarmo01](https://github.com/PedroCarmo01) | _preencher_ |
-| _Nome do integrante 2_ | @_usuario_ | _preencher_ |
-| _Nome do integrante 3_ | @_usuario_ | _preencher_ |
-| _Nome do integrante 4_ | @_usuario_ | _preencher_ |
-| _Nome do integrante 5_ | @_usuario_ | _preencher_ |
+| Integrante | Função | GitHub | Responsabilidade |
+|---|---|---|---|
+| Vitor Yuki Ouchi | Product Owner | _preencher_ | Define a visão do produto e prioriza o backlog (o que entra no app e em que ordem). |
+| Bryan Palacio | Scrum Master | _preencher_ | Organiza as sprints, acompanha as entregas e remove impedimentos da equipe. |
+| Davi Lopes | Desenvolvedor | _preencher_ | Desenvolvimento e testes do aplicativo. |
+| Pedro Carmo | Desenvolvedor | [@PedroCarmo01](https://github.com/PedroCarmo01) | Desenvolvimento e testes do aplicativo; mantém o repositório. |
+| Gabriel Candido | Desenvolvedor | _preencher_ | Desenvolvimento e testes do aplicativo. |
 
 ## Uso de inteligência artificial
 
