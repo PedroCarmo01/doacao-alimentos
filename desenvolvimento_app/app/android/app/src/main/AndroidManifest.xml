@@ -9,7 +9,7 @@
 
     <!-- android:label é o nome que aparece embaixo do ícone (igual a AppConfig.nomeApp) -->
     <application
-        android:label="Doação de Alimentos"
+        android:label="ConectaFood"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
