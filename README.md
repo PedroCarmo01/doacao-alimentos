@@ -154,11 +154,12 @@ Resumo do pitch apresentado à banca. Preço, pedido e metas são **estimativas 
 
 | Integrante | Função | GitHub | Responsabilidade |
 |---|---|---|---|
-| Vitor Yuki Ouchi | Product Owner | _preencher_ | Define a visão do produto e prioriza o backlog (o que entra no app e em que ordem). |
-| Bryan Palacio | Scrum Master | _preencher_ | Organiza as sprints, acompanha as entregas e remove impedimentos da equipe. |
-| Davi Lopes | Desenvolvedor | _preencher_ | Desenvolvimento e testes do aplicativo. |
+| Vitor Yuki Ouchi | Product Owner | [@VitorYuki](https://github.com/VitorYuki) | Define a visão do produto e prioriza o backlog (o que entra no app e em que ordem). |
+| Bryan Palacio | Scrum Master | [@bryanrubinho](https://github.com/bryanrubinho) | Organiza as sprints, acompanha as entregas e remove impedimentos da equipe. |
+| Davi Lopes | Desenvolvedor | [@davilspa](https://github.com/davilspa) | Desenvolvimento e testes do aplicativo. |
 | Pedro Carmo | Desenvolvedor | [@PedroCarmo01](https://github.com/PedroCarmo01) | Desenvolvimento e testes do aplicativo; mantém o repositório. |
-| Gabriel Candido | Desenvolvedor | _preencher_ | Desenvolvimento e testes do aplicativo. |
+| Gabriel Candido | Desenvolvedor | [@bielccandido](https://github.com/bielccandido) | Desenvolvimento e testes do aplicativo. |
+
 
 ## Uso de inteligência artificial
 
