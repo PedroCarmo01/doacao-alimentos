@@ -83,11 +83,11 @@ Senha de todos: `senha123`. Os mesmos usuários existem no modo Fake.
 
 | E-mail | Perfil | Para mostrar |
 |---|---|---|
-| `mercado@exemplo.com` | doador (Mercado Bom Preço) | histórico, "Cestas de mercearia" reservada (código **4821**), chat |
-| `padaria@exemplo.com` | doador (Padaria Pão Quente) | publicar uma doação |
+| `mercado@exemplo.com` | doador (Mercado Bom Preço) | "Mantimentos não perecíveis" reservada pela Mãos Amigas (código **4821**), chat |
+| `padaria@exemplo.com` | doador (Padaria Pão Quente) | "Pão francês do dia" disponível; publicar uma doação |
 | `feirante@exemplo.com` | doador com CPF (Banca do Zé) | o selo "verificação pendente" (CPF não tem consulta pública, RN03) |
 | `maosamigas@exemplo.com` | ONG (ONG Mãos Amigas) | lista, mapa, retirada em andamento, chat |
-| `pratocheio@exemplo.com` | ONG com 2 desistências | o aviso "mais uma e sua conta será suspensa" |
+| `pratocheio@exemplo.com` | ONG com 2 desistências (uma em cada doação de exemplo) | o aviso "mais uma e sua conta será suspensa" (bloqueada nas 2 doações de exemplo, RN22: para ver o aviso, publique uma doação nova) |
 | `suspensa@exemplo.com` | ONG suspensa | a faixa vermelha e o botão desativado |
 | `distante@exemplo.com` | ONG a 45 km | não vê nem é avisada das doações |
 
