@@ -55,9 +55,21 @@ void main() {
     expect(doacao.fotos.last, endsWith('.png'));
   });
 
+  test('reconhece extensões de foto em maiúsculas', () {
+    expect(FormatoDeFoto.doNome('imagem.JPG'), FormatoDeFoto.jpg);
+    expect(FormatoDeFoto.doNome('imagem.PNG'), FormatoDeFoto.png);
+  });
+
   test('recusa arquivo que não é foto (pelos bytes, não pelo nome)', () {
     expect(
       () => service.adicionar(doador, doacaoId, 'texto'.codeUnits),
+      throwsA(isA<ValidacaoException>()),
+    );
+  });
+
+  test('recusa PNG com assinatura incompleta', () {
+    expect(
+      () => service.adicionar(doador, doacaoId, [0x89, 0x50, 0x4E, 0x00]),
       throwsA(isA<ValidacaoException>()),
     );
   });
