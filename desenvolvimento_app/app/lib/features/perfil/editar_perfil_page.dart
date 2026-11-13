@@ -126,11 +126,19 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            AppTextField(label: 'Nome do responsável', controller: _nome),
+            // A validação da tela são as MESMAS regras que `salvar()` confere
+            // (ValidadorUsuario.validarPerfil). Assim o erro aparece embaixo
+            // do campo, na hora, e não só depois de apertar "Salvar".
+            AppTextField(
+              label: 'Nome do responsável',
+              controller: _nome,
+              validator: ValidadorUsuario.nome,
+            ),
             const SizedBox(height: 12),
             AppTextField(
               label: 'Nome da organização',
               controller: _organizacao,
+              validator: ValidadorUsuario.nomeOrganizacao,
             ),
             const SizedBox(height: 12),
             AppTextField(
@@ -138,6 +146,7 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
               controller: _telefone,
               keyboardType: TextInputType.phone,
               somenteNumeros: true,
+              validator: ValidadorUsuario.telefoneObrigatorio,
             ),
             const SizedBox(height: 12),
             Row(
@@ -148,6 +157,7 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
                     controller: _cep,
                     somenteNumeros: true,
                     tamanhoMaximo: 8,
+                    validator: ValidadorUsuario.cep,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -158,7 +168,11 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
               ],
             ),
             const SizedBox(height: 12),
-            AppTextField(label: 'Endereço (com número)', controller: _endereco),
+            AppTextField(
+              label: 'Endereço (com número)',
+              controller: _endereco,
+              validator: ValidadorUsuario.textoLivre,
+            ),
             const SizedBox(height: 8),
             TextButton.icon(
               onPressed: _viewModel.ocupado ? null : _usarGps,
@@ -177,6 +191,9 @@ class _EditarPerfilPageState extends State<EditarPerfilPage> {
                 label: 'Famílias atendidas',
                 controller: _familias,
                 somenteNumeros: true,
+                validator: (valor) => ValidadorUsuario.familiasAtendidas(
+                  int.tryParse(valor ?? ''),
+                ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<Transporte?>(

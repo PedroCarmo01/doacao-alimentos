@@ -20,7 +20,10 @@ enum FormatoDeFoto {
     if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
       return FormatoDeFoto.jpg;
     }
-    if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E) {
+    if (bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
       return FormatoDeFoto.png;
     }
     return null;
@@ -28,8 +31,9 @@ enum FormatoDeFoto {
 
   /// Pela extensão do nome salvo ("abc.png" → png).
   static FormatoDeFoto? doNome(String nome) {
+    final nomeNormalizado = nome.toLowerCase();
     for (final formato in values) {
-      if (nome.endsWith('.${formato.name}')) return formato;
+      if (nomeNormalizado.endsWith('.${formato.name}')) return formato;
     }
     return null;
   }
