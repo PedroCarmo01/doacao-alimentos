@@ -1,10 +1,16 @@
-import 'package:shared_models/shared_models.dart';
-
 import 'contas_de_exemplo.dart';
 import 'gravador_de_exemplos.dart';
 
-/// As doações do seed: 5 disponíveis, 1 sendo retirada (com chat),
-/// 2 concluídas e 3 que expiraram porque ONGs não buscaram.
+/// As 2 doações do seed (as MESMAS do modo Fake do app, em
+/// `app/lib/data/fake/exemplos_fake.dart`):
+///
+/// 1. "Mantimentos não perecíveis" (Mercado Bom Preço): RESERVADA pela ONG
+///    Mãos Amigas, retirada em andamento (código 4821) e com chat.
+/// 2. "Pão francês do dia" (Padaria Pão Quente): DISPONÍVEL.
+///
+/// O Instituto Prato Cheio aceitou as duas mais cedo e deixou o prazo
+/// acabar: são as 2 desistências dele (RN22–RN24). Por isso ele fica
+/// bloqueado nas duas e não vê o pão francês na lista.
 ///
 /// Categoria, unidade, conservação e status são os valores dos ENUM do banco.
 class DoacoesDeExemplo {
@@ -22,129 +28,93 @@ class DoacoesDeExemplo {
   final DateTime hoje;
   final Duration prazoReserva;
 
-  /// Ids das doações concluídas (a Comunidade fala delas).
-  final List<int> concluidas = [];
-
   Future<void> criar() async {
-    await _criarDisponiveis();
-    await _criarRetiradaEmAndamento();
-    await _criarHistorico();
-  }
-
-  Future<void> _criarDisponiveis() async {
-    await _disponivel(
-      doador: _contas.mercado,
-      titulo: 'Frutas e verduras do dia',
-      foto: 'frutas.jpg',
-      categoria: 'hortifruti',
-      quantidade: 5,
-      unidade: 'caixas',
-      pesoKg: 25,
-      horas: 6,
-      descricao: 'Retirar pela porta lateral, falar com o Carlos.',
-    );
-    await _disponivel(
-      doador: _contas.mercado,
-      titulo: 'Iogurtes perto do vencimento',
-      foto: 'iogurtes.jpg',
-      categoria: 'laticinios',
-      quantidade: 24,
-      unidade: 'unidades',
-      pesoKg: 4.8,
-      horas: 8,
-      conservacao: 'refrigerado',
-    );
-    await _disponivel(
-      doador: _contas.mercado,
-      titulo: 'Frios fatiados',
-      foto: 'frios.jpg',
-      categoria: 'carnesFrios',
-      quantidade: 4,
-      unidade: 'kg',
-      pesoKg: 4,
-      horas: 4,
-      conservacao: 'refrigerado',
-    );
-    await _disponivel(
-      doador: _contas.padaria,
-      titulo: 'Marmitas do almoço',
-      foto: 'marmitas.jpg',
-      categoria: 'refeicoesProntas',
-      quantidade: 20,
-      unidade: 'unidades',
-      pesoKg: 8,
-      // Refeição pronta: retirada até 4 h depois do preparo.
-      horas: 3,
-      preparadoEm: agora.subtract(const Duration(minutes: 30)),
-    );
-    await _disponivel(
-      doador: _contas.feirante,
-      titulo: 'Verduras da feira',
-      categoria: 'hortifruti',
-      quantidade: 3,
-      unidade: 'caixas',
-      pesoKg: 15,
-      horas: 5,
-    );
-  }
-
-  Future<int> _disponivel({
-    required int doador,
-    required String titulo,
-    required String categoria,
-    required double quantidade,
-    required String unidade,
-    required double pesoKg,
-    required int horas,
-    String conservacao = 'ambiente',
-    String? descricao,
-    DateTime? preparadoEm,
-    String? foto,
-  }) async {
-    final id = await _ex.doacao(
-      doadorId: doador,
-      titulo: titulo,
-      categoria: categoria,
-      quantidade: quantidade,
-      unidade: unidade,
-      pesoKg: pesoKg,
-      conservacao: conservacao,
-      validade: hoje.add(const Duration(days: 1)),
-      preparadoEm: preparadoEm,
-      inicio: agora.subtract(const Duration(minutes: 30)),
-      fim: agora.add(Duration(hours: horas)),
-      local: _localDe(doador),
-      endereco: _enderecoDe(doador),
-      status: 'disponivel',
-      criadaEm: agora.subtract(const Duration(minutes: 30)),
-      descricao: descricao,
-    );
-    if (foto != null) await _ex.foto(id, foto);
-    return id;
-  }
-
-  /// Mãos Amigas está retirando as cestas do mercado agora (código 4821),
-  /// com uma conversa no chat da doação.
-  Future<void> _criarRetiradaEmAndamento() async {
-    final aceitaEm = agora.subtract(const Duration(minutes: 10));
-    final cestas = await _ex.doacao(
+    final mantimentos = await _ex.doacao(
       doadorId: _contas.mercado,
-      titulo: 'Cestas de mercearia',
+      titulo: 'Mantimentos não perecíveis',
+      descricao: 'Arroz, feijão, macarrão, farinha de milho, açúcar e óleo.',
       categoria: 'mercearia',
-      quantidade: 10,
-      unidade: 'caixas',
-      pesoKg: 40,
+      quantidade: 120,
+      unidade: 'kg',
+      pesoKg: 120,
       conservacao: 'ambiente',
       validade: hoje.add(const Duration(days: 30)),
-      inicio: agora.subtract(const Duration(minutes: 30)),
+      inicio: agora.subtract(const Duration(hours: 3)),
       fim: agora.add(const Duration(hours: 5)),
       local: ContasDeExemplo.localMercado,
-      endereco: _enderecoDe(_contas.mercado),
+      endereco: 'Rua Principal, 100 - Centro',
       status: 'reservada',
-      criadaEm: agora.subtract(const Duration(minutes: 30)),
+      criadaEm: agora.subtract(const Duration(hours: 3)),
     );
+    await _ex.foto(mantimentos, 'mantimentos.jpg');
+
+    final paes = await _ex.doacao(
+      doadorId: _contas.padaria,
+      titulo: 'Pão francês do dia',
+      descricao: 'Pães assados hoje, separados em 4 caixas.',
+      categoria: 'padaria',
+      quantidade: 4,
+      unidade: 'caixas',
+      pesoKg: 12,
+      conservacao: 'ambiente',
+      validade: hoje.add(const Duration(days: 1)),
+      inicio: agora.subtract(const Duration(hours: 2)),
+      fim: agora.add(const Duration(hours: 4)),
+      local: ContasDeExemplo.localPadaria,
+      endereco: 'Avenida das Flores, 250',
+      status: 'disponivel',
+      criadaEm: agora.subtract(const Duration(hours: 2)),
+    );
+    await _ex.foto(paes, 'paes.jpg');
+
+    // As 2 desistências do Prato Cheio, antes de a Mãos Amigas aceitar.
+    await _desistencia(mantimentos, const Duration(minutes: 150));
+    await _desistencia(paes, const Duration(minutes: 105));
+    await _retiradaEmAndamento(mantimentos);
+  }
+
+  /// O Prato Cheio aceitou há [tempo], deixou o prazo de 1 h acabar e
+  /// ficou bloqueado para esta doação (RN22). Conta como desistência (RN24).
+  Future<void> _desistencia(int doacao, Duration tempo) async {
+    final aceitaEm = agora.subtract(tempo);
+    final venceuEm = aceitaEm.add(const Duration(hours: 1));
     final reserva = await _ex.reserva(
-      doacaoId: cestas,
+      doacaoId: doacao,
+      ongId: _contas.pratoCheio,
+      status: 'expirada',
+      codigo: '2468',
+      reservadaEm: aceitaEm,
+      expiraEm: venceuEm,
+      encerradaEm: venceuEm,
+      contaDesistencia: true,
+    );
+    await _ex.bloqueio(
+      ongId: _contas.pratoCheio,
+      doacaoId: doacao,
+      em: venceuEm,
+    );
+    // As mensagens automáticas que o backend grava no aceite e no fim do
+    // prazo.
+    await _ex.mensagem(
+      reservaId: reserva,
+      autorId: null,
+      texto: 'Instituto Prato Cheio aceitou a doação.',
+      em: aceitaEm,
+    );
+    await _ex.mensagem(
+      reservaId: reserva,
+      autorId: null,
+      texto: 'O prazo da retirada acabou.',
+      em: venceuEm,
+    );
+  }
+
+  /// Mãos Amigas está retirando os mantimentos agora (código 4821), com uma
+  /// conversa curta no chat combinando a retirada.
+  Future<void> _retiradaEmAndamento(int mantimentos) async {
+    final aceitaEm = agora.subtract(const Duration(minutes: 10));
+    final reserva = await _ex.reserva(
+      doacaoId: mantimentos,
       ongId: _contas.maosAmigas,
       status: 'ativa',
       codigo: '4821',
@@ -159,96 +129,22 @@ class DoacoesDeExemplo {
     );
     await _ex.mensagem(
       reservaId: reserva,
+      autorId: _contas.mercado,
+      texto: 'Olá! Separamos as caixas com os mantimentos no estoque.',
+      em: aceitaEm.add(const Duration(minutes: 1)),
+    );
+    await _ex.mensagem(
+      reservaId: reserva,
       autorId: _contas.maosAmigas,
-      texto: 'Estou a caminho',
+      texto: 'Obrigado! Estou a caminho de carro, chego em uns 20 minutos.',
       em: aceitaEm.add(const Duration(minutes: 2)),
     );
     await _ex.mensagem(
       reservaId: reserva,
       autorId: _contas.mercado,
-      texto: 'Pode entrar pelo portão lateral',
+      texto: 'Combinado. Pode entrar pelo portão lateral e procurar o Carlos.',
       em: aceitaEm.add(const Duration(minutes: 3)),
       lida: false,
     );
-  }
-
-  /// 2 doações concluídas e 3 expiradas, todas do mercado.
-  Future<void> _criarHistorico() async {
-    final arroz = await _antiga('Arroz e feijão', 6, 'concluida');
-    final enlatados = await _antiga('Enlatados variados', 3, 'concluida');
-    await _retiradaConcluida(arroz, _contas.maosAmigas, 6);
-    await _retiradaConcluida(enlatados, _contas.pratoCheio, 3);
-    concluidas.addAll([arroz, enlatados]);
-
-    // RN22–RN24: Prato Cheio deixou 2 prazos acabarem; Casa Esperança, 3.
-    const diasAtras = [12, 8, 4];
-    final titulos = ['Macarrão e molho', 'Biscoitos', 'Farinha e açúcar'];
-    for (var i = 0; i < titulos.length; i++) {
-      final doacao = await _antiga(titulos[i], diasAtras[i], 'expirada');
-      if (i < 2) await _desistencia(doacao, _contas.pratoCheio, diasAtras[i]);
-      await _desistencia(doacao, _contas.suspensa, diasAtras[i]);
-    }
-  }
-
-  Future<int> _antiga(String titulo, int diasAtras, String status) {
-    final dia = agora.subtract(Duration(days: diasAtras));
-    return _ex.doacao(
-      doadorId: _contas.mercado,
-      titulo: titulo,
-      categoria: 'mercearia',
-      quantidade: 30,
-      unidade: 'kg',
-      pesoKg: 30,
-      conservacao: 'ambiente',
-      validade: hoje,
-      inicio: dia,
-      fim: dia.add(const Duration(hours: 6)),
-      local: ContasDeExemplo.localMercado,
-      endereco: _enderecoDe(_contas.mercado),
-      status: status,
-      criadaEm: dia,
-    );
-  }
-
-  Future<void> _retiradaConcluida(int doacao, int ong, int diasAtras) async {
-    final aceitaEm = agora.subtract(Duration(days: diasAtras));
-    await _ex.reserva(
-      doacaoId: doacao,
-      ongId: ong,
-      status: 'concluida',
-      codigo: '1357',
-      reservadaEm: aceitaEm,
-      expiraEm: aceitaEm.add(const Duration(hours: 1)),
-      encerradaEm: aceitaEm.add(const Duration(minutes: 40)),
-    );
-  }
-
-  /// A ONG aceitou, deixou o prazo acabar e ficou bloqueada para a doação.
-  Future<void> _desistencia(int doacao, int ong, int diasAtras) async {
-    final aceitaEm = agora.subtract(Duration(days: diasAtras));
-    final venceuEm = aceitaEm.add(const Duration(hours: 1));
-    await _ex.reserva(
-      doacaoId: doacao,
-      ongId: ong,
-      status: 'expirada',
-      codigo: '2468',
-      reservadaEm: aceitaEm,
-      expiraEm: venceuEm,
-      encerradaEm: venceuEm,
-      contaDesistencia: true,
-    );
-    await _ex.bloqueio(ongId: ong, doacaoId: doacao, em: venceuEm);
-  }
-
-  String _enderecoDe(int doador) {
-    if (doador == _contas.padaria) return 'Avenida das Flores, 250';
-    if (doador == _contas.feirante) return 'Feira do Mercadão, banca 12';
-    return 'Rua Principal, 100 - Centro';
-  }
-
-  Coordenadas _localDe(int doador) {
-    if (doador == _contas.padaria) return ContasDeExemplo.localPadaria;
-    if (doador == _contas.feirante) return ContasDeExemplo.localFeirante;
-    return ContasDeExemplo.localMercado;
   }
 }

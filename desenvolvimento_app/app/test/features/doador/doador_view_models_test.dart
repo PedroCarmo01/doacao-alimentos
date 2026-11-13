@@ -129,12 +129,16 @@ void main() {
 
       await vm.carregar();
 
-      // Dados de exemplo do mercado: 3 disponíveis + 1 reservada; no
-      // histórico 2 concluídas (30 kg cada) e 3 expiradas.
-      expect(vm.ativas, hasLength(4));
-      expect(vm.historico, hasLength(5));
-      expect(vm.totalConcluidas, 2);
-      expect(vm.kgSalvos, 60);
+      // Dados de exemplo do mercado: só os mantimentos (reservados pela
+      // Mãos Amigas). Ainda não há nada no histórico.
+      expect(
+        [for (final d in vm.ativas) d.titulo],
+        ['Mantimentos não perecíveis'],
+      );
+      expect(vm.ativas.single.status, StatusDoacao.reservada);
+      expect(vm.historico, isEmpty);
+      expect(vm.totalConcluidas, 0);
+      expect(vm.kgSalvos, 0);
       expect(vm.nomeOrganizacao, 'Mercado Bom Preço');
     });
 
@@ -148,11 +152,12 @@ void main() {
 
       await vm.carregar();
 
-      // As 3 antigas + as 3 disponíveis de hoje + as cestas: o prazo da
-      // retirada venceu, a doação voltou e depois o horário dela acabou.
+      // Os mantimentos: o prazo da retirada venceu, a doação voltou e
+      // depois o horário dela acabou.
+      expect(vm.ativas, isEmpty);
       expect(
-        vm.historico.where((d) => d.status == StatusDoacao.expirada),
-        hasLength(7),
+        [for (final d in vm.historico) (d.titulo, d.status)],
+        [('Mantimentos não perecíveis', StatusDoacao.expirada)],
       );
     });
   });
@@ -164,12 +169,18 @@ void main() {
     }
 
     test('RN12: cancela uma disponível sem motivo', () async {
-      final frutas = await doacaoComTitulo('Frutas e verduras do dia');
+      // O pão francês (disponível) é da padaria.
+      await deps.sessao.iniciar(
+        await deps.auth.entrar(
+          const DadosLogin(email: 'padaria@exemplo.com', senha: 'senha123'),
+        ),
+      );
+      final paes = await doacaoComTitulo('Pão francês do dia');
       final vm = DetalheDoacaoDoadorViewModel(
         doacoes: deps.doacoes,
         reservas: deps.reservas,
         relogio: relogio,
-        doacaoId: frutas.id,
+        doacaoId: paes.id,
       );
 
       expect(await vm.cancelar(), isTrue);
@@ -178,12 +189,12 @@ void main() {
     });
 
     test('RN12: reservada pede motivo e mostra a ONG', () async {
-      final cestas = await doacaoComTitulo('Cestas de mercearia');
+      final mantimentos = await doacaoComTitulo('Mantimentos não perecíveis');
       final vm = DetalheDoacaoDoadorViewModel(
         doacoes: deps.doacoes,
         reservas: deps.reservas,
         relogio: relogio,
-        doacaoId: cestas.id,
+        doacaoId: mantimentos.id,
       );
       await vm.carregar();
       expect(vm.detalhe!.ong?.nomeOrganizacao, 'ONG Mãos Amigas');

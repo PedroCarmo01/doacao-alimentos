@@ -45,7 +45,7 @@ Erros "amigáveis" (`ErroAmigavel`): `ApiException` (API), `LocalizacaoException
 | `SistemaRepository` | `verificar` | `GET /` |
 | `LocalizacaoService` | `obterAtual` | GPS do aparelho |
 
-O `BancoFake` aplica **as mesmas regras e códigos de erro** do backend (usa os validadores do `shared_models`), com duas diferenças propositais: prazo de reserva de 2 minutos e uma "doação surpresa" a cada 45 s.
+O `BancoFake` aplica **as mesmas regras e códigos de erro** do backend (usa os validadores do `shared_models`), com uma diferença proposital: prazo de reserva de 2 minutos. Os dados de exemplo são os mesmos do seed (2 doações e 2 publicações). A "doação surpresa" a cada 45 s fica desligada; para ligar, crie o `BancoFake(simularNovasDoacoes: true)`.
 
 ## `ApiClient` (`core/api/api_client.dart`)
 

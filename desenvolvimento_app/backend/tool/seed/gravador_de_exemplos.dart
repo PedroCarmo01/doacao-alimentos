@@ -40,16 +40,36 @@ class GravadorDeExemplos {
     }
   }
 
-  /// Copia [exemplo] (ex.: "frutas.jpg") para a pasta do servidor, como se
+  /// Copia [exemplo] (ex.: "paes.jpg") para a pasta do servidor, como se
   /// o app tivesse enviado, e liga à doação na [ordem] dada.
   Future<void> foto(int doacaoId, String exemplo, {int ordem = 1}) async {
-    final bytes = await File('$pastaDasFotosDeExemplo/$exemplo').readAsBytes();
-    final arquivo = await _fotos.salvar(bytes, FormatoDeFoto.dosBytes(bytes)!);
+    final arquivo = await _copiarFoto(exemplo);
     await _banco.inserir(
       'INSERT INTO fotos_doacao (doacao_id, arquivo, ordem) '
       'VALUES (:doacao, :arquivo, :ordem)',
       {'doacao': doacaoId, 'arquivo': arquivo, 'ordem': ordem},
     );
+  }
+
+  /// Igual a [foto], mas liga a foto a uma publicação da Comunidade.
+  Future<void> fotoDaPublicacao(
+    int publicacaoId,
+    String exemplo, {
+    int ordem = 1,
+  }) async {
+    final arquivo = await _copiarFoto(exemplo);
+    await _banco.inserir(
+      'INSERT INTO fotos_publicacao (publicacao_id, arquivo, ordem) '
+      'VALUES (:publicacao, :arquivo, :ordem)',
+      {'publicacao': publicacaoId, 'arquivo': arquivo, 'ordem': ordem},
+    );
+  }
+
+  /// Copia a foto de exemplo para a pasta do servidor e devolve o nome
+  /// que ela ganhou lá.
+  Future<String> _copiarFoto(String exemplo) async {
+    final bytes = await File('$pastaDasFotosDeExemplo/$exemplo').readAsBytes();
+    return _fotos.salvar(bytes, FormatoDeFoto.dosBytes(bytes)!);
   }
 
   /// Apaga tudo, na ordem "filhas antes das mães" (chaves estrangeiras).

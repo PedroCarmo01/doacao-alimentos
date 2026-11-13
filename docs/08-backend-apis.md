@@ -543,14 +543,14 @@ RN42: uma por conta (repetir não soma). Com `DENUNCIAS_PARA_OCULTAR` (padrão 3
 
 | id | E-mail | Tipo | Organização e situação para testar |
 |---|---|---|---|
-| 1 | `mercado@exemplo.com` | doador (supermercado, CNPJ) | Mercado Bom Preço: 3 doações disponíveis, 1 reservada, 2 concluídas, 3 expiradas |
-| 2 | `padaria@exemplo.com` | doador (padaria, CNPJ) | Padaria Pão Quente: 1 refeição pronta disponível |
-| 3 | `feirante@exemplo.com` | doador (feira, **CPF**) | Banca do Zé: 1 doação; verificação pendente |
-| 4 | `maosamigas@exemplo.com` | ong | ONG Mãos Amigas: retirada em andamento (código **4821**) e conversa no chat |
-| 5 | `pratocheio@exemplo.com` | ong | Instituto Prato Cheio: **2 desistências** (o próximo aviso é "mais uma e será suspensa") |
+| 1 | `mercado@exemplo.com` | doador (supermercado, CNPJ) | Mercado Bom Preço: "Mantimentos não perecíveis" (120 kg), reservada |
+| 2 | `padaria@exemplo.com` | doador (padaria, CNPJ) | Padaria Pão Quente: "Pão francês do dia" (4 caixas, 12 kg), disponível |
+| 3 | `feirante@exemplo.com` | doador (feira, **CPF**) | Banca do Zé: sem doações; verificação pendente |
+| 4 | `maosamigas@exemplo.com` | ong | ONG Mãos Amigas: retirando os mantimentos (código **4821**) e conversa no chat |
+| 5 | `pratocheio@exemplo.com` | ong | Instituto Prato Cheio: **2 desistências**, uma em cada doação de exemplo (fica bloqueado nelas, RN22; o próximo aviso é "mais uma e será suspensa") |
 | 6 | `suspensa@exemplo.com` | ong | Casa Esperança: **suspensa** por mais 30 h |
 | 7 | `distante@exemplo.com` | ong | Associação Distante (~45 km, fora do raio) |
 
 Os ids da tabela valem logo depois de recriar o banco com o `schema.sql`. Rodar o seed de novo apaga as linhas com `DELETE`, que **não** reinicia a contagem: os ids mudam e os tokens antigos deixam de valer (o app volta para o login).
 
-Senha de todos: `senha123`. Os CNPJs e o CPF são fictícios (dígitos calculados pelo `ValidadorDocumento`). O seed também cria 4 publicações na Comunidade. Token sem login: `dart run tool/gerar_token.dart <id> <doador|ong>`.
+Senha de todos: `senha123`. Os CNPJs e o CPF são fictícios (dígitos calculados pelo `ValidadorDocumento`). O seed também cria 2 publicações com foto na Comunidade (Prato Cheio e Mãos Amigas, sem doação ligada). As fotos de exemplo ficam em `tool/seed/fotos/` (`mantimentos.jpg` e `paes.jpg`); o modo Fake do app usa as mesmas, em `app/assets/exemplos/`. Token sem login: `dart run tool/gerar_token.dart <id> <doador|ong>`.

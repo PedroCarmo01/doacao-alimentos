@@ -9,7 +9,8 @@ import 'package:summit_app/features/chat/chat_view_model.dart';
 import 'package:summit_app/features/chat/conversas_view_model.dart';
 
 /// Etapa 6 — o chat da retirada no modo Fake. O exemplo: Mãos Amigas está
-/// retirando as cestas do mercado e os dois já trocaram 2 mensagens.
+/// retirando os mantimentos do mercado e os dois já trocaram 3 mensagens
+/// (a última, do mercado, a ONG ainda não leu).
 void main() {
   late RelogioFixo relogio;
   late BancoFake banco;
@@ -37,11 +38,11 @@ void main() {
     await deps.auth.entrar(DadosLogin(email: email, senha: 'senha123')),
   );
 
-  ResumoConversa cestas(List<ResumoConversa> conversas) =>
-      conversas.firstWhere((c) => c.tituloDoacao == 'Cestas de mercearia');
+  ResumoConversa mantimentos(List<ResumoConversa> conversas) => conversas
+      .firstWhere((c) => c.tituloDoacao == 'Mantimentos não perecíveis');
 
-  Future<int> reservaDasCestas() async =>
-      cestas(await deps.chat.conversas()).reservaId;
+  Future<int> reservaDosMantimentos() async =>
+      mantimentos(await deps.chat.conversas()).reservaId;
 
   ChatViewModel abrir(int reservaId) => ChatViewModel(
     chat: deps.chat,
@@ -50,45 +51,55 @@ void main() {
     reservaId: reservaId,
   );
 
-  test('T31: a ONG vê a conversa das cestas com 1 não lida', () async {
+  test('T31: a ONG vê a conversa dos mantimentos com 1 não lida', () async {
     await entrarComo('maosamigas@exemplo.com');
     final vm = ConversasViewModel(chat: deps.chat, relogio: relogio);
 
     await vm.carregar();
 
-    final conversa = cestas(vm.conversas);
+    final conversa = mantimentos(vm.conversas);
     expect(conversa.nomeOutro, 'Mercado Bom Preço');
-    expect(conversa.naoLidas, 1); // "Pode entrar pelo portão lateral"
+    expect(conversa.naoLidas, 1); // "Combinado. Pode entrar pelo portão..."
     expect(conversa.somenteLeitura, isFalse);
-    // RN31: as retiradas encerradas há menos de 7 dias continuam na lista,
-    // só para leitura.
-    expect(vm.conversas.where((c) => c.somenteLeitura), isNotEmpty);
     expect(vm.totalNaoLidas, 1);
+    vm.dispose();
+  });
+
+  test('RN31: as retiradas encerradas há menos de 7 dias ficam só para '
+      'leitura', () async {
+    // O Prato Cheio deixou o prazo acabar nas 2 doações dos exemplos.
+    await entrarComo('pratocheio@exemplo.com');
+    final vm = ConversasViewModel(chat: deps.chat, relogio: relogio);
+
+    await vm.carregar();
+
+    expect(vm.conversas, hasLength(2));
+    expect(vm.conversas.every((c) => c.somenteLeitura), isTrue);
     vm.dispose();
   });
 
   test('T30: abrir a conversa marca como lida e o outro vê "✓ lida"', () async {
     await entrarComo('maosamigas@exemplo.com');
-    final reserva = await reservaDasCestas();
+    final reserva = await reservaDosMantimentos();
     final vm = abrir(reserva);
 
     await vm.carregar();
 
     expect(vm.mensagens.first.ehDoSistema, isTrue);
     expect(vm.titulo, 'Mercado Bom Preço');
-    expect(cestas(await deps.chat.conversas()).naoLidas, 0);
+    expect(mantimentos(await deps.chat.conversas()).naoLidas, 0);
 
     await entrarComo('mercado@exemplo.com');
     final doMercado = abrir(reserva);
     await doMercado.carregar();
-    final minha = doMercado.mensagens.last; // "Pode entrar pelo portão"
+    final minha = doMercado.mensagens.last; // "Combinado. Pode entrar.."
     expect(doMercado.ehMinha(minha), isTrue);
     expect(doMercado.foiLida(minha), isTrue);
   });
 
   test('RN30: enviar uma resposta rápida avisa o outro', () async {
     await entrarComo('maosamigas@exemplo.com');
-    final reserva = await reservaDasCestas();
+    final reserva = await reservaDosMantimentos();
     final vm = abrir(reserva);
     await vm.carregar();
 
@@ -103,7 +114,7 @@ void main() {
 
   test('a conversa aberta na tela não vira notificação', () async {
     await entrarComo('maosamigas@exemplo.com');
-    final reserva = await reservaDasCestas();
+    final reserva = await reservaDosMantimentos();
     await deps.chat.enviar(reserva, 'Estou chegando');
 
     await entrarComo('mercado@exemplo.com');
@@ -118,7 +129,7 @@ void main() {
 
   test('RN30: mensagem vazia não é enviada', () async {
     await entrarComo('maosamigas@exemplo.com');
-    final vm = abrir(await reservaDasCestas());
+    final vm = abrir(await reservaDosMantimentos());
     await vm.carregar();
 
     expect(await vm.enviar('   '), isFalse);
@@ -127,7 +138,7 @@ void main() {
 
   test('RN30: outra ONG não vê a conversa', () async {
     await entrarComo('maosamigas@exemplo.com');
-    final reserva = await reservaDasCestas();
+    final reserva = await reservaDosMantimentos();
 
     await entrarComo('pratocheio@exemplo.com');
     final vm = abrir(reserva);
@@ -139,7 +150,7 @@ void main() {
 
   test('RN31: confirmada a retirada, a conversa fica só de leitura', () async {
     await entrarComo('mercado@exemplo.com');
-    final reserva = await reservaDasCestas();
+    final reserva = await reservaDosMantimentos();
     await deps.reservas.confirmar(reserva, '4821');
 
     final vm = abrir(reserva);

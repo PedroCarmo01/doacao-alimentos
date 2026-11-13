@@ -184,10 +184,10 @@ Authorization: Bearer {{loginDoador.response.body.$.token}}
 Content-Type: multipart/form-data; boundary=FRONTEIRA
 
 --FRONTEIRA
-Content-Disposition: form-data; name="foto"; filename="frutas.jpg"
+Content-Disposition: form-data; name="foto"; filename="paes.jpg"
 Content-Type: image/jpeg
 
-< ./tool/seed/fotos/frutas.jpg
+< ./tool/seed/fotos/paes.jpg
 --FRONTEIRA--
 
 ### Minhas doações: abas Ativas e Histórico
@@ -403,7 +403,7 @@ Authorization: Bearer {{loginOng.response.body.$.token}}
 DELETE {{base}}/reservas/1
 Authorization: Bearer {{loginOng.response.body.$.token}}
 
-### Doador confirma com o código (seed: Cestas de mercearia, código 4821;
+### Doador confirma com o código (seed: Mantimentos não perecíveis, código 4821;
 ### troque o 1 pelo id da retirada, que aparece em /reservas da ONG)
 POST {{base}}/reservas/1/confirmar
 Authorization: Bearer {{loginDoador.response.body.$.token}}
